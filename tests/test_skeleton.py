@@ -1,6 +1,6 @@
 import pytest
 
-from docker_graph.skeleton import fib, main
+from docker_graph.docker_graph import fib, main
 
 __author__ = "Michael Mussato"
 __copyright__ = "Michael Mussato"
