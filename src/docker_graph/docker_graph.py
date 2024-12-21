@@ -69,7 +69,12 @@ class DockerComposeGraph(Digraph):
 
     def parse_docker_compose(self, yaml: pathlib.Path, docker_compose_chainmap: dict = {}):
 
-        working_dir = pathlib.Path().absolute()
+        print(os.path.relpath(yaml, os.getcwd()))  # ../deadline-docker/10.2/docker-compose.yaml
+        print(os.path.relpath(os.getcwd(), yaml))  # ../../../docker-graph
+
+        print(pathlib.Path().cwd().relative_to(yaml))
+
+        # working_dir = pathlib.Path().absolute()
 
         # print(os.path.relpath(yaml.parent, start=pathlib.Path.cwd()))
 
