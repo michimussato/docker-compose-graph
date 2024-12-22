@@ -47,23 +47,23 @@ _logger = logging.getLogger(__name__)
 # when using this Python module as a library.
 
 
-def fib(n):
-    """Fibonacci example function
+# def fib(n):
+#     """Fibonacci example function
+#
+#     Args:
+#       n (int): integer
+#
+#     Returns:
+#       int: n-th Fibonacci number
+#     """
+#     assert n > 0
+#     a, b = 1, 1
+#     for _i in range(n - 1):
+#         a, b = b, a + b
+#     return a
 
-    Args:
-      n (int): integer
 
-    Returns:
-      int: n-th Fibonacci number
-    """
-    assert n > 0
-    a, b = 1, 1
-    for _i in range(n - 1):
-        a, b = b, a + b
-    return a
-
-
-class DockerComposeGraph(Digraph):
+class DockerComposeGraph:
 
     # result = {}
 
@@ -135,33 +135,131 @@ class DockerComposeGraph(Digraph):
     def process_graph(
             self,
             tree,
-            graph: [pydot.Dot, None] = None
+            # graph: [pydot.Dot, None] = None
     ):
 
-        if graph is None:
-            graph = pydot.Dot("my_graph", graph_type="digraph", bgcolor="yellow")
+        print(tree)
 
-            if isinstance(tree, dict):
-                if "services" in tree:
-                    services = tree["services"]
-                    for service in services:
-                        node = pydot.Node(service, label=service)
-                        graph.add_node(node)
-                for key, value in tree.items():
-                    if isinstance(value, dict):
-                        self.process_graph(value)
-                    elif isinstance(value, list):
-                        for item in value:
-                            self.process_graph(item)
+        # if graph is None:
+        graph = pydot.Dot(
+            "my_graph",
+            rankdir="TB",
+            graph_type="digraph",
+            bgcolor="#909090",
+        )
+
+        for compose in tree:
+            print(compose)
+
+            includes_compose = compose.get("include", [])
+            # print(f"{includes_compose = }")
+            services_compose = compose.get("services", [])
+            print(f"{services_compose = }")
+            networks_compose = compose.get("networks", [])
+            # print(f"{networks_compose = }")
+            volumes_compose = compose.get("volumes", [])
+            # print(f"{volumes_compose = }")
+
+            for services, values in services_compose.items():
+
+                print(f"{values = }")
+
+                service_name = services
+                image_name = values.get("image", None)
+                service_depends_on = values.get("depends_on", [])
+                print(f"{service_depends_on = }")
+                # service_restart = compose[service].get("restart", None)
+                # container_name = compose[service].get("container_name", None)
+                # host_name = service.get("host_name", None)
+                # domain_name = service.get("domain_name", None)
+                # service_networks = service.get("networks", None)
+                # service_environment = service.get("environment", None)
+                service_ports = values.get("ports", [])
+                # service_volumes = service.get("volumes", None)
+
+                # _nodes = graph.get_nodes()
+
+                # graph_service = pydot.Subgraph("service_graph", graph_type="digraph", bgcolor="green")
+
+                # if service_name not in [_node.get_name() for _node in _nodes]:
+                #     graph.add_node(pydot.Node(service_name))
+
+
+
+                # graph_service = pydot.Dot(service_name, graph_type="digraph", bgcolor="yellow")
+                # graph_service = pydot.Subgraph(service_name, graph_type="digraph", bgcolor="yellow")
+                graph_cluster = pydot.Cluster(
+                    service_name,
+                    label=service_name,
+                    graph_type="digraph",
+                    rankdir="TB",
+                    bgcolor="yellow",
+                    # border_color="black",
+                    shape="box",
+                    style="rounded",
+                )
+
+                node_image = pydot.Node(image_name)
+                graph_cluster.add_node(node_image)
+
+                # depends_on
+                for depends_on in service_depends_on:
+                    node = [node.get_name(depends_on) for node in graph.get_nodes()]
+                    if bool(node):
+                        pass
                     else:
-                        print(f"{value} -> {os.path.expandvars(str(value))}")
-                        tree[key] = value
-            elif isinstance(tree, list):
-                for obj in tree:
-                    self.process_graph(obj)
+                        node = pydot.Node(
+                                depends_on,
+                            )
 
-            elif isinstance(tree, str):
-                print(f"{tree} -> {os.path.expandvars(str(tree))}")
+                        graph_cluster.add_node(
+                            node
+                        )
+
+                    edge = pydot.Edge(
+                        src=service_name,
+                        dst=node,
+                    )
+                    graph.add_edge(edge)
+
+                # ports
+
+                for port in service_ports:
+                    node = [node.get_name(port) for node in graph.get_nodes()]
+                    if bool(node):
+                        pass
+                    else:
+                        node = pydot.Node(
+                            os.path.expandvars(port),
+                            shape="circle",
+                        )
+
+                    graph.add_node(node)
+
+                    edge = pydot.Edge(
+                        src=port,
+                        dst=service_name,
+                    )
+
+                    graph.add_edge(edge)
+
+
+                graph_cluster.add_node(pydot.Node(service_name))
+                # graph.add_node(pydot.Node("service_name"))
+                #
+                graph.add_subgraph(graph_cluster)
+
+
+
+                # if not bool(graph_service):
+                #     # if image_name not in [_node.get_name() for _node in _nodes]:
+                #     graph_service = pydot.Subgraph(image_name, graph_type="digraph", bgcolor="green")
+                #     for network in networks_compose:
+                #         print(network)
+                #         graph_service.add_node(pydot.Node(network))
+                #     graph.add_subgraph(graph_service)
+                # else:
+                #     graph.add_subgraph(graph_service[0])
 
         graph.write_png("graph.png")
 
@@ -191,21 +289,6 @@ class DockerComposeGraph(Digraph):
 
 
 
-"""
-from docker_graph.docker_graph import DockerComposeGraph
-import json
-from pathlib import Path
-dcg = DockerComposeGraph()
-tree = dcg.parse_docker_compose(Path("/home/michael/git/repos/deadline-docker/10.2/docker-compose.yaml"))
-# j = json.dumps(tree, indent=2)
-# print(j)
-
-dcg.load_dotenv(Path("/home/michael/git/repos/deadline-docker/10.2/.env"))
-
-# dcg.expand_vars(tree)
-dcg.process_graph(tree)
-
-"""
 
 
 
