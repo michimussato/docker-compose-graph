@@ -27,7 +27,9 @@ import pathlib
 import sys
 import yaml as pyyaml
 from graphviz import Digraph
+import pydot
 from collections import ChainMap
+import dotenv
 
 from docker_graph import __version__
 
@@ -93,6 +95,8 @@ class DockerComposeGraph(Digraph):
             _abs_yaml = yaml
             root_path = _abs_yaml.parent
 
+        _abs_yaml = _abs_yaml.resolve()
+
         print(f"Processing {_abs_yaml.as_posix()}")
 
         with open(_abs_yaml, "r") as fr:
@@ -116,6 +120,7 @@ class DockerComposeGraph(Digraph):
                 self.parse_docker_compose(
                     yaml=pathlib_path,
                     root_path=root_path,
+                    ret=ret,
                 )
 
                 # yield included_docker_compose
@@ -123,6 +128,66 @@ class DockerComposeGraph(Digraph):
         return ret
 
         # return self.result
+
+    def load_dotenv(self, env: pathlib.Path):
+        dotenv.load_dotenv(env)
+
+    def process_graph(
+            self,
+            tree,
+            graph: [pydot.Dot, None] = None
+    ):
+
+        if graph is None:
+            graph = pydot.Dot("my_graph", graph_type="digraph", bgcolor="yellow")
+
+            if isinstance(tree, dict):
+                if "services" in tree:
+                    services = tree["services"]
+                    for service in services:
+                        node = pydot.Node(service, label=service)
+                        graph.add_node(node)
+                for key, value in tree.items():
+                    if isinstance(value, dict):
+                        self.process_graph(value)
+                    elif isinstance(value, list):
+                        for item in value:
+                            self.process_graph(item)
+                    else:
+                        print(f"{value} -> {os.path.expandvars(str(value))}")
+                        tree[key] = value
+            elif isinstance(tree, list):
+                for obj in tree:
+                    self.process_graph(obj)
+
+            elif isinstance(tree, str):
+                print(f"{tree} -> {os.path.expandvars(str(tree))}")
+
+        graph.write_png("graph.png")
+
+        return graph
+
+
+    # def expand_vars(self, nested_obj):
+    #     if isinstance(nested_obj, dict):
+    #         for key, value in nested_obj.items():
+    #             if isinstance(value, dict):
+    #                 self.expand_vars(value)
+    #             elif isinstance(value, list):
+    #                 for item in value:
+    #                     self.expand_vars(item)
+    #             else:
+    #                 print(f"{value} -> {os.path.expandvars(str(value))}")
+    #                 nested_obj[key] = value
+    #     elif isinstance(nested_obj, list):
+    #         for obj in nested_obj:
+    #             self.expand_vars(obj)
+    #
+    #     elif isinstance(nested_obj, str):
+    #         print(f"{nested_obj} -> {os.path.expandvars(str(nested_obj))}")
+
+            # nested_dict = {'outer_key': {'inner_key1': 'value1', 'inner_key2': 'value2'}}
+            # iterate_nested_dict(nested_dict)
 
 
 
@@ -132,8 +197,13 @@ import json
 from pathlib import Path
 dcg = DockerComposeGraph()
 tree = dcg.parse_docker_compose(Path("/home/michael/git/repos/deadline-docker/10.2/docker-compose.yaml"))
-j = json.dumps(tree, indent=2)
-print(j)
+# j = json.dumps(tree, indent=2)
+# print(j)
+
+dcg.load_dotenv(Path("/home/michael/git/repos/deadline-docker/10.2/.env"))
+
+# dcg.expand_vars(tree)
+dcg.process_graph(tree)
 
 """
 
