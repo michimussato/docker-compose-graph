@@ -200,22 +200,18 @@ class DockerComposeGraph:
                     style="rounded",
                 )
 
-                node_image = pydot.Node(
-                    f"{service_name}_{image_name}",
-                    label=image_name,
-                    bgcolor="3a3a3a",
-                )
+                node_image = pydot.Node(image_name, bgcolor="3a3a3a")
                 graph_cluster.add_node(node_image)
 
                 # depends_on
                 # edges only
                 for depends_on in service_depends_on:
-                    node = [n for n in graph.get_nodes() if n.get_name() == f"{service_name}_{depends_on}"]
+                    node = [n for n in graph.get_nodes() if n.get_name() == depends_on]
                     if bool(node):
                         pass
                     else:
                         node = pydot.Node(
-                                f"{service_name}_{depends_on}",
+                                depends_on,
                                 label=depends_on,
                                 shape="database",
                                 bgcolor="blue",
@@ -258,13 +254,12 @@ class DockerComposeGraph:
 
                     # _port = os.path.expandvars(port).replace(":", " -> ")
 
-                    node_host = [n for n in graph.get_nodes() if n.get_name() == f"{service_name}_{port_host}"]
+                    node_host = [n for n in graph.get_nodes() if n.get_name() == port_host]
                     if bool(node_host):
                         pass
                     else:
                         node_host = pydot.Node(
-                            f"{service_name}_{port_host}",
-                            label=port_host,
+                            port_host,
                             shape="circle",
                             bgcolor="red",
                         )
