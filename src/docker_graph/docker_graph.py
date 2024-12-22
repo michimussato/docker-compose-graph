@@ -145,7 +145,7 @@ class DockerComposeGraph:
             "my_graph",
             rankdir="TB",
             graph_type="digraph",
-            bgcolor="#909090",
+            bgcolor="#2f2f2f",
         )
 
         for compose in tree:
@@ -193,55 +193,90 @@ class DockerComposeGraph:
                     label=service_name,
                     graph_type="digraph",
                     rankdir="TB",
-                    bgcolor="yellow",
-                    # border_color="black",
+                    bgcolor="brown",
                     shape="box",
+                    simplify=True,
+                    strict=True,
                     style="rounded",
                 )
 
-                node_image = pydot.Node(image_name)
+                node_image = pydot.Node(
+                    f"{service_name}_{image_name}",
+                    label=image_name,
+                    bgcolor="3a3a3a",
+                )
                 graph_cluster.add_node(node_image)
 
                 # depends_on
+                # edges only
                 for depends_on in service_depends_on:
-                    node = [node.get_name(depends_on) for node in graph.get_nodes()]
+                    node = [n for n in graph.get_nodes() if n.get_name() == f"{service_name}_{depends_on}"]
                     if bool(node):
                         pass
                     else:
                         node = pydot.Node(
-                                depends_on,
+                                f"{service_name}_{depends_on}",
+                                label=depends_on,
+                                shape="database",
+                                bgcolor="blue",
                             )
 
                         graph_cluster.add_node(
-                            node
+                            node,
                         )
 
                     edge = pydot.Edge(
                         src=service_name,
                         dst=node,
+                        style="dashed",
                     )
                     graph.add_edge(edge)
 
                 # ports
-
                 for port in service_ports:
-                    node = [node.get_name(port) for node in graph.get_nodes()]
-                    if bool(node):
+                    port_host, port_container = os.path.expandvars(port).split(":")
+
+                    node_container = [n for n in graph_cluster.get_nodes() if n.get_name() == f"{service_name}_{port_container}"]
+                    if bool(node_container):
                         pass
                     else:
-                        node = pydot.Node(
-                            os.path.expandvars(port),
+                        node_container = pydot.Node(
+                            f"{service_name}_{port_container}",
+                            label=port_container,
                             shape="circle",
+                            bgcolor="red",
                         )
 
-                    graph.add_node(node)
+                        graph_cluster.add_node(node_container)
 
-                    edge = pydot.Edge(
-                        src=port,
+                    edge_container = pydot.Edge(
+                        src=node_container,
                         dst=service_name,
                     )
 
-                    graph.add_edge(edge)
+                    graph.add_edge(edge_container)
+
+                    # _port = os.path.expandvars(port).replace(":", " -> ")
+
+                    node_host = [n for n in graph.get_nodes() if n.get_name() == f"{service_name}_{port_host}"]
+                    if bool(node_host):
+                        pass
+                    else:
+                        node_host = pydot.Node(
+                            f"{service_name}_{port_host}",
+                            label=port_host,
+                            shape="circle",
+                            bgcolor="red",
+                        )
+
+                        graph.add_node(node_host)
+
+                    edge_host = pydot.Edge(
+                        src=node_host,
+                        dst=node_container,
+                    )
+
+                    graph.add_edge(edge_host)
 
 
                 graph_cluster.add_node(pydot.Node(service_name))
@@ -359,7 +394,7 @@ def main(args):
     args = parse_args(args)
     setup_logging(args.loglevel)
     _logger.debug("Starting crazy calculations...")
-    print(f"The {args.n}-th Fibonacci number is {fib(args.n)}")
+    # print(f"The {args.n}-th Fibonacci number is {fib(args.n)}")
     _logger.info("Script ends here")
 
 
