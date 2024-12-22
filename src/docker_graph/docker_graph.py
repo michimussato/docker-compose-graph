@@ -63,64 +63,77 @@ def fib(n):
 
 class DockerComposeGraph(Digraph):
 
+    # result = {}
+
     # def __init__(self, compose_file):
     #     super().__init__()
     #     self.compose_files: list[pathlib.Path] = []
 
-    def parse_docker_compose(self, yaml: pathlib.Path, docker_compose_chainmap: dict = {}):
+    def _to_abs_path(
+            self,
+            root_path,
+            rel_path
+    ) -> pathlib.Path:
 
-        print(os.path.relpath(yaml, os.getcwd()))  # ../deadline-docker/10.2/docker-compose.yaml
-        print(os.path.relpath(os.getcwd(), yaml))  # ../../../docker-graph
+        abs_path = os.path.join(root_path, rel_path)
 
-        print(pathlib.Path().cwd().relative_to(yaml))
+        _logger.debug(f"{rel_path} -> {abs_path}")
 
-        # working_dir = pathlib.Path().absolute()
+        return pathlib.Path(abs_path)
 
-        # print(os.path.relpath(yaml.parent, start=pathlib.Path.cwd()))
+    def parse_docker_compose(self, yaml: pathlib.Path, root_path: [pathlib.Path, None] = None, ret=None):
 
-        with open(yaml, "r") as fr:
-            docker_compose_chainmap.update(pyyaml.safe_load(fr))
+        if not yaml.is_absolute():
+            _logger.debug(yaml)
+            _abs_yaml = self._to_abs_path(
+                root_path=root_path,
+                rel_path=yaml,
+            )
+        else:
+            _abs_yaml = yaml
+            root_path = _abs_yaml.parent
 
-        # print(docker_compose_chainmap)
+        print(f"Processing {_abs_yaml.as_posix()}")
+
+        with open(_abs_yaml, "r") as fr:
+            docker_compose_chainmap = pyyaml.safe_load(fr)
+
+        if ret is None:
+            ret = []
+
+        ret.append(docker_compose_chainmap)
+
+        # self.result.update(docker_compose_chainmap)
+
+        _logger.debug(docker_compose_chainmap.get("include", []))
 
         for include in docker_compose_chainmap.get("include", []):
-            for included_docker_compose in include.values():
-                for _path in included_docker_compose:
-                    # print(yaml)
-                    # print(_path)
-                    # print(yaml.relative_to(_path))
-                    # yaml = pathlib.Path(_path).resolve()
-                    # # os.path.relpath(_path, start=yaml)
-                    # docker_compose_include = pathlib.Path(_path).absolute()
-                    # # docker_compose_include = pathlib.Path(_path).resolve()
-                    # # print(_path)
-                    # # print(pathlib.Path(_path).resolve().absolute())
-                    self.parse_docker_compose(yaml=pathlib.Path(os.path.relpath(pathlib.Path(_path).parent, start=pathlib.Path.cwd())))
-                # self.parse_docker_compose(included_docker_compose., docker_compose_chainmap)
+            for included_docker_compose in include.get("path", []):
+                _logger.debug(included_docker_compose)
+                pathlib_path = pathlib.Path(included_docker_compose)
+                _logger.debug(pathlib_path)
 
-        # self.compose_files.insert(0, docker_compose_chainmap)
+                self.parse_docker_compose(
+                    yaml=pathlib_path,
+                    root_path=root_path,
+                )
 
-        return docker_compose_chainmap
+                # yield included_docker_compose
 
-    # def _parse_docker_compose_includes(self, yaml: pathlib.Path):
-    #
-    #     with open(yaml, "r") as fr:
-    #         docker_compose_chainmap = pyyaml.safe_load(fr)
-    #
-    #     self.compose_files.append(docker_compose_chainmap)
-    #
-    # def parse_includes(self):
-    #     for compose_file in self.compose_files[0]["includes"]:
+        return ret
 
+        # return self.result
 
 
 
 """
 from docker_graph.docker_graph import DockerComposeGraph
+import json
 from pathlib import Path
 dcg = DockerComposeGraph()
-dcg.parse_docker_compose(Path("/home/michael/git/repos/deadline-docker/10.2/docker-compose.yaml"))
-
+tree = dcg.parse_docker_compose(Path("/home/michael/git/repos/deadline-docker/10.2/docker-compose.yaml"))
+j = json.dumps(tree, indent=2)
+print(j)
 
 """
 
