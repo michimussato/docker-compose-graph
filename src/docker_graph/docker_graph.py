@@ -164,6 +164,7 @@ class DockerComposeGraph:
         cluster_ports = pydot.Cluster(
             graph_name="cluster_ports",
             label="cluster_ports",
+            color="red",
         )
 
         _ports = []
@@ -176,7 +177,7 @@ class DockerComposeGraph:
 
                 _ports.append(
                     {
-                        f"port_host": f"{service_name}_{port_host}",
+                        f"port_host": f"{service_name}:{port_host}",
                         # f"{service_name}_port_container": f"{service_name}_{port_container}"
                         f"{service_name}_port_container": f"{port_container}"
                     }
@@ -206,6 +207,7 @@ class DockerComposeGraph:
         cluster_images = pydot.Cluster(
             graph_name="cluster_images",
             label="cluster_images",
+            color="yellow",
         )
 
         _images = []
@@ -232,6 +234,7 @@ class DockerComposeGraph:
         cluster_networks = pydot.Cluster(
             graph_name="cluster_networks",
             label="cluster_networks",
+            color="blue",
         )
 
         _networks = []
@@ -253,6 +256,7 @@ class DockerComposeGraph:
         cluster_services = pydot.Cluster(
             graph_name="cluster_services",
             label="cluster_services",
+            color="magenta",
         )
         # networks
         ##############################
@@ -263,6 +267,7 @@ class DockerComposeGraph:
                 label=service_name,
                 # simplify=True,
                 rankdir="TB",
+                color="cyan",
             )
 
             node = pydot.Node(
@@ -274,6 +279,9 @@ class DockerComposeGraph:
             # Service ports
             for port_mapping in _ports:
 
+
+
+
                 p = port_mapping.get(f"{service_name}_port_container", None)
 
                 if p is not None:
@@ -282,6 +290,13 @@ class DockerComposeGraph:
                         label=port_mapping.get(f"{service_name}_port_container"),
                         shape="circle",
                     )
+
+                    edge = pydot.Edge(
+                        src=port_mapping.get(f"port_host"),
+                        dst=node_host,
+                    )
+
+                    graph.add_edge(edge)
 
                     cluster_service.add_node(node_host)
 
