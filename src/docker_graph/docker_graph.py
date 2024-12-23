@@ -143,10 +143,10 @@ class DockerComposeGraph:
     def get_primary_graph(self, tree):
         # graph = pydot.
 
-        include = tree.get("include", [])
+        # include = tree.get("include", [])
         services = tree.get("services", [])
-        networks = tree.get("networks", [])
-        volumes = tree.get("volumes", [])
+        # networks = tree.get("networks", [])
+        # volumes = tree.get("volumes", [])
 
         # if graph is None:
         graph = pydot.Dot(
@@ -156,20 +156,44 @@ class DockerComposeGraph:
             bgcolor="#2f2f2f",
         )
 
-        #######################
-        # Get all ports
-        # for port in service_ports:
-        #     port_host, port_container = os.path.expandvars(port).split(":")
+        cluster_services = pydot.Cluster(
+            graph_name="cluster_services",
+            label="cluster_services",
+            color="magenta",
+        )
+        graph.add_subgraph(cluster_services)
 
         cluster_ports = pydot.Cluster(
             graph_name="cluster_ports",
             label="cluster_ports",
             color="red",
         )
+        graph.add_subgraph(cluster_ports)
 
+        cluster_images = pydot.Cluster(
+            graph_name="cluster_images",
+            label="cluster_images",
+            color="yellow",
+        )
+        graph.add_subgraph(cluster_images)
+
+        cluster_volumes = pydot.Cluster(
+            graph_name="cluster_volumes",
+            label="cluster_volumes",
+            color="blue",
+        )
+        # graph.add_subgraph(cluster_volumes)
+
+        cluster_networks = pydot.Cluster(
+            graph_name="cluster_networks",
+            label="cluster_networks",
+            color="blue",
+        )
+        graph.add_subgraph(cluster_networks)
+
+        #######################
+        # Get all ports
         _ports = []
-        # _ports_hosts = []
-        # _ports_containers = []
         for service_name, service_values in services.items():
             ports = service_values.get("ports", [])
             for port_tuple in ports:
@@ -183,8 +207,6 @@ class DockerComposeGraph:
                     }
                 )
 
-        # _ports = list(set(_ports))
-
         for port_mapping in _ports:
             node_host = pydot.Node(
                 name=port_mapping["port_host"],
@@ -193,23 +215,11 @@ class DockerComposeGraph:
             )
 
             cluster_ports.add_node(node_host)
-
-        graph.add_subgraph(cluster_ports)
-
-        # cluster_services = pydot.Cluster(
-        #     graph_name="cluster_services",
-        #     label="cluster_services",
-        # )
+        # all ports
         #######################
 
         #######################
         # Get all images
-        cluster_images = pydot.Cluster(
-            graph_name="cluster_images",
-            label="cluster_images",
-            color="yellow",
-        )
-
         _images = []
         for service_name, service_values in services.items():
             image = service_values.get("image", None)
@@ -225,18 +235,39 @@ class DockerComposeGraph:
             )
 
             cluster_images.add_node(node)
-
-        graph.add_subgraph(cluster_images)
+        # all images
         #######################
 
         #######################
-        # Get all networks
-        cluster_networks = pydot.Cluster(
-            graph_name="cluster_networks",
-            label="cluster_networks",
-            color="blue",
-        )
+        # Get all service volumes
+        _volumes_service = []
+        for service_name, service_values in services.items():
+            volumes_service = service_values.get("volumes", [])
+            for volumes_service_tuple in volumes_service:
+                # print(volumes_service_tuple)
+                volumes_service_host, volumes_service_container = os.path.expandvars(volumes_service_tuple).split(":", maxsplit=1)
 
+                _volumes_service.append(
+                    {
+                        f"volumes_service_host": f"{service_name}:{volumes_service_host}",
+                        f"{service_name}_volumes_service_container": f"{volumes_service_container}"
+                    }
+                )
+
+        for volume_service_mapping in _volumes_service:
+            node = pydot.Node(
+                name=volume_service_mapping["volumes_service_host"],
+                label=volume_service_mapping["volumes_service_host"],
+                shape="triangle",
+                color="white"
+            )
+
+            cluster_volumes.add_node(node)
+        # service volumes
+        ##############################
+
+        #######################
+        # Get all service networks
         _networks = []
         for service_name, service_values in services.items():
             _networks.extend(service_values.get("networks", []))
@@ -250,15 +281,7 @@ class DockerComposeGraph:
             )
 
             cluster_networks.add_node(node)
-
-        graph.add_subgraph(cluster_networks)
-
-        cluster_services = pydot.Cluster(
-            graph_name="cluster_services",
-            label="cluster_services",
-            color="magenta",
-        )
-        # networks
+        # service networks
         ##############################
 
         for service_name, service_values in services.items():
@@ -278,9 +301,6 @@ class DockerComposeGraph:
 
             # Service ports
             for port_mapping in _ports:
-
-
-
 
                 p = port_mapping.get(f"{service_name}_port_container", None)
 
@@ -303,8 +323,6 @@ class DockerComposeGraph:
             ##############
 
             cluster_services.add_subgraph(cluster_service)
-
-        graph.add_subgraph(cluster_services)
 
         graph.write_png("graph2.png")
         return graph
