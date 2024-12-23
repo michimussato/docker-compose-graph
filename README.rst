@@ -40,6 +40,12 @@ docker-graph
 A longer description of your project goes here...
 
 
+1. graph_primary yaml
+2. graph_includes
+3. graph_overrides
+3. overlay graph_includes with graph_overrides
+
+
 .. _pyscaffold-notes:
 
 Making Changes & Contributing

@@ -27,7 +27,27 @@ def test_process_graph():
     dcg.load_dotenv(pathlib.Path("/home/michael/git/repos/deadline-docker/10.2/.env"))
 
     # dcg.expand_vars(tree)
+
+    with open("tree.json", "w") as fw:
+        json.dump(tree, fw, indent=2)
+
     dcg.process_graph(tree)
+
+
+def test_iterate_trees():
+    dcg = DockerComposeGraph()
+    trees = dcg.parse_docker_compose(pathlib.Path("/home/michael/git/repos/deadline-docker/10.2/docker-compose.yaml"))
+    # j = json.dumps(tree, indent=2)
+    # print(j)
+
+    dcg.load_dotenv(pathlib.Path("/home/michael/git/repos/deadline-docker/10.2/.env"))
+
+    # dcg.expand_vars(tree)
+
+    # with open("tree.json", "w") as fw:
+    #     json.dump(tree, fw, indent=2)
+
+    dcg.iterate_trees(trees)
 
 
 # def test_main(capsys):

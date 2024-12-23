@@ -132,13 +132,176 @@ class DockerComposeGraph:
     def load_dotenv(self, env: pathlib.Path):
         dotenv.load_dotenv(env)
 
+    def iterate_trees(self, trees):
+        primary_tree = trees.pop(0)
+
+        primary_graph = self.get_primary_graph(primary_tree)
+
+        # for secondary_tree in trees:
+        #     print
+
+    def get_primary_graph(self, tree):
+        # graph = pydot.
+
+        include = tree.get("include", [])
+        services = tree.get("services", [])
+        networks = tree.get("networks", [])
+        volumes = tree.get("volumes", [])
+
+        # if graph is None:
+        graph = pydot.Dot(
+            "my_graph",
+            rankdir="TB",
+            graph_type="digraph",
+            bgcolor="#2f2f2f",
+        )
+
+        #######################
+        # Get all ports
+        # for port in service_ports:
+        #     port_host, port_container = os.path.expandvars(port).split(":")
+
+        cluster_ports = pydot.Cluster(
+            graph_name="cluster_ports",
+            label="cluster_ports",
+        )
+
+        _ports = []
+        # _ports_hosts = []
+        # _ports_containers = []
+        for service_name, service_values in services.items():
+            ports = service_values.get("ports", [])
+            for port_tuple in ports:
+                port_host, port_container = os.path.expandvars(port_tuple).split(":")
+
+                _ports.append(
+                    {
+                        f"port_host": f"{service_name}_{port_host}",
+                        # f"{service_name}_port_container": f"{service_name}_{port_container}"
+                        f"{service_name}_port_container": f"{port_container}"
+                    }
+                )
+
+        # _ports = list(set(_ports))
+
+        for port_mapping in _ports:
+            node_host = pydot.Node(
+                name=port_mapping["port_host"],
+                label=port_mapping["port_host"],
+                shape="circle",
+            )
+
+            cluster_ports.add_node(node_host)
+
+        graph.add_subgraph(cluster_ports)
+
+        # cluster_services = pydot.Cluster(
+        #     graph_name="cluster_services",
+        #     label="cluster_services",
+        # )
+        #######################
+
+        #######################
+        # Get all images
+        cluster_images = pydot.Cluster(
+            graph_name="cluster_images",
+            label="cluster_images",
+        )
+
+        _images = []
+        for service_name, service_values in services.items():
+            image = service_values.get("image", None)
+            if image is not None:
+                _images.append(image)
+
+        _images = list(set(_images))
+
+        for image in _images:
+            node = pydot.Node(
+                name=image,
+                label=image,
+            )
+
+            cluster_images.add_node(node)
+
+        graph.add_subgraph(cluster_images)
+        #######################
+
+        #######################
+        # Get all networks
+        cluster_networks = pydot.Cluster(
+            graph_name="cluster_networks",
+            label="cluster_networks",
+        )
+
+        _networks = []
+        for service_name, service_values in services.items():
+            _networks.extend(service_values.get("networks", []))
+
+        _networks = list(set(_networks))
+
+        for network in _networks:
+            node = pydot.Node(
+                name=network,
+                label=network,
+            )
+
+            cluster_networks.add_node(node)
+
+        graph.add_subgraph(cluster_networks)
+
+        cluster_services = pydot.Cluster(
+            graph_name="cluster_services",
+            label="cluster_services",
+        )
+        # networks
+        ##############################
+
+        for service_name, service_values in services.items():
+            cluster_service = pydot.Cluster(
+                graph_name=service_name,
+                label=service_name,
+                # simplify=True,
+                rankdir="TB",
+            )
+
+            node = pydot.Node(
+                f"{service_name}_{service_values.get('hostname')}",
+            )
+
+            cluster_service.add_node(node)
+
+            # Service ports
+            for port_mapping in _ports:
+
+                p = port_mapping.get(f"{service_name}_port_container", None)
+
+                if p is not None:
+                    node_host = pydot.Node(
+                        name=port_mapping.get(f"{service_name}_port_container"),
+                        label=port_mapping.get(f"{service_name}_port_container"),
+                        shape="circle",
+                    )
+
+                    cluster_service.add_node(node_host)
+
+            ##############
+
+            cluster_services.add_subgraph(cluster_service)
+
+        graph.add_subgraph(cluster_services)
+
+        graph.write_png("graph2.png")
+        return graph
+
+
     def process_graph(
             self,
             tree,
             # graph: [pydot.Dot, None] = None
     ):
 
-        print(tree)
+        # print(tree)
 
         # if graph is None:
         graph = pydot.Dot(
