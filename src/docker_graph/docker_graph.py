@@ -177,12 +177,12 @@ class DockerComposeGraph:
         )
         graph.add_subgraph(cluster_images)
 
-        # cluster_volumes = pydot.Cluster(
-        #     graph_name="cluster_volumes",
-        #     label="cluster_volumes",
-        #     color="blue",
-        # )
-        # graph.add_subgraph(cluster_volumes)
+        cluster_volumes = pydot.Cluster(
+            graph_name="cluster_volumes",
+            label="cluster_volumes",
+            color="blue",
+        )
+        graph.add_subgraph(cluster_volumes)
 
         cluster_networks = pydot.Cluster(
             graph_name="cluster_networks",
@@ -241,31 +241,31 @@ class DockerComposeGraph:
         # all images
         #######################
 
-        #######################
-        # Get all service volumes
-        _volumes_service = []
-        for service_name, service_values in services.items():
-            volumes_service = service_values.get("volumes", [])
-            for volumes_service_tuple in volumes_service:
-                # print(volumes_service_tuple)
-                volumes_service_host, volumes_service_container = os.path.expandvars(volumes_service_tuple).split(":", maxsplit=1)
+        # #######################
+        # # Get all service volumes
+        # _volumes_service = []
+        # for service_name, service_values in services.items():
+        #     volumes_service = service_values.get("volumes", [])
+        #     for volumes_service_tuple in volumes_service:
+        #         # print(volumes_service_tuple)
+        #         volumes_service_host, volumes_service_container = os.path.expandvars(volumes_service_tuple).split(":", maxsplit=1)
+        #
+        #         _volumes_service.append(
+        #             {
+        #                 f"volumes_service_host": f"{service_name}:{volumes_service_host}",
+        #                 f"{service_name}_volumes_service_container": f"{volumes_service_container}"
+        #             }
+        #         )
 
-                _volumes_service.append(
-                    {
-                        f"volumes_service_host": f"{service_name}:{volumes_service_host}",
-                        f"{service_name}_volumes_service_container": f"{volumes_service_container}"
-                    }
-                )
-
-        for volume_service_mapping in _volumes_service:
-            node = pydot.Node(
-                name=volume_service_mapping["volumes_service_host"],
-                label=volume_service_mapping["volumes_service_host"],
-                shape="triangle",
-                color="white"
-            )
-
-            cluster_volumes.add_node(node)
+        # for volume_service_mapping in _volumes_service:
+        #     node = pydot.Node(
+        #         name=volume_service_mapping["volumes_service_host"],
+        #         label=volume_service_mapping["volumes_service_host"],
+        #         shape="triangle",
+        #         color="white"
+        #     )
+        #
+        #     cluster_volumes.add_node(node)
         # service volumes
         ##############################
 
@@ -297,11 +297,45 @@ class DockerComposeGraph:
                 color="cyan",
             )
 
-            if service_values.get('hostname', None) is not None:
+            if service_values.get("hostname", None) is not None:
                 node_hostname = pydot.Node(
                     f"{service_name}_{service_values.get('hostname', None)}",
                 )
                 cluster_service.add_node(node_hostname)
+
+            service_volumes = service_values.get("volumes", None)
+            if service_volumes is not None:
+                service_volumes_cluster = pydot.Cluster(
+                    label="Volumes",
+                    rankdir="LR",
+                )
+                for service_volume in service_volumes:
+                    volumes_service_host, volumes_service_container = os.path.expandvars(service_volume).split(":", maxsplit=1)
+                    node_service_volume = pydot.Node(
+                        name=f"{service_name}_{volumes_service_container}",
+                        label=volumes_service_container,
+                        shape="box",
+                        style="rounded"
+                    )
+                    service_volumes_cluster.add_node(node_service_volume)
+
+                    node_service_volume_host = pydot.Node(
+                        name=f"{volumes_service_host}",
+                        label=volumes_service_host,
+                        shape="box",
+                        style="rounded",
+                        color="white",
+                    )
+                    cluster_volumes.add_node(node_service_volume_host)
+
+                    edge = pydot.Edge(
+                        src=node_service_volume_host,
+                        dst=node_service_volume,
+                    )
+
+                    graph.add_edge(edge)
+
+                cluster_service.add_subgraph(service_volumes_cluster)
 
             image = service_values.get("image", None)
             if image is not None:
