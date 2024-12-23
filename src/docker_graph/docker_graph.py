@@ -201,7 +201,7 @@ class DockerComposeGraph:
 
                 _ports.append(
                     {
-                        f"port_host": f"{service_name}:{port_host}",
+                        "port_host": f"{service_name}:{port_host}",
                         # f"{service_name}_port_container": f"{service_name}_{port_container}"
                         f"{service_name}_port_container": f"{port_container}"
                     }
@@ -224,14 +224,17 @@ class DockerComposeGraph:
         for service_name, service_values in services.items():
             image = service_values.get("image", None)
             if image is not None:
-                _images.append(image)
+                _images.append({
+                    f"image_host": image,
+                    f"image_{service_name}": image
+                })
 
-        _images = list(set(_images))
+        # _images = list(set(_images))
 
         for image in _images:
             node = pydot.Node(
-                name=image,
-                label=image,
+                name=image["image_host"],
+                label=image["image_host"],
             )
 
             cluster_images.add_node(node)
@@ -284,6 +287,7 @@ class DockerComposeGraph:
         # service networks
         ##############################
 
+        # Individual Services
         for service_name, service_values in services.items():
             cluster_service = pydot.Cluster(
                 graph_name=service_name,
@@ -293,11 +297,84 @@ class DockerComposeGraph:
                 color="cyan",
             )
 
-            node = pydot.Node(
-                f"{service_name}_{service_values.get('hostname')}",
-            )
+            if service_values.get('hostname', None) is not None:
+                node_hostname = pydot.Node(
+                    f"{service_name}_{service_values.get('hostname', None)}",
+                )
+                cluster_service.add_node(node_hostname)
 
-            cluster_service.add_node(node)
+            image = service_values.get("image", None)
+            if image is not None:
+                node = pydot.Node(
+                    name=f"{service_name}_{image}",
+                    label=image,
+                )
+                cluster_service.add_node(node)
+
+                edge = pydot.Edge(
+                    src=image,
+                    dst=f"{service_name}_{image}",
+                )
+                graph.add_edge(edge)
+
+            #     print(image)
+            #     for _image in _images:
+            #         i = _image.get(f"image_{service_name}", None)
+            #         if i is not None:
+            #             if i == image:
+            #                 print(i)
+            #                 print(image)
+            #                 _i = [n for n in cluster_service.get_nodes() if n.get_name() == i]
+            #                 print(_i)
+            #                 print("Image found")
+            #                 edge = pydot.Edge(
+            #                     src=image,
+            #                     dst=_i,
+            #                 )
+            #                 graph.add_edge(edge)
+            # else:
+            #     "build"
+            # #     node_image = pydot.Node(
+            #         image,
+            #     )
+            #     cluster_service.add_node(node_image)
+
+                # cluster_image_nodes = cluster_images.get_nodes()
+                # print(f"{cluster_image_nodes = }")
+                # for _image in _images:
+                #     for node in cluster_image_nodes:
+                #         _node = None
+                #         if node.get_name() == _image:
+                #             _node = node
+                #             print(f"{_node = }")
+                #             break
+                #
+                #     if _node is not None:
+                #         edge = pydot.Edge(
+                #             src=_image,
+                #             dst=_node
+                #         )
+                #
+                #         cluster_service.add_edge(edge)
+                    # print(cluster_images.get_node(name=_image))
+                    # print(_image)
+                #     if _image == cluster_image_node
+
+            # # Service images
+            # for image in _images:
+            #     image_service = service_values.get("image", None)
+            #     if image_service is not None:
+            #         _node = [node for node in cluster_images.get_nodes() if node.get_name() == image]
+            #         print(_node)
+            #         print(image)
+            #         print(image_service)
+            #         print(cluster_images.get_nodes())
+            #         edge = pydot.Edge(
+            #             src=image_service,
+            #             dst=_node,
+            #         )
+            #
+            #         cluster_service.add_edge(edge)
 
             # Service ports
             for port_mapping in _ports:
