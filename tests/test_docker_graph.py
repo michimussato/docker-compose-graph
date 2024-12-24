@@ -9,26 +9,9 @@ __copyright__ = "Michael Mussato"
 __license__ = "MIT"
 
 
-# import logging
-# import sys
-#
-# logformat = "[%(asctime)s] %(levelname)s:%(name)s:%(message)s"
-# logging.basicConfig(
-#     level=logging.DEBUG, stream=sys.stdout, format=logformat, datefmt="%Y-%m-%d %H:%M:%S"
-# )
-
-
-# def test_fib():
-#     """API Tests"""
-#     assert fib(1) == 1
-#     assert fib(2) == 1
-#     assert fib(7) == 13
-#     with pytest.raises(AssertionError):
-#         fib(-10)
-
-def test_get_root_ports():
-    # Todo
-    raise NotImplementedError
+# def test_get_root_ports():
+#     # Todo
+#     raise NotImplementedError
 
 
 def test_get_service_ports():
@@ -52,6 +35,72 @@ def test_get_service_ports():
                 {'deadline-webservice-runner-10-2': ['${WEBSERVICE_HTTP_PORT_HOST}:${WEBSERVICE_HTTP_PORT_CONTAINER}']}]
 
     assert port_mappings == expected
+
+
+def test_get_service_volumes():
+    dcg = DockerComposeGraph()
+    trees = dcg.parse_docker_compose(pathlib.Path("/home/michael/git/repos/deadline-docker/10.2/docker-compose.yaml"))
+
+    # resolve environment variables (optional)
+    # dcg.load_dotenv(pathlib.Path("/home/michael/git/repos/deadline-docker/10.2/.env"))
+
+    volume_mappings = dcg._get_service_volumes(
+        tree=trees[0],
+    )
+
+    expected = [{'mongodb-10-2': [
+        '${NFS_ENTRY_POINT}/test_data/10.2/opt/Thinkbox/DeadlineDatabase10/mongo/data_LOCAL:/opt/Thinkbox'
+        '/DeadlineDatabase10/mongo/data',
+        '${NFS_ENTRY_POINT}:${NFS_ENTRY_POINT}:ro', '${NFS_ENTRY_POINT}:${NFS_ENTRY_POINT_LNS}:ro']}, {
+                    'mongo-express-10-2': [
+                        '${NFS_ENTRY_POINT}/test_data/10.2/opt/Thinkbox/DeadlineDatabase10/mongo/data_LOCAL:/opt'
+                        '/Thinkbox/DeadlineDatabase10/mongo/data',
+                        '${NFS_ENTRY_POINT}:${NFS_ENTRY_POINT}:ro', '${NFS_ENTRY_POINT}:${NFS_ENTRY_POINT_LNS}:ro']}, {
+                    'filebrowser': ['./databases/filebrowser/filebrowser.db:/filebrowser.db',
+                                    './configs/filebrowser/filebrowser.json:/.filebrowser.json',
+                                    '${NFS_ENTRY_POINT}/test_data/10.2/opt/Thinkbox/DeadlineDatabase10/mongo'
+                                    '/data_LOCAL:/opt/Thinkbox/DeadlineDatabase10/mongo/data:ro',
+                                    '${NFS_ENTRY_POINT}:${NFS_ENTRY_POINT}:ro',
+                                    '${NFS_ENTRY_POINT}:${NFS_ENTRY_POINT_LNS}:ro']}, {
+                    'dagster_dev': ['./configs/dagster_shared/workspace.yaml:/dagster/workspace.yaml:ro',
+                                    './configs/dagster_shared/dagster.yaml:/dagster/materializations/workspace.yaml:ro',
+                                    '${NFS_ENTRY_POINT}:${NFS_ENTRY_POINT}',
+                                    '${NFS_ENTRY_POINT}:${NFS_ENTRY_POINT_LNS}']}, {
+                    'deadline-repository-installer-10-2': [
+                        '${NFS_ENTRY_POINT}/test_data/10.2/opt/Thinkbox/DeadlineRepository10:/opt/Thinkbox'
+                        '/DeadlineRepository10',
+                        '${NFS_ENTRY_POINT}:${NFS_ENTRY_POINT}:ro', '${NFS_ENTRY_POINT}:${NFS_ENTRY_POINT_LNS}:ro']}, {
+                    'deadline-client-installer-10-2': [
+                        '${NFS_ENTRY_POINT}/test_data/10.2/opt/Thinkbox/Deadline10:/opt/Thinkbox/Deadline10',
+                        '${NFS_ENTRY_POINT}/test_data/10.2/opt/Thinkbox/DeadlineRepository10:/opt/Thinkbox'
+                        '/DeadlineRepository10',
+                        '${NFS_ENTRY_POINT}:${NFS_ENTRY_POINT}:ro', '${NFS_ENTRY_POINT}:${NFS_ENTRY_POINT_LNS}:ro']}, {
+                    'deadline-rcs-runner-10-2': [
+                        './configs/Deadline10/deadline.ini:/var/lib/Thinkbox/Deadline10/deadline.ini:ro',
+                        '${NFS_ENTRY_POINT}/test_data/10.2/opt/Thinkbox/Deadline10:/opt/Thinkbox/Deadline10',
+                        '${NFS_ENTRY_POINT}/test_data/10.2/opt/Thinkbox/DeadlineRepository10:/opt/Thinkbox'
+                        '/DeadlineRepository10',
+                        '${NFS_ENTRY_POINT}:${NFS_ENTRY_POINT}:ro', '${NFS_ENTRY_POINT}:${NFS_ENTRY_POINT_LNS}:ro']}, {
+                    'deadline-pulse-runner-10-2': [
+                        './configs/Deadline10/deadline.ini:/var/lib/Thinkbox/Deadline10/deadline.ini:ro',
+                        '${NFS_ENTRY_POINT}/test_data/10.2/opt/Thinkbox/Deadline10:/opt/Thinkbox/Deadline10',
+                        '${NFS_ENTRY_POINT}/test_data/10.2/opt/Thinkbox/DeadlineRepository10:/opt/Thinkbox'
+                        '/DeadlineRepository10',
+                        '${NFS_ENTRY_POINT}:${NFS_ENTRY_POINT}:ro', '${NFS_ENTRY_POINT}:${NFS_ENTRY_POINT_LNS}:ro']}, {
+                    'deadline-worker-runner-10-2': [
+                        './configs/Deadline10/deadline.ini:/var/lib/Thinkbox/Deadline10/deadline.ini:ro',
+                        '${NFS_ENTRY_POINT}/test_data/10.2/opt/Thinkbox/Deadline10:/opt/Thinkbox/Deadline10',
+                        '${NFS_ENTRY_POINT}/test_data/10.2/opt/Thinkbox/DeadlineRepository10:/opt/Thinkbox'
+                        '/DeadlineRepository10',
+                        '${NFS_ENTRY_POINT}:${NFS_ENTRY_POINT}:ro', '${NFS_ENTRY_POINT}:${NFS_ENTRY_POINT_LNS}:ro']}, {
+                    'deadline-webservice-runner-10-2': [
+                        './configs/Deadline10/deadline.ini:/var/lib/Thinkbox/Deadline10/deadline.ini:ro',
+                        '${NFS_ENTRY_POINT}/test_data/10.2/opt/Thinkbox/Deadline10:/opt/Thinkbox/Deadline10',
+                        '${NFS_ENTRY_POINT}/test_data/10.2/opt/Thinkbox/DeadlineRepository10:/opt/Thinkbox'
+                        '/DeadlineRepository10',
+                        '${NFS_ENTRY_POINT}:${NFS_ENTRY_POINT}:ro', '${NFS_ENTRY_POINT}:${NFS_ENTRY_POINT_LNS}:ro']}]
+
+    assert volume_mappings == expected
 
 
 def test_iterate_trees():
