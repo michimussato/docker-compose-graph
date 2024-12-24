@@ -40,6 +40,7 @@ def test_iterate_trees():
     # j = json.dumps(tree, indent=2)
     # print(j)
 
+    # resolve environment variables (optional)
     dcg.load_dotenv(pathlib.Path("/home/michael/git/repos/deadline-docker/10.2/.env"))
 
     # dcg.expand_vars(tree)

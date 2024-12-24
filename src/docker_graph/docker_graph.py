@@ -79,25 +79,11 @@ _logger = logging.getLogger(__name__)
 # when using this Python module as a library.
 
 
-# def fib(n):
-#     """Fibonacci example function
-#
-#     Args:
-#       n (int): integer
-#
-#     Returns:
-#       int: n-th Fibonacci number
-#     """
-#     assert n > 0
-#     a, b = 1, 1
-#     for _i in range(n - 1):
-#         a, b = b, a + b
-#     return a
-
-
 class DockerComposeGraph:
 
-    def __init__(self, compose_file):
+    def __init__(
+            self,
+    ):
 
         # Main Graph
 
@@ -110,42 +96,55 @@ class DockerComposeGraph:
 
         # Clusters
 
-        self.cluster_services = pydot.Cluster(
+        ## Root Clusters
+
+        self.cluster_root_services = pydot.Cluster(
             graph_name="cluster_services",
             label="cluster_services",
             color="magenta",
             rankdir="TB",
         )
 
-        self.cluster_ports = pydot.Cluster(
-            graph_name="cluster_ports",
-            label="cluster_ports",
-            color="red",
-        )
+        ### Collection Clusters
+        # Clusters summarize root and
+        # services into one for easy
+        # overview
 
-        self.cluster_images = pydot.Cluster(
+        #### images
+
+        self.cluster_root_images = pydot.Cluster(
             graph_name="cluster_images",
             label="cluster_images",
             color="yellow",
         )
 
-        self.cluster_volumes = pydot.Cluster(
+        #### ports
+
+        self.cluster_root_ports = pydot.Cluster(
+            graph_name="cluster_ports",
+            label="cluster_ports",
+            color="red",
+        )
+
+        ## Service Clusters
+
+        ### ports
+
+        ### volumes
+
+        self.cluster_service_volumes = pydot.Cluster(
             graph_name="cluster_volumes",
             label="cluster_volumes",
             color="blue",
         )
 
-        self.cluster_networks = pydot.Cluster(
+        ### networks
+
+        self.cluster_service_networks = pydot.Cluster(
             graph_name="cluster_networks",
             label="cluster_networks",
             color="blue",
         )
-
-    # result = {}
-
-    # def __init__(self, compose_file):
-    #     super().__init__()
-    #     self.compose_files: list[pathlib.Path] = []
 
     def _to_abs_path(
             self,
@@ -219,9 +218,6 @@ class DockerComposeGraph:
         # for secondary_tree in trees:
         #     print
         
-    def cluster_services(self, services):
-        self.graph.add_subgraph(self.cluster_services)
-
     def get_primary_graph(self, tree):
 
         # include = tree.get("include", [])
@@ -229,23 +225,17 @@ class DockerComposeGraph:
         # networks = tree.get("networks", [])
         # volumes = tree.get("volumes", [])
 
-        # cluster_services = pydot.Cluster(
-        #     graph_name="cluster_services",
-        #     label="cluster_services",
-        #     color="magenta",
-        #     rankdir="TB",
-        # )
-        self.graph.add_subgraph(cluster_services)
+        self.graph.add_subgraph(self.cluster_root_services)
 
         # cluster_ports = pydot.Cluster(
         #     graph_name="cluster_ports",
         #     label="cluster_ports",
         #     color="red",
         # )
-        self.graph.add_subgraph(cluster_ports)
-        self.graph.add_subgraph(cluster_images)
-        self.graph.add_subgraph(cluster_volumes)
-        self.graph.add_subgraph(cluster_networks)
+        self.graph.add_subgraph(self.cluster_root_ports)
+        self.graph.add_subgraph(self.cluster_root_images)
+        self.graph.add_subgraph(self.cluster_service_volumes)
+        self.graph.add_subgraph(self.cluster_service_networks)
 
         #######################
         # Get all ports
@@ -270,7 +260,7 @@ class DockerComposeGraph:
                 shape="circle",
             )
 
-            cluster_ports.add_node(node_host)
+            self.cluster_root_ports.add_node(node_host)
         # all ports
         #######################
 
@@ -293,7 +283,7 @@ class DockerComposeGraph:
                 label=image["image_host"],
             )
 
-            cluster_images.add_node(node)
+            self.cluster_root_images.add_node(node)
         # all images
         #######################
 
@@ -339,7 +329,7 @@ class DockerComposeGraph:
                 label=network,
             )
 
-            cluster_networks.add_node(node)
+            self.cluster_service_networks.add_node(node)
         # service networks
         ##############################
 
@@ -382,7 +372,7 @@ class DockerComposeGraph:
                         style="rounded",
                         color="white",
                     )
-                    cluster_volumes.add_node(node_service_volume_host)
+                    self.cluster_service_volumes.add_node(node_service_volume_host)
 
                     edge = pydot.Edge(
                         src=node_service_volume_host,
@@ -430,7 +420,7 @@ class DockerComposeGraph:
 
             ##############
 
-            cluster_services.add_subgraph(cluster_service)
+            self.cluster_root_services.add_subgraph(cluster_service)
 
         self.graph.write_png("graph2.png")
         return self.graph
