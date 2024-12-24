@@ -416,18 +416,8 @@ class DockerComposeGraph:
 
     def get_primary_graph(self, tree):
 
-        # include = tree.get("include", [])
-        services = tree.get("services", [])
-        # networks = tree.get("networks", [])
-        # volumes = tree.get("volumes", [])
-
         self.graph.add_subgraph(self.cluster_root_services)
 
-        # cluster_ports = pydot.Cluster(
-        #     graph_name="cluster_ports",
-        #     label="cluster_ports",
-        #     color="red",
-        # )
         self.graph.add_subgraph(self.cluster_root_ports)
         self.graph.add_subgraph(self.cluster_root_volumes)
         self.graph.add_subgraph(self.cluster_root_networks)
@@ -439,6 +429,7 @@ class DockerComposeGraph:
         # Get all Ports
 
         # Service Ports
+        ports_host = []
         for port_mapping in self.port_mappings["services"]:
             # port_mapping:
             # {'mongo-express-10-2': ['${MONGO_EXPRESS_PORT_HOST}:${MONGO_EXPRESS_PORT_CONTAINER}']}
@@ -447,14 +438,17 @@ class DockerComposeGraph:
 
                 for _mapping in mappings:
                     port_host, port_container = os.path.expandvars(_mapping).split(":", maxsplit=1)
-                    # print(service_mapping)
-                    node_host = pydot.Node(
-                        name=f"{service_name}__{port_host}__{port_container}",
-                        label=port_host,
-                        shape="circle",
-                    )
+                    ports_host.append(int(port_host))
 
-                    self.cluster_root_ports.add_node(node_host)
+        ports_host.sort()
+
+        node_host = pydot.Node(
+            name=f"ports_host",
+            label=" | ".join([str(n) for n in ports_host]),
+            shape="record",
+        )
+
+        self.cluster_root_ports.add_node(node_host)
 
         # Root Ports
         # Todo
