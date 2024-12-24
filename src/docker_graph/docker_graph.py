@@ -149,6 +149,18 @@ class DockerComposeGraph:
             # style="rounded",
         )
 
+        #### networks
+
+        self.cluster_root_networks = pydot.Cluster(
+            graph_name="cluster_root_networks",
+            label="cluster_root_networks",
+            color="red",
+            rankdir="TB",
+            graph_type="digraph",
+            # shape="box",
+            # style="rounded",
+        )
+
         ## Service Clusters
 
         ### ports
@@ -240,6 +252,7 @@ class DockerComposeGraph:
 
         self.port_mappings = self._get_ports(trees)
         self.volume_mappings = self._get_volumes(trees)
+        self.network_mappings = self._get_networks(trees)
 
         primary_tree = trees.pop(0)
 
@@ -342,6 +355,53 @@ class DockerComposeGraph:
 
         return volume_mappings
 
+    def _get_networks(
+            self,
+            trees,
+    ) -> dict[str, list[str]]:
+
+        network_mappings = {
+            "root": [],
+            "services": [],
+        }
+
+        for tree in trees:
+            service_networks = self._get_service_networks(
+                tree=tree,
+            )
+            network_mappings["services"].extend(service_networks)
+
+            # Todo
+            # root_volumes = self._get_root_volumes(
+            #     tree=tree,
+            # )
+            # volume_mappings["root"].extend(root_volumes)
+
+        _logger.debug(f"All {network_mappings = }")
+        print(f"All {network_mappings = }")
+
+        return network_mappings
+
+    @staticmethod
+    def _get_service_networks(
+            tree: dict,
+    ) -> list[dict[str, list[str]]]:
+
+        network_mappings = []
+
+        services: dict = tree.get("services", {})
+
+        for service_name, service_config in services.items():
+            networks = service_config.get("networks", [])
+
+            network_mappings.append(
+                {
+                    service_name: networks
+                }
+            )
+
+        return network_mappings
+
     def _get_root_ports(self, tree):
         # Todo
         raise NotImplementedError
@@ -370,6 +430,7 @@ class DockerComposeGraph:
         # )
         self.graph.add_subgraph(self.cluster_root_ports)
         self.graph.add_subgraph(self.cluster_root_volumes)
+        self.graph.add_subgraph(self.cluster_root_networks)
         # self.graph.add_subgraph(self.cluster_root_images)
         # self.graph.add_subgraph(self.cluster_service_volumes)
         # self.graph.add_subgraph(self.cluster_service_networks)
@@ -501,6 +562,68 @@ class DockerComposeGraph:
             #         self.cluster_root_volumes.add_node(node_host)
 
         # all volumes
+        #######################
+
+        #######################
+        # Get all Networks
+
+        # Service Networks
+        for network_mapping in self.network_mappings["services"]:
+            # network_mapping:
+            # [{'mongodb-10-2': ['${NFS_ENTRY_POINT}/test_data/10.2/opt/Thinkbox/DeadlineDatabase10/mongo/data_LOCAL:/opt/Thinkbox/DeadlineDatabase10/mongo/data', '${NFS_ENTRY_POINT}:${NFS_ENTRY_POINT}:ro', '${NFS_ENTRY_POINT}:${NFS_ENTRY_POINT_LNS}:ro']}, {'mongo-express-10-2': ['${NFS_ENTRY_POINT}/test_data/10.2/opt/Thinkbox/DeadlineDatabase10/mongo/data_LOCAL:/opt/Thinkbox/DeadlineDatabase10/mongo/data', '${NFS_ENTRY_POINT}:${NFS_ENTRY_POINT}:ro', '${NFS_ENTRY_POINT}:${NFS_ENTRY_POINT_LNS}:ro']}, {'filebrowser': ['./databases/filebrowser/filebrowser.db:/filebrowser.db', './configs/filebrowser/filebrowser.json:/.filebrowser.json', '${NFS_ENTRY_POINT}/test_data/10.2/opt/Thinkbox/DeadlineDatabase10/mongo/data_LOCAL:/opt/Thinkbox/DeadlineDatabase10/mongo/data:ro', '${NFS_ENTRY_POINT}:${NFS_ENTRY_POINT}:ro', '${NFS_ENTRY_POINT}:${NFS_ENTRY_POINT_LNS}:ro']}, {'dagster_dev': ['./configs/dagster_shared/workspace.yaml:/dagster/workspace.yaml:ro', './configs/dagster_shared/dagster.yaml:/dagster/materializations/workspace.yaml:ro', '${NFS_ENTRY_POINT}:${NFS_ENTRY_POINT}', '${NFS_ENTRY_POINT}:${NFS_ENTRY_POINT_LNS}']}, {'deadline-repository-installer-10-2': ['${NFS_ENTRY_POINT}/test_data/10.2/opt/Thinkbox/DeadlineRepository10:/opt/Thinkbox/DeadlineRepository10', '${NFS_ENTRY_POINT}:${NFS_ENTRY_POINT}:ro', '${NFS_ENTRY_POINT}:${NFS_ENTRY_POINT_LNS}:ro']}, {'deadline-client-installer-10-2': ['${NFS_ENTRY_POINT}/test_data/10.2/opt/Thinkbox/Deadline10:/opt/Thinkbox/Deadline10', '${NFS_ENTRY_POINT}/test_data/10.2/opt/Thinkbox/DeadlineRepository10:/opt/Thinkbox/DeadlineRepository10', '${NFS_ENTRY_POINT}:${NFS_ENTRY_POINT}:ro', '${NFS_ENTRY_POINT}:${NFS_ENTRY_POINT_LNS}:ro']}, {'deadline-rcs-runner-10-2': ['./configs/Deadline10/deadline.ini:/var/lib/Thinkbox/Deadline10/deadline.ini:ro', '${NFS_ENTRY_POINT}/test_data/10.2/opt/Thinkbox/Deadline10:/opt/Thinkbox/Deadline10', '${NFS_ENTRY_POINT}/test_data/10.2/opt/Thinkbox/DeadlineRepository10:/opt/Thinkbox/DeadlineRepository10', '${NFS_ENTRY_POINT}:${NFS_ENTRY_POINT}:ro', '${NFS_ENTRY_POINT}:${NFS_ENTRY_POINT_LNS}:ro']}, {'deadline-pulse-runner-10-2': ['./configs/Deadline10/deadline.ini:/var/lib/Thinkbox/Deadline10/deadline.ini:ro', '${NFS_ENTRY_POINT}/test_data/10.2/opt/Thinkbox/Deadline10:/opt/Thinkbox/Deadline10', '${NFS_ENTRY_POINT}/test_data/10.2/opt/Thinkbox/DeadlineRepository10:/opt/Thinkbox/DeadlineRepository10', '${NFS_ENTRY_POINT}:${NFS_ENTRY_POINT}:ro', '${NFS_ENTRY_POINT}:${NFS_ENTRY_POINT_LNS}:ro']}, {'deadline-worker-runner-10-2': ['./configs/Deadline10/deadline.ini:/var/lib/Thinkbox/Deadline10/deadline.ini:ro', '${NFS_ENTRY_POINT}/test_data/10.2/opt/Thinkbox/Deadline10:/opt/Thinkbox/Deadline10', '${NFS_ENTRY_POINT}/test_data/10.2/opt/Thinkbox/DeadlineRepository10:/opt/Thinkbox/DeadlineRepository10', '${NFS_ENTRY_POINT}:${NFS_ENTRY_POINT}:ro', '${NFS_ENTRY_POINT}:${NFS_ENTRY_POINT_LNS}:ro']}, {'deadline-webservice-runner-10-2': ['./configs/Deadline10/deadline.ini:/var/lib/Thinkbox/Deadline10/deadline.ini:ro', '${NFS_ENTRY_POINT}/test_data/10.2/opt/Thinkbox/Deadline10:/opt/Thinkbox/Deadline10', '${NFS_ENTRY_POINT}/test_data/10.2/opt/Thinkbox/DeadlineRepository10:/opt/Thinkbox/DeadlineRepository10', '${NFS_ENTRY_POINT}:${NFS_ENTRY_POINT}:ro', '${NFS_ENTRY_POINT}:${NFS_ENTRY_POINT_LNS}:ro']}]
+
+            for service_name, mappings in network_mapping.items():
+
+                for _mapping in mappings:
+                    print(_mapping)
+                    # split = os.path.expandvars(_mapping).split(":")
+                    #
+                    # network_host = split[0]
+                    # network_container = split[1]
+                    # network_mode = "rw"
+
+                    # if len(split) > 2:
+                    #     volume_mode = split[2]
+
+                    node_host = pydot.Node(
+                        name=f"{service_name}__{_mapping}",
+                        label=f"{_mapping}",
+                        shape="box",
+                        style="rounded",
+                    )
+
+                    self.cluster_root_networks.add_node(node_host)
+
+        # Root Networks
+        # Todo
+        for network_mapping in self.network_mappings["root"]:
+            # network_mapping:
+            #
+
+            _logger.debug(f"Not Implemented yet.")
+
+            # for service_name, mappings in network_mapping.items():
+            #
+            #     for _mapping in mappings:
+            #         split = os.path.expandvars(_mapping).split(":")
+            #
+            #         network_host = split[0]
+            #         network_container = split[1]
+            #         # network_mode = "rw"
+            #
+            #         # if len(split) > 2:
+            #         #     network_mode = split[2]
+            #
+            #         node_host = pydot.Node(
+            #             name=f"{service_name}__{network_host}__{network_container}",
+            #             label=f"{network_host}",
+            #             shape="box",
+            #             style="rounded",
+            #         )
+            #
+            #         self.cluster_root_networks.add_node(node_host)
+
+        # all networks
         #######################
 
 
