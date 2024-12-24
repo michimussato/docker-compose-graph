@@ -85,6 +85,8 @@ class DockerComposeGraph:
             self,
     ):
 
+        self.port_mappings = None
+
         # Main Graph
 
         self.graph = pydot.Dot(
@@ -98,8 +100,15 @@ class DockerComposeGraph:
 
         ## Root Clusters
 
+        self.cluster_root_include = pydot.Cluster(
+            graph_name="cluster_root_include",
+            label="cluster_include",
+            color="magenta",
+            rankdir="TB",
+        )
+
         self.cluster_root_services = pydot.Cluster(
-            graph_name="cluster_services",
+            graph_name="cluster_root_services",
             label="cluster_services",
             color="magenta",
             rankdir="TB",
@@ -113,7 +122,7 @@ class DockerComposeGraph:
         #### images
 
         self.cluster_root_images = pydot.Cluster(
-            graph_name="cluster_images",
+            graph_name="cluster_root_images",
             label="cluster_images",
             color="yellow",
         )
@@ -121,7 +130,7 @@ class DockerComposeGraph:
         #### ports
 
         self.cluster_root_ports = pydot.Cluster(
-            graph_name="cluster_ports",
+            graph_name="cluster_root_ports",
             label="cluster_ports",
             color="red",
         )
@@ -133,7 +142,7 @@ class DockerComposeGraph:
         ### volumes
 
         self.cluster_service_volumes = pydot.Cluster(
-            graph_name="cluster_volumes",
+            graph_name="cluster_service_volumes",
             label="cluster_volumes",
             color="blue",
         )
@@ -141,7 +150,7 @@ class DockerComposeGraph:
         ### networks
 
         self.cluster_service_networks = pydot.Cluster(
-            graph_name="cluster_networks",
+            graph_name="cluster_service_networks",
             label="cluster_networks",
             color="blue",
         )
@@ -163,7 +172,7 @@ class DockerComposeGraph:
             yaml: pathlib.Path,
             root_path: [pathlib.Path, None] = None,
             ret=None,
-    ):
+    ) -> list[dict]:
 
         if not yaml.is_absolute():
             _logger.debug(yaml)
@@ -187,8 +196,6 @@ class DockerComposeGraph:
 
         ret.append(docker_compose_chainmap)
 
-        # self.result.update(docker_compose_chainmap)
-
         _logger.debug(docker_compose_chainmap.get("include", []))
 
         for include in docker_compose_chainmap.get("include", []):
@@ -203,21 +210,88 @@ class DockerComposeGraph:
                     ret=ret,
                 )
 
-                # yield included_docker_compose
-
         return ret
 
     def load_dotenv(self, env: pathlib.Path):
         dotenv.load_dotenv(env)
 
     def iterate_trees(self, trees):
+
+        self.port_mappings = self._get_ports(trees)
+
         primary_tree = trees.pop(0)
 
         primary_graph = self.get_primary_graph(primary_tree)
 
         # for secondary_tree in trees:
         #     print
-        
+
+    def _get_ports(
+            self,
+            trees,
+    ) -> dict[str, list[str]]:
+
+        port_mappings = {
+            "root": [],
+            "services": [],
+        }
+
+        for tree in trees:
+            service_ports = self._get_service_ports(
+                tree=tree,
+            )
+            port_mappings["services"].extend(service_ports)
+
+            # Todo
+            # root_ports = self._get_root_ports(
+            #     tree=tree,
+            # )
+            # port_mappings["root"].extend(root_ports)
+
+        _logger.debug(f"All {port_mappings = }")
+        print(f"All {port_mappings = }")
+
+        return port_mappings
+
+    @staticmethod
+    def _get_service_ports(
+            tree: dict,
+    ) -> list[dict[str, list[str]]]:
+
+        port_mappings = []
+
+        services: dict = tree.get("services", {})
+
+        for service_name, service_config in services.items():
+            ports = service_config.get("ports", [])
+
+            port_mappings.append(
+                {
+                    service_name: ports
+                }
+            )
+
+        return port_mappings
+
+    def _get_volumes(self):
+        # self._get_root_volumes()
+        self._get_service_volumes()
+
+    def _get_service_volumes(self):
+        pass
+
+    def _get_root_ports(self, tree):
+        # Todo
+        raise NotImplementedError
+
+    def _get_root_networks(self, tree):
+        # Todo
+        raise NotImplementedError
+
+    def _get_root_volumes(self, tree):
+        # Todo
+        raise NotImplementedError
+
     def get_primary_graph(self, tree):
 
         # include = tree.get("include", [])
@@ -238,29 +312,47 @@ class DockerComposeGraph:
         self.graph.add_subgraph(self.cluster_service_networks)
 
         #######################
-        # Get all ports
-        _ports = []
-        for service_name, service_values in services.items():
-            ports = service_values.get("ports", [])
-            for port_tuple in ports:
-                port_host, port_container = os.path.expandvars(port_tuple).split(":")
+        # Get all Ports
 
-                _ports.append(
-                    {
-                        "port_host": f"{service_name}:{port_host}",
-                        # f"{service_name}_port_container": f"{service_name}_{port_container}"
-                        f"{service_name}_port_container": f"{port_container}"
-                    }
-                )
+        # Service Ports
+        for port_mapping in self.port_mappings["services"]:
+            # port_mapping:
+            # {'mongo-express-10-2': ['${MONGO_EXPRESS_PORT_HOST}:${MONGO_EXPRESS_PORT_CONTAINER}']}
 
-        for port_mapping in _ports:
-            node_host = pydot.Node(
-                name=port_mapping["port_host"],
-                label=port_mapping["port_host"].split(":")[1],
-                shape="circle",
-            )
+            for service_name, mappings in port_mapping.items():
 
-            self.cluster_root_ports.add_node(node_host)
+                for _mapping in mappings:
+                    port_host, port_container = os.path.expandvars(_mapping).split(":", maxsplit=1)
+                    # print(service_mapping)
+                    node_host = pydot.Node(
+                        name=f"{service_name}__{port_host}__{port_container}",
+                        label=port_host,
+                        shape="circle",
+                    )
+
+                    self.cluster_root_ports.add_node(node_host)
+
+        # Root Ports
+        # Todo
+        for port_mapping in self.port_mappings["root"]:
+            # port_mapping:
+            #
+
+            _logger.debug(f"Not Implemented yet.")
+
+            # for service_name, mappings in port_mapping.items():
+            #
+            #     for _mapping in mappings:
+            #         port_host, port_container = os.path.expandvars(_mapping).split(":", maxsplit=1)
+            #         # print(service_mapping)
+            #         node_host = pydot.Node(
+            #             name=f"{service_name}__{port_host}__{port_container}",
+            #             label=port_host,
+            #             shape="circle",
+            #         )
+            #
+            #         self.cluster_root_ports.add_node(node_host)
+
         # all ports
         #######################
 
@@ -398,25 +490,25 @@ class DockerComposeGraph:
                 self.graph.add_edge(edge)
 
             # Service ports
-            for port_mapping in _ports:
-
-                p = port_mapping.get(f"{service_name}_port_container", None)
-
-                if p is not None:
-                    node_host = pydot.Node(
-                        name=port_mapping.get(f"{service_name}_port_container"),
-                        label=port_mapping.get(f"{service_name}_port_container"),
-                        shape="circle",
-                    )
-
-                    edge = pydot.Edge(
-                        src=port_mapping.get(f"port_host"),
-                        dst=node_host,
-                    )
-
-                    self.graph.add_edge(edge)
-
-                    cluster_service.add_node(node_host)
+            # for port_mapping in _ports:
+            #
+            #     p = port_mapping.get(f"{service_name}_port_container", None)
+            #
+            #     if p is not None:
+            #         node_host = pydot.Node(
+            #             name=port_mapping.get(f"{service_name}_port_container"),
+            #             label=port_mapping.get(f"{service_name}_port_container"),
+            #             shape="circle",
+            #         )
+            #
+            #         edge = pydot.Edge(
+            #             src=port_mapping.get(f"port_host"),
+            #             dst=node_host,
+            #         )
+            #
+            #         self.graph.add_edge(edge)
+            #
+            #         cluster_service.add_node(node_host)
 
             ##############
 
@@ -706,4 +798,8 @@ if __name__ == "__main__":
     #
     #     python -m docker_graph.skeleton 42
     #
+    setup_logging(logging.DEBUG)
     run()
+
+else:
+    setup_logging(logging.DEBUG)

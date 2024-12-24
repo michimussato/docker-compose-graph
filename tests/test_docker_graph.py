@@ -9,6 +9,15 @@ __copyright__ = "Michael Mussato"
 __license__ = "MIT"
 
 
+# import logging
+# import sys
+#
+# logformat = "[%(asctime)s] %(levelname)s:%(name)s:%(message)s"
+# logging.basicConfig(
+#     level=logging.DEBUG, stream=sys.stdout, format=logformat, datefmt="%Y-%m-%d %H:%M:%S"
+# )
+
+
 # def test_fib():
 #     """API Tests"""
 #     assert fib(1) == 1
@@ -17,28 +26,37 @@ __license__ = "MIT"
 #     with pytest.raises(AssertionError):
 #         fib(-10)
 
+def test_get_root_ports():
+    # Todo
+    raise NotImplementedError
 
-def test_process_graph():
+
+def test_get_service_ports():
     dcg = DockerComposeGraph()
-    tree = dcg.parse_docker_compose(pathlib.Path("/home/michael/git/repos/deadline-docker/10.2/docker-compose.yaml"))
-    # j = json.dumps(tree, indent=2)
-    # print(j)
+    trees = dcg.parse_docker_compose(pathlib.Path("/home/michael/git/repos/deadline-docker/10.2/docker-compose.yaml"))
 
-    dcg.load_dotenv(pathlib.Path("/home/michael/git/repos/deadline-docker/10.2/.env"))
+    # resolve environment variables (optional)
+    # dcg.load_dotenv(pathlib.Path("/home/michael/git/repos/deadline-docker/10.2/.env"))
 
-    # dcg.expand_vars(tree)
+    port_mappings = dcg._get_service_ports(
+        tree=trees[0],
+    )
 
-    with open("tree.json", "w") as fw:
-        json.dump(tree, fw, indent=2)
+    expected = [{'mongodb-10-2': ['${MONGO_DB_PORT_HOST}:${MONGO_DB_PORT_CONTAINER}']},
+                {'mongo-express-10-2': ['${MONGO_EXPRESS_PORT_HOST}:${MONGO_EXPRESS_PORT_CONTAINER}']},
+                {'filebrowser': ['${FILEBROWSER_PORT_HOST}:${FILEBROWSER_PORT_CONTAINER}']},
+                {'dagster_dev': ['${DAGSTER_DEV_PORT_HOST}:${DAGSTER_DEV_PORT_CONTAINER}']},
+                {'deadline-repository-installer-10-2': []}, {'deadline-client-installer-10-2': []},
+                {'deadline-rcs-runner-10-2': ['${RCS_HTTP_PORT_HOST}:${RCS_HTTP_PORT_CONTAINER}']},
+                {'deadline-pulse-runner-10-2': []}, {'deadline-worker-runner-10-2': []},
+                {'deadline-webservice-runner-10-2': ['${WEBSERVICE_HTTP_PORT_HOST}:${WEBSERVICE_HTTP_PORT_CONTAINER}']}]
 
-    dcg.process_graph(tree)
+    assert port_mappings == expected
 
 
 def test_iterate_trees():
     dcg = DockerComposeGraph()
     trees = dcg.parse_docker_compose(pathlib.Path("/home/michael/git/repos/deadline-docker/10.2/docker-compose.yaml"))
-    # j = json.dumps(tree, indent=2)
-    # print(j)
 
     # resolve environment variables (optional)
     dcg.load_dotenv(pathlib.Path("/home/michael/git/repos/deadline-docker/10.2/.env"))
@@ -49,7 +67,6 @@ def test_iterate_trees():
     #     json.dump(tree, fw, indent=2)
 
     dcg.iterate_trees(trees)
-
 
 # def test_main(capsys):
 #     """CLI Tests"""
