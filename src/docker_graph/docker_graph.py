@@ -25,28 +25,28 @@ References:
 The basic structure of a Docker YAML:
 
 root: [dict]
-- include: list[dict[str, list]]
+- [ ] include: list[dict[str, list]]
   - path: list[str]
-- services
+- [ ] services
   - service_name: [dict[str, str|list]
-    - container_name: [str]
-    - hostname: [str]
-    - restart: [str]
-    - domainname: [str]
-    - depends_on: [list[str]]
-    - networks: [list[str]]
-    - environment: [list[str]]
-    - command: [str]
-    - ports: [list[str]]
-    - volumes: [list[str]]
-    - image: [str] or
-    - build: [dict[str, str|list[str]]]
+    - [ ] container_name: [str]
+    - [ ] hostname: [str]
+    - [ ] restart: [str]
+    - [ ] domainname: [str]
+    - [ ] depends_on: [list[str]]
+    - [x] networks: [list[str]]
+    - [ ] environment: [list[str]]
+    - [ ] command: [str]
+    - [x] ports: [list[str]]
+    - [x] volumes: [list[str]]
+    - [ ] image: [str] or
+    - [ ] build: [dict[str, str|list[str]]]
       - context: [str]
       - dockerfile: [str]
       - target: [str]
       - args: [list[str]]
-- volumes
-- networks
+- [ ] volumes
+- [ ] networks
 ...
 
 
