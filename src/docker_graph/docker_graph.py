@@ -27,6 +27,10 @@ The basic structure of a Docker YAML:
 root: [dict]
 - [ ] include: list[dict[str, list]]
   - path: list[str]
+    - main
+    - override
+    - override
+    - ...
 - [ ] services
   - service_name: [dict[str, str|list]
     - [ ] container_name: [str]
@@ -429,7 +433,7 @@ class DockerComposeGraph:
         # Get all Ports
 
         # Service Ports
-        ports_host = []
+        # ports_host = []
         for port_mapping in self.port_mappings["services"]:
             # port_mapping:
             # {'mongo-express-10-2': ['${MONGO_EXPRESS_PORT_HOST}:${MONGO_EXPRESS_PORT_CONTAINER}']}
@@ -438,17 +442,23 @@ class DockerComposeGraph:
 
                 for _mapping in mappings:
                     port_host, port_container = os.path.expandvars(_mapping).split(":", maxsplit=1)
-                    ports_host.append(int(port_host))
+                    node_host = pydot.Node(
+                        name=f"{service_name}__{port_host}__{port_container}",
+                        label=port_host,
+                        shape="circle",
+                    )
 
-        ports_host.sort()
+        #             ports_host.append(int(port_host))
+        #
+        # ports_host.sort()
+        #
+        # node_host = pydot.Node(
+        #     name=f"ports_host",
+        #     label=" | ".join([str(n) for n in ports_host]),
+        #     shape="record",
+        # )
 
-        node_host = pydot.Node(
-            name=f"ports_host",
-            label=" | ".join([str(n) for n in ports_host]),
-            shape="record",
-        )
-
-        self.cluster_root_ports.add_node(node_host)
+                    self.cluster_root_ports.add_node(node_host)
 
         # Root Ports
         # Todo
