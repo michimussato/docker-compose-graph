@@ -168,7 +168,9 @@ def test_iterate_trees():
     #     json.dump(tree, fw, indent=2)
 
     dcg.iterate_trees(trees)
+    # dcg.connect()
     dcg.write_png()
+    dcg.write_dot()
 
 # def test_main(capsys):
 #     """CLI Tests"""

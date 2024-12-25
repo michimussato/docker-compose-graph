@@ -103,6 +103,8 @@ class DockerComposeGraph:
             rankdir="LR",
             graph_type="digraph",
             bgcolor="#2f2f2f",
+            # splines="line",
+            pad="1.5", nodesep="0.3", ranksep="10"
         )
 
         # Clusters
@@ -188,11 +190,23 @@ class DockerComposeGraph:
             color="blue",
         )
 
+    # def connect(self):
+    #
+    #     self._connect_ports()
+    #
+    # def _connect_ports(self):
+
     def write_png(self):
 
         self.graph.write(
             path=pathlib.Path(__file__).parent.parent.parent / "tests" / "fixtures" / "out" / "main_graph.png",
             format="png",
+        )
+
+    def write_dot(self):
+        self.graph.write(
+            path=pathlib.Path(__file__).parent.parent.parent / "tests" / "fixtures" / "out" / "main_graph.dot",
+            format="dot",
         )
 
     def _to_abs_path(
@@ -291,6 +305,16 @@ class DockerComposeGraph:
 
                 ports: list = ports_services.get(service_name, [])
                 ports_container: list = [os.path.expandvars(p) for p in ports]
+                # f"{service_name}__{port_host}__{port_container}"
+                _p = []
+                for p in ports_container:
+                    port_host, port_container = p.split(":", maxsplit=1)
+                    id_service_port = f"<TAG_{service_name}__{port_host}__{port_container}> {port_container}"
+                    _p.append(id_service_port)
+                    # str(p.split(":", maxsplit=1)[1])
+
+                # print("|".join([p for p in _p]))
+                # # "|".join(["<" f"" ">" + p for p in _p])
 
                 depends_on: list = service_config.get("depends_on", [])
 
@@ -308,7 +332,9 @@ class DockerComposeGraph:
                         "restart": "{restart|{" + restart + "}}",
                         "depends_on": "{depends_on|{" +  "|".join(depends_on) + "}}",
                         "image": "{image|{" +  os.path.expandvars(service_config.get("image", "-")) + "}}",
-                        "ports": "{exposed ports|{" +  "|".join([p.split(":", maxsplit=1)[1] for p in ports_container]) + "}}",
+
+                        # "ports": "{exposed ports|{" +  "|".join(["<" + ">" + str(p.split(":", maxsplit=1)[1]) for p in ports_container]) + "}}",
+                        "ports": "{exposed ports|{" + "|".join([p for p in _p]) + "}}",
                         "command": "{command|{" +  os.path.expandvars(service_config.get("command", "-")) + "}}",
                         "environment": "{environment|{" + "|".join([
                             os.path.expandvars(e) for e in service_config.get(
@@ -487,10 +513,6 @@ class DockerComposeGraph:
 
         # _logger.debug(f"All {service_depends_mappings = }")
         # print(f"All {service_depends_mappings = }")
-        print(depends_on_mappings)
-        print(depends_on_mappings)
-        print(depends_on_mappings)
-        print(depends_on_mappings)
         return depends_on_mappings
 
     @staticmethod
@@ -564,7 +586,9 @@ class DockerComposeGraph:
         #######################
         # Get all Services and add them as clusters
         for service in self.services:
+            # print(self.services)
             cluster_service = pydot.Cluster(
+                # graph_name=f"cluster_service_",
                 graph_name=f"cluster_service_{service.get('service_name')}",
                 label=f"cluster_service_{service.get('service_name')}",
                 color="white",
@@ -583,6 +607,9 @@ class DockerComposeGraph:
             cluster_service.add_node(node_service)
 
             self.cluster_root_services.add_subgraph(cluster_service)
+
+        # for n in self.cluster_root_services.get_nodes():
+        #     print(n.get_name())
 
         # all services
         #######################
@@ -603,26 +630,40 @@ class DockerComposeGraph:
 
                 self.cluster_root_ports.add_node(node_host)
 
-        # Root Ports
-        # Todo
-        for port_mappings in self.port_mappings["root"]:
-            # port_mapping:
-            #
+                for sg in self.cluster_root_services.get_subgraphs():
+                    if sg.get_name().replace('"', '') == f"cluster_cluster_service_{service_name}":
+                        n = sg.get_node(name=f"dummy_{service_name}")[0]
+                        break
 
-            _logger.debug(f"Not Implemented yet.")
+                dst = n.get_name().replace('"', '')
+                edge = pydot.Edge(
+                    src=f"{service_name}__{port_host}__{port_container}",
+                    dst=f"{dst}:<TAG_{service_name}__{port_host}__{port_container}>",
+                    color="red",
+                )
 
-            # for service_name, mappings in port_mapping.items():
-            #
-            #     for _mapping in mappings:
-            #         port_host, port_container = os.path.expandvars(_mapping).split(":", maxsplit=1)
-            #         # print(service_mapping)
-            #         node_host = pydot.Node(
-            #             name=f"{service_name}__{port_host}__{port_container}",
-            #             label=port_host,
-            #             shape="circle",
-            #         )
-            #
-            #         self.cluster_root_ports.add_node(node_host)
+                self.graph.add_edge(edge)
+
+        # # Root Ports
+        # # Todo
+        # for port_mappings in self.port_mappings["root"]:
+        #     # port_mapping:
+        #     #
+        #
+        #     _logger.debug(f"Not Implemented yet.")
+        #
+        #     # for service_name, mappings in port_mapping.items():
+        #     #
+        #     #     for _mapping in mappings:
+        #     #         port_host, port_container = os.path.expandvars(_mapping).split(":", maxsplit=1)
+        #     #         # print(service_mapping)
+        #     #         node_host = pydot.Node(
+        #     #             name=f"{service_name}__{port_host}__{port_container}",
+        #     #             label=port_host,
+        #     #             shape="circle",
+        #     #         )
+        #     #
+        #     #         self.cluster_root_ports.add_node(node_host)
 
         # all ports
         #######################
