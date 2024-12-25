@@ -25,14 +25,14 @@ def test_get_service_ports():
         tree=trees[0],
     )
 
-    expected = [{'mongodb-10-2': ['${MONGO_DB_PORT_HOST}:${MONGO_DB_PORT_CONTAINER}']},
-                {'mongo-express-10-2': ['${MONGO_EXPRESS_PORT_HOST}:${MONGO_EXPRESS_PORT_CONTAINER}']},
-                {'filebrowser': ['${FILEBROWSER_PORT_HOST}:${FILEBROWSER_PORT_CONTAINER}']},
-                {'dagster_dev': ['${DAGSTER_DEV_PORT_HOST}:${DAGSTER_DEV_PORT_CONTAINER}']},
-                {'deadline-repository-installer-10-2': []}, {'deadline-client-installer-10-2': []},
-                {'deadline-rcs-runner-10-2': ['${RCS_HTTP_PORT_HOST}:${RCS_HTTP_PORT_CONTAINER}']},
-                {'deadline-pulse-runner-10-2': []}, {'deadline-worker-runner-10-2': []},
-                {'deadline-webservice-runner-10-2': ['${WEBSERVICE_HTTP_PORT_HOST}:${WEBSERVICE_HTTP_PORT_CONTAINER}']}]
+    expected = {'mongodb-10-2': ['${MONGO_DB_PORT_HOST}:${MONGO_DB_PORT_CONTAINER}'],
+                'mongo-express-10-2': ['${MONGO_EXPRESS_PORT_HOST}:${MONGO_EXPRESS_PORT_CONTAINER}'],
+                'filebrowser': ['${FILEBROWSER_PORT_HOST}:${FILEBROWSER_PORT_CONTAINER}'],
+                'dagster_dev': ['${DAGSTER_DEV_PORT_HOST}:${DAGSTER_DEV_PORT_CONTAINER}'],
+                'deadline-repository-installer-10-2': [], 'deadline-client-installer-10-2': [],
+                'deadline-rcs-runner-10-2': ['${RCS_HTTP_PORT_HOST}:${RCS_HTTP_PORT_CONTAINER}'],
+                'deadline-pulse-runner-10-2': [], 'deadline-worker-runner-10-2': [],
+                'deadline-webservice-runner-10-2': ['${WEBSERVICE_HTTP_PORT_HOST}:${WEBSERVICE_HTTP_PORT_CONTAINER}']}
 
     assert port_mappings == expected
 
@@ -137,22 +137,20 @@ def test_get_service_depends_on():
         tree=trees[0],
     )
 
-    expected = [{'mongo-express-10-2': {'mongodb-10-2': {'condition': None}}},
-                {'filebrowser': {'mongodb-10-2': {'condition': None}}},
-                {'deadline-repository-installer-10-2': {'mongodb-10-2': {'condition': None}}}, {
-                    'deadline-client-installer-10-2': {
-                        'deadline-repository-installer-10-2': {'condition': 'service_completed_successfully'}}}, {
-                    'deadline-rcs-runner-10-2': {
-                        'deadline-client-installer-10-2': {'condition': 'service_completed_successfully'}}}, {
-                    'deadline-pulse-runner-10-2': {
-                        'deadline-client-installer-10-2': {'condition': 'service_completed_successfully'},
-                        'deadline-rcs-runner-10-2': {'condition': 'service_started'}}}, {
-                    'deadline-worker-runner-10-2': {
-                        'deadline-client-installer-10-2': {'condition': 'service_completed_successfully'},
-                        'deadline-rcs-runner-10-2': {'condition': 'service_started'}}}, {
-                    'deadline-webservice-runner-10-2': {
-                        'deadline-client-installer-10-2': {'condition': 'service_completed_successfully'},
-                        'deadline-rcs-runner-10-2': {'condition': 'service_started'}}}]
+    expected = {'mongo-express-10-2': {'mongodb-10-2': {'condition': None}},
+                'filebrowser': {'mongodb-10-2': {'condition': None}},
+                'deadline-repository-installer-10-2': {'mongodb-10-2': {'condition': None}},
+                'deadline-client-installer-10-2': {
+                    'deadline-repository-installer-10-2': {'condition': 'service_completed_successfully'}},
+                'deadline-rcs-runner-10-2': {
+                    'deadline-client-installer-10-2': {'condition': 'service_completed_successfully'}},
+                'deadline-pulse-runner-10-2': {
+                    'deadline-client-installer-10-2': {'condition': 'service_completed_successfully'},
+                    'deadline-rcs-runner-10-2': {'condition': 'service_started'}}, 'deadline-worker-runner-10-2': {
+            'deadline-client-installer-10-2': {'condition': 'service_completed_successfully'},
+            'deadline-rcs-runner-10-2': {'condition': 'service_started'}}, 'deadline-webservice-runner-10-2': {
+            'deadline-client-installer-10-2': {'condition': 'service_completed_successfully'},
+            'deadline-rcs-runner-10-2': {'condition': 'service_started'}}}
 
     assert depends_on == expected
 

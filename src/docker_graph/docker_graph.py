@@ -36,14 +36,14 @@ root: [dict]
     - [x] container_name: [str]
     - [x] hostname: [str]
     - [ ] restart: [str]
-    - [ ] domainname: [str]
-    - [ ] depends_on: [list[dict[str, list]]]
+    - [x] domainname: [str]
+    - [x] depends_on: [list[dict[str, list]]]
     - [x] networks: [list[str]]
-    - [ ] environment: [list[str]]
-    - [ ] command: [str]
+    - [x] environment: [list[str]]
+    - [x] command: [str]
     - [x] ports: [list[str]]
     - [x] volumes: [list[str]]
-    - [ ] image: [str] or
+    - [x] image: [str] or
     - [ ] build: [dict[str, str|list[str]]]
       - context: [str]
       - dockerfile: [str]
@@ -55,7 +55,6 @@ root: [dict]
 
 
 """
-
 import os
 import argparse
 import logging
@@ -64,6 +63,7 @@ import sys
 import yaml as pyyaml
 import pydot
 import dotenv
+from collections import OrderedDict
 
 # from docker_graph import __version__
 
@@ -91,7 +91,7 @@ class DockerComposeGraph:
 
         self.services = None
         self.network_mappings = None
-        self.port_mappings = None
+        self.port_mappings: [dict, None] = None
         self.volume_mappings = None
 
         # Main Graph
@@ -257,13 +257,12 @@ class DockerComposeGraph:
     def iterate_trees(self, trees):
 
         self.services = self._get_serivces(trees)
+        self.depends_on = self._get_depends_on(trees)
         self.port_mappings = self._get_ports(trees)
         self.volume_mappings = self._get_volumes(trees)
         self.network_mappings = self._get_networks(trees)
 
-        primary_tree = trees.pop(0)
-
-        primary_graph = self.get_primary_graph(primary_tree)
+        primary_graph = self.get_primary_graph()
 
         # for secondary_tree in trees:
         #     print
@@ -278,25 +277,32 @@ class DockerComposeGraph:
         for tree in trees:
             _logger.debug(tree)
 
-            print(tree)
+            ports_services: dict = self._get_service_ports(tree=tree)
 
             for service_name, service_config in tree.get("services", {}).items():
-                print(service_name, service_config)
-                # container_name = service_config.get("container_name", None)
-                # hostname = service_config.get("hostname", None)
+
+                ports: list = ports_services.get(service_name, [])
+                ports_container: list = [os.path.expandvars(p) for p in ports]
+                depends_on: list = service_config.get("depends_on", [])
 
                 services.append(
-                    {
+                    OrderedDict({
                         "service_name": service_name,
-                        "container_name": service_config.get("container_name", None),
-                        "hostname": service_config.get("hostname", None)
-                    }
+                        "container_name": "{container_name|{" +  os.path.expandvars(service_config.get("container_name", "-")) + "}}",
+                        "hostname": "{hostname|{" +  os.path.expandvars(service_config.get("hostname", "-")) + "}}",
+                        "domainname": "{domainname|{" +  os.path.expandvars(service_config.get("domainname", "-")) + "}}",
+                        "depends_on": "{depends_on|{" +  "|".join(depends_on) + "}}",
+                        "image": "{image|{" +  os.path.expandvars(service_config.get("image", "-")) + "}}",
+                        "ports": "{exposed ports|{" +  "|".join([p.split(":", maxsplit=1)[1] for p in ports_container]) + "}}",
+                        "command": "{command|{" +  os.path.expandvars(service_config.get("command", "-")) + "}}",
+                        "environment": "{environment|{" + "|".join([
+                            os.path.expandvars(e) for e in service_config.get(
+                                "environment", [],
+                            )
+                        ]) + "}}",
+                        # "build": os.path.expandvars(service_config.get("build", "-")),
+                    })
                 )
-
-            # print(tree)
-            # print(tree.get("services"))
-
-            # services.extend(tree.get("services").keys())
 
         _logger.debug(f"All {services = }")
         print(f"All {services = }")
@@ -310,14 +316,15 @@ class DockerComposeGraph:
 
         port_mappings = {
             "root": [],
-            "services": [],
+            "services": {},
         }
 
         for tree in trees:
-            service_ports = self._get_service_ports(
+            service_ports: dict = self._get_service_ports(
                 tree=tree,
             )
-            port_mappings["services"].extend(service_ports)
+
+            port_mappings["services"].update(service_ports)
 
             # Todo
             # root_ports = self._get_root_ports(
@@ -333,20 +340,16 @@ class DockerComposeGraph:
     @staticmethod
     def _get_service_ports(
             tree: dict,
-    ) -> list[dict[str, list[str]]]:
+    ) -> dict[str, list[str]]:
 
-        port_mappings = []
+        port_mappings = {}
 
         services: dict = tree.get("services", {})
 
         for service_name, service_config in services.items():
             ports = service_config.get("ports", [])
 
-            port_mappings.append(
-                {
-                    service_name: ports
-                }
-            )
+            port_mappings[service_name] = ports
 
         return port_mappings
 
@@ -447,18 +450,19 @@ class DockerComposeGraph:
     def _get_depends_on(
             self,
             trees,
-    ) -> list:
+    ) -> dict:
 
-        # service_depends_mappings = []
+        depends_on_mappings = {
+            "root": [],
+            "services": {},
+        }
 
         for tree in trees:
-            service_depends_on = self._get_service_depends_on(
+            service_depends_on: dict = self._get_service_depends_on(
                 tree=tree,
             )
 
-            print(service_depends_on)
-
-            # service_depends_mappings.extend(service_depends_on)
+            depends_on_mappings["services"].update(service_depends_on)
 
             # Todo
             # root_volumes = self._get_root_volumes(
@@ -469,14 +473,14 @@ class DockerComposeGraph:
         # _logger.debug(f"All {service_depends_mappings = }")
         # print(f"All {service_depends_mappings = }")
 
-        return None
+        return depends_on_mappings
 
     @staticmethod
     def _get_service_depends_on(
             tree: dict,
-    ) -> list[dict[str, list[str]]]:
+    ) -> dict[str, list[str]]:
 
-        depends_on_mappings = []
+        depends_on_mappings = {}
 
         services: dict = tree.get("services", {})
 
@@ -507,7 +511,7 @@ class DockerComposeGraph:
                         "condition": None,
                     }
 
-            depends_on_mappings.append(
+            depends_on_mappings.update(
                 {
                     service_name: _depends_on
                 }
@@ -527,10 +531,9 @@ class DockerComposeGraph:
         # Todo
         raise NotImplementedError
 
-    def get_primary_graph(self, tree):
+    def get_primary_graph(self):
 
         self.graph.add_subgraph(self.cluster_root_services)
-
         self.graph.add_subgraph(self.cluster_root_ports)
         self.graph.add_subgraph(self.cluster_root_volumes)
         self.graph.add_subgraph(self.cluster_root_networks)
@@ -543,24 +546,23 @@ class DockerComposeGraph:
         #######################
         # Get all Services and add them as clusters
         for service in self.services:
-            print(service)
             cluster_service = pydot.Cluster(
                 graph_name=f"cluster_service_{service.get('service_name')}",
-                label=service.get('service_name'),
+                label=f"cluster_service_{service.get('service_name')}",
                 color="white",
                 rankdir="TB",
                 shape="square",
                 style="rounded",
             )
 
-            # dummy_node = pydot.Node(
-            #     name=f"dummy_{service}",
-            #     label=f"DUMMY_{service}",
-            #     shape="box",
-            #     style="filled",
-            # )
-            #
-            # cluster_service.add_node(dummy_node)
+            node_service = pydot.Node(
+                name=f"dummy_{service.get('service_name')}",
+                label="|".join([v for k, v in service.items()]),
+                shape="record",
+                style="filled",
+            )
+
+            cluster_service.add_node(node_service)
 
             self.cluster_root_services.add_subgraph(cluster_service)
 
@@ -571,36 +573,21 @@ class DockerComposeGraph:
         # Get all Ports
 
         # Service Ports
-        # ports_host = []
-        for port_mapping in self.port_mappings["services"]:
-            # port_mapping:
-            # {'mongo-express-10-2': ['${MONGO_EXPRESS_PORT_HOST}:${MONGO_EXPRESS_PORT_CONTAINER}']}
+        for service_name, mappings in self.port_mappings["services"].items():
 
-            for service_name, mappings in port_mapping.items():
+            for _mapping in mappings:
+                port_host, port_container = os.path.expandvars(_mapping).split(":", maxsplit=1)
+                node_host = pydot.Node(
+                    name=f"{service_name}__{port_host}__{port_container}",
+                    label=port_host,
+                    shape="circle",
+                )
 
-                for _mapping in mappings:
-                    port_host, port_container = os.path.expandvars(_mapping).split(":", maxsplit=1)
-                    node_host = pydot.Node(
-                        name=f"{service_name}__{port_host}__{port_container}",
-                        label=port_host,
-                        shape="circle",
-                    )
-
-        #             ports_host.append(int(port_host))
-        #
-        # ports_host.sort()
-        #
-        # node_host = pydot.Node(
-        #     name=f"ports_host",
-        #     label=" | ".join([str(n) for n in ports_host]),
-        #     shape="record",
-        # )
-
-                    self.cluster_root_ports.add_node(node_host)
+                self.cluster_root_ports.add_node(node_host)
 
         # Root Ports
         # Todo
-        for port_mapping in self.port_mappings["root"]:
+        for port_mappings in self.port_mappings["root"]:
             # port_mapping:
             #
 
@@ -882,12 +869,7 @@ class DockerComposeGraph:
         #
         #     self.cluster_root_services.add_subgraph(cluster_service)
 
-        self.graph.write_png("graph2.png")
         return self.graph
-
-
-
-
 
 
 # ---- CLI ----
