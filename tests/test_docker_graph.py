@@ -126,19 +126,50 @@ def test_get_service_networks():
     assert network_mappings == expected
 
 
-def test_iterate_trees():
+def test_get_service_depends_on():
     dcg = DockerComposeGraph()
     trees = dcg.parse_docker_compose(pathlib.Path("/home/michael/git/repos/deadline-docker/10.2/docker-compose.yaml"))
 
     # resolve environment variables (optional)
-    dcg.load_dotenv(pathlib.Path("/home/michael/git/repos/deadline-docker/10.2/.env"))
+    # dcg.load_dotenv(pathlib.Path("/home/michael/git/repos/deadline-docker/10.2/.env"))
 
-    # dcg.expand_vars(tree)
+    depends_on = dcg._get_service_depends_on(
+        tree=trees[0],
+    )
 
-    # with open("tree.json", "w") as fw:
-    #     json.dump(tree, fw, indent=2)
+    expected = [{'mongo-express-10-2': {'mongodb-10-2': {'condition': None}}},
+                {'filebrowser': {'mongodb-10-2': {'condition': None}}},
+                {'deadline-repository-installer-10-2': {'mongodb-10-2': {'condition': None}}}, {
+                    'deadline-client-installer-10-2': {
+                        'deadline-repository-installer-10-2': {'condition': 'service_completed_successfully'}}}, {
+                    'deadline-rcs-runner-10-2': {
+                        'deadline-client-installer-10-2': {'condition': 'service_completed_successfully'}}}, {
+                    'deadline-pulse-runner-10-2': {
+                        'deadline-client-installer-10-2': {'condition': 'service_completed_successfully'},
+                        'deadline-rcs-runner-10-2': {'condition': 'service_started'}}}, {
+                    'deadline-worker-runner-10-2': {
+                        'deadline-client-installer-10-2': {'condition': 'service_completed_successfully'},
+                        'deadline-rcs-runner-10-2': {'condition': 'service_started'}}}, {
+                    'deadline-webservice-runner-10-2': {
+                        'deadline-client-installer-10-2': {'condition': 'service_completed_successfully'},
+                        'deadline-rcs-runner-10-2': {'condition': 'service_started'}}}]
 
-    dcg.iterate_trees(trees)
+    assert depends_on == expected
+
+
+# def test_iterate_trees():
+#     dcg = DockerComposeGraph()
+#     trees = dcg.parse_docker_compose(pathlib.Path("/home/michael/git/repos/deadline-docker/10.2/docker-compose.yaml"))
+#
+#     # resolve environment variables (optional)
+#     dcg.load_dotenv(pathlib.Path("/home/michael/git/repos/deadline-docker/10.2/.env"))
+#
+#     # dcg.expand_vars(tree)
+#
+#     # with open("tree.json", "w") as fw:
+#     #     json.dump(tree, fw, indent=2)
+#
+#     dcg.iterate_trees(trees)
 
 # def test_main(capsys):
 #     """CLI Tests"""

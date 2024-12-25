@@ -37,7 +37,7 @@ root: [dict]
     - [ ] hostname: [str]
     - [ ] restart: [str]
     - [ ] domainname: [str]
-    - [ ] depends_on: [list[str]]
+    - [ ] depends_on: [list[dict[str, list]]]
     - [x] networks: [list[str]]
     - [ ] environment: [list[str]]
     - [ ] command: [str]
@@ -252,18 +252,20 @@ class DockerComposeGraph:
     def load_dotenv(self, env: pathlib.Path):
         dotenv.load_dotenv(env)
 
-    def iterate_trees(self, trees):
+    # def iterate_trees(self, trees):
+    #
+    #     self.port_mappings = self._get_ports(trees)
+    #     self.volume_mappings = self._get_volumes(trees)
+    #     self.network_mappings = self._get_networks(trees)
+    #
+    #     primary_tree = trees.pop(0)
+    #
+    #     primary_graph = self.get_primary_graph(primary_tree)
+    #
+    #     # for secondary_tree in trees:
+    #     #     print
 
-        self.port_mappings = self._get_ports(trees)
-        self.volume_mappings = self._get_volumes(trees)
-        self.network_mappings = self._get_networks(trees)
-
-        primary_tree = trees.pop(0)
-
-        primary_graph = self.get_primary_graph(primary_tree)
-
-        # for secondary_tree in trees:
-        #     print
+    def _get_serivces(self):
 
     def _get_ports(
             self,
@@ -406,6 +408,77 @@ class DockerComposeGraph:
 
         return network_mappings
 
+    def _get_depends_on(
+            self,
+            trees,
+    ) -> list:
+
+        # service_depends_mappings = []
+
+        for tree in trees:
+            service_depends_on = self._get_service_depends_on(
+                tree=tree,
+            )
+
+            print(service_depends_on)
+
+            # service_depends_mappings.extend(service_depends_on)
+
+            # Todo
+            # root_volumes = self._get_root_volumes(
+            #     tree=tree,
+            # )
+            # volume_mappings["root"].extend(root_volumes)
+
+        # _logger.debug(f"All {service_depends_mappings = }")
+        # print(f"All {service_depends_mappings = }")
+
+        return None
+
+    @staticmethod
+    def _get_service_depends_on(
+            tree: dict,
+    ) -> list[dict[str, list[str]]]:
+
+        depends_on_mappings = []
+
+        services: dict = tree.get("services", {})
+
+        for service_name, service_config in services.items():
+            depends_on = service_config.get("depends_on", [])
+
+            if len(depends_on) == 0:
+                # No need to keep these:
+                #  {'dagster_dev': []},
+                continue
+
+            # a depends_on dependency can come in the
+            # form of a dict[list]:
+            # {'deadline-repository-installer-10-2': ['mongodb-10-2']}
+            # or as a dict[dict[str, str]]:
+            # {'deadline-client-installer-10-2': {'deadline-repository-installer-10-2': {'condition': 'service_completed_successfully'}}}
+            #
+            # potentially even more schemas
+            #
+            # Hence: conform
+
+            _depends_on = depends_on
+
+            if isinstance(depends_on, list):
+                _depends_on = {}
+                for i in depends_on:
+                    _depends_on[i] = {
+                        "condition": None,
+                    }
+
+            depends_on_mappings.append(
+                {
+                    service_name: _depends_on
+                }
+            )
+
+        return depends_on_mappings
+
     def _get_root_ports(self, tree):
         # Todo
         raise NotImplementedError
@@ -425,6 +498,7 @@ class DockerComposeGraph:
         self.graph.add_subgraph(self.cluster_root_ports)
         self.graph.add_subgraph(self.cluster_root_volumes)
         self.graph.add_subgraph(self.cluster_root_networks)
+        self.graph.add_subgraph(self.cluster_service_depends_on)
         # self.graph.add_subgraph(self.cluster_root_images)
         # self.graph.add_subgraph(self.cluster_service_volumes)
         # self.graph.add_subgraph(self.cluster_service_networks)
@@ -579,7 +653,7 @@ class DockerComposeGraph:
             for service_name, mappings in network_mapping.items():
 
                 for _mapping in mappings:
-                    print(_mapping)
+                    # print(_mapping)
                     # split = os.path.expandvars(_mapping).split(":")
                     #
                     # network_host = split[0]
