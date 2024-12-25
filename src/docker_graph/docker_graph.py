@@ -33,8 +33,8 @@ root: [dict]
     - ...
 - [ ] services
   - service_name: [dict[str, str|list]
-    - [ ] container_name: [str]
-    - [ ] hostname: [str]
+    - [x] container_name: [str]
+    - [x] hostname: [str]
     - [ ] restart: [str]
     - [ ] domainname: [str]
     - [ ] depends_on: [list[dict[str, list]]]
@@ -65,7 +65,7 @@ import yaml as pyyaml
 import pydot
 import dotenv
 
-from docker_graph import __version__
+# from docker_graph import __version__
 
 __author__ = "Michael Mussato"
 __copyright__ = "Michael Mussato"
@@ -89,6 +89,8 @@ class DockerComposeGraph:
 
         self.docker_yaml: [pathlib.Path, None] = None
 
+        self.services = None
+        self.network_mappings = None
         self.port_mappings = None
         self.volume_mappings = None
 
@@ -252,20 +254,54 @@ class DockerComposeGraph:
     def load_dotenv(self, env: pathlib.Path):
         dotenv.load_dotenv(env)
 
-    # def iterate_trees(self, trees):
-    #
-    #     self.port_mappings = self._get_ports(trees)
-    #     self.volume_mappings = self._get_volumes(trees)
-    #     self.network_mappings = self._get_networks(trees)
-    #
-    #     primary_tree = trees.pop(0)
-    #
-    #     primary_graph = self.get_primary_graph(primary_tree)
-    #
-    #     # for secondary_tree in trees:
-    #     #     print
+    def iterate_trees(self, trees):
 
-    def _get_serivces(self):
+        self.services = self._get_serivces(trees)
+        self.port_mappings = self._get_ports(trees)
+        self.volume_mappings = self._get_volumes(trees)
+        self.network_mappings = self._get_networks(trees)
+
+        primary_tree = trees.pop(0)
+
+        primary_graph = self.get_primary_graph(primary_tree)
+
+        # for secondary_tree in trees:
+        #     print
+
+    def _get_serivces(
+            self,
+            trees: list[dict]
+    ):
+
+        services = []
+
+        for tree in trees:
+            _logger.debug(tree)
+
+            print(tree)
+
+            for service_name, service_config in tree.get("services", {}).items():
+                print(service_name, service_config)
+                # container_name = service_config.get("container_name", None)
+                # hostname = service_config.get("hostname", None)
+
+                services.append(
+                    {
+                        "service_name": service_name,
+                        "container_name": service_config.get("container_name", None),
+                        "hostname": service_config.get("hostname", None)
+                    }
+                )
+
+            # print(tree)
+            # print(tree.get("services"))
+
+            # services.extend(tree.get("services").keys())
+
+        _logger.debug(f"All {services = }")
+        print(f"All {services = }")
+
+        return services
 
     def _get_ports(
             self,
@@ -498,10 +534,38 @@ class DockerComposeGraph:
         self.graph.add_subgraph(self.cluster_root_ports)
         self.graph.add_subgraph(self.cluster_root_volumes)
         self.graph.add_subgraph(self.cluster_root_networks)
-        self.graph.add_subgraph(self.cluster_service_depends_on)
+        # self.graph.add_subgraph(self.cluster_root_services)
+        # self.graph.add_subgraph(self.cluster_service_depends_on)
         # self.graph.add_subgraph(self.cluster_root_images)
         # self.graph.add_subgraph(self.cluster_service_volumes)
         # self.graph.add_subgraph(self.cluster_service_networks)
+
+        #######################
+        # Get all Services and add them as clusters
+        for service in self.services:
+            print(service)
+            cluster_service = pydot.Cluster(
+                graph_name=f"cluster_service_{service.get('service_name')}",
+                label=service.get('service_name'),
+                color="white",
+                rankdir="TB",
+                shape="square",
+                style="rounded",
+            )
+
+            # dummy_node = pydot.Node(
+            #     name=f"dummy_{service}",
+            #     label=f"DUMMY_{service}",
+            #     shape="box",
+            #     style="filled",
+            # )
+            #
+            # cluster_service.add_node(dummy_node)
+
+            self.cluster_root_services.add_subgraph(cluster_service)
+
+        # all services
+        #######################
 
         #######################
         # Get all Ports
@@ -843,11 +907,11 @@ def parse_args(args):
       :obj:`argparse.Namespace`: command line parameters namespace
     """
     parser = argparse.ArgumentParser(description="Just a Fibonacci demonstration")
-    parser.add_argument(
-        "--version",
-        action="version",
-        version=f"docker-graph {__version__}",
-    )
+    # parser.add_argument(
+    #     "--version",
+    #     action="version",
+    #     version=f"docker-graph {__version__}",
+    # )
     parser.add_argument(dest="n", help="n-th Fibonacci number", type=int, metavar="INT")
     parser.add_argument(
         "-v",

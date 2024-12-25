@@ -157,19 +157,19 @@ def test_get_service_depends_on():
     assert depends_on == expected
 
 
-# def test_iterate_trees():
-#     dcg = DockerComposeGraph()
-#     trees = dcg.parse_docker_compose(pathlib.Path("/home/michael/git/repos/deadline-docker/10.2/docker-compose.yaml"))
-#
-#     # resolve environment variables (optional)
-#     dcg.load_dotenv(pathlib.Path("/home/michael/git/repos/deadline-docker/10.2/.env"))
-#
-#     # dcg.expand_vars(tree)
-#
-#     # with open("tree.json", "w") as fw:
-#     #     json.dump(tree, fw, indent=2)
-#
-#     dcg.iterate_trees(trees)
+def test_iterate_trees():
+    dcg = DockerComposeGraph()
+    trees = dcg.parse_docker_compose(pathlib.Path("/home/michael/git/repos/deadline-docker/10.2/docker-compose.yaml"))
+
+    # resolve environment variables (optional)
+    dcg.load_dotenv(pathlib.Path("/home/michael/git/repos/deadline-docker/10.2/.env"))
+
+    # dcg.expand_vars(tree)
+
+    # with open("tree.json", "w") as fw:
+    #     json.dump(tree, fw, indent=2)
+
+    dcg.iterate_trees(trees)
 
 # def test_main(capsys):
 #     """CLI Tests"""
