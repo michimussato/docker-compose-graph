@@ -35,7 +35,7 @@ root: [dict]
   - service_name: [dict[str, str|list]
     - [x] container_name: [str]
     - [x] hostname: [str]
-    - [ ] restart: [str]
+    - [x] restart: [str]
     - [x] domainname: [str]
     - [x] depends_on: [list[dict[str, list]]]
     - [x] networks: [list[str]]
@@ -87,12 +87,13 @@ class DockerComposeGraph:
             self,
     ):
 
-        self.docker_yaml: [pathlib.Path, None] = None
+        self.docker_yaml: [pathlib.Path | None] = None
 
-        self.services = None
-        self.network_mappings = None
-        self.port_mappings: [dict, None] = None
-        self.volume_mappings = None
+        self.services: [list[dict] | None] = None
+        self.depends_on: [dict[str, list | dict] | None] = None
+        self.network_mappings: [dict[str, list[str]] | None] = None
+        self.port_mappings: [dict[str, list[str]] | None] = None
+        self.volume_mappings: [dict[str, list[str]] | None] = None
 
         # Main Graph
 
@@ -185,6 +186,13 @@ class DockerComposeGraph:
             graph_name="cluster_service_networks",
             label="cluster_service_networks",
             color="blue",
+        )
+
+    def write_png(self):
+
+        self.graph.write(
+            path=pathlib.Path(__file__).parent.parent.parent / "tests" / "fixtures" / "out" / "main_graph.png",
+            format="png",
         )
 
     def _to_abs_path(
@@ -283,7 +291,12 @@ class DockerComposeGraph:
 
                 ports: list = ports_services.get(service_name, [])
                 ports_container: list = [os.path.expandvars(p) for p in ports]
+
                 depends_on: list = service_config.get("depends_on", [])
+
+                volumes: list = [os.path.expandvars(v.split(":", maxsplit=1)[1]) for v in service_config.get("volumes", [])]
+
+                restart: str = service_config.get("restart", "")
 
                 services.append(
                     OrderedDict({
@@ -291,6 +304,8 @@ class DockerComposeGraph:
                         "container_name": "{container_name|{" +  os.path.expandvars(service_config.get("container_name", "-")) + "}}",
                         "hostname": "{hostname|{" +  os.path.expandvars(service_config.get("hostname", "-")) + "}}",
                         "domainname": "{domainname|{" +  os.path.expandvars(service_config.get("domainname", "-")) + "}}",
+                        "volumes": "{volumes|{" +  "|".join(volumes) + "}}",
+                        "restart": "{restart|{" + restart + "}}",
                         "depends_on": "{depends_on|{" +  "|".join(depends_on) + "}}",
                         "image": "{image|{" +  os.path.expandvars(service_config.get("image", "-")) + "}}",
                         "ports": "{exposed ports|{" +  "|".join([p.split(":", maxsplit=1)[1] for p in ports_container]) + "}}",
@@ -450,7 +465,7 @@ class DockerComposeGraph:
     def _get_depends_on(
             self,
             trees,
-    ) -> dict:
+    ) -> dict[str, list | dict]:
 
         depends_on_mappings = {
             "root": [],
@@ -472,7 +487,10 @@ class DockerComposeGraph:
 
         # _logger.debug(f"All {service_depends_mappings = }")
         # print(f"All {service_depends_mappings = }")
-
+        print(depends_on_mappings)
+        print(depends_on_mappings)
+        print(depends_on_mappings)
+        print(depends_on_mappings)
         return depends_on_mappings
 
     @staticmethod
