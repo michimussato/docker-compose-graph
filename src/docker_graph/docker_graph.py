@@ -709,7 +709,7 @@ class DockerComposeGraph:
                 edge = pydot.Edge(
                     src=f"{service_name}__{port_host}__{port_container}",
                     dst=f"{dst}:<PLUG_{service_name}__{port_host}__{port_container}>",
-                    color="red",
+                    color="white",
                     arrowhead="dot",
                     tailhead="dot",
                 )
