@@ -588,14 +588,18 @@ class DockerComposeGraph:
 
         _d = []
         for d in depends_on:
-            print(d)  # mongodb-10-2
-
             id_service_depends_on = f"<PLUG_DEPENDS_ON_NODE-SERVICE_{d}> {d}"
-            print(id_service_depends_on)  # <PLUG_DEPENDS_ON_NODE-SERVICE_mongodb-10-2> mongodb-10-2
-
             _d.append(id_service_depends_on)
 
-        volumes: list = [os.path.expandvars(v.split(":", maxsplit=1)[1]) for v in service_config.get("volumes", [])]
+        # volumes: list = [os.path.expandvars(v.split(":", maxsplit=1)[1]) for v in service_config.get("volumes", [])]
+        volumes: list = [os.path.expandvars(v.split(":")[1]) for v in service_config.get("volumes", [])]
+
+        _v = []
+        for v in volumes:
+            # id_service_volume = f"<PLUG_DEPENDS_ON_NODE-SERVICE_{v}> {v}"
+            id_service_volume = f"<PLUG_{service_name}__{v}> {v}"
+            print(v)
+            _v.append(id_service_volume)
 
         restart: str = service_config.get("restart", "")
 
@@ -605,7 +609,7 @@ class DockerComposeGraph:
                 service_config.get("container_name", "-")) + "}}",
             "hostname": "{hostname|{" + os.path.expandvars(service_config.get("hostname", "-")) + "}}",
             "domainname": "{domainname|{" + os.path.expandvars(service_config.get("domainname", "-")) + "}}",
-            "volumes": "{{" + "|".join(volumes) + "}|volumes}",
+            "volumes": "{{" + "|".join([v for v in _v]) + "}|volumes}",
             "restart": "{restart|{" + restart + "}}",
             "depends_on": "{{" + "|".join([d for d in _d]) + "}|depends_on}",
             "image": "{image|{" + os.path.expandvars(service_config.get("image", "-")) + "}}",
@@ -665,7 +669,13 @@ class DockerComposeGraph:
                 edge = pydot.Edge(
                     dst=f"{src}:<PLUG_DEPENDS_ON_NODE-SERVICE_{depends_on}>",
                     src=f"NODE-SERVICE_{depends_on}",
+                    arrowhead="dot",
+                    # tailhead="dot",
+                    color="yellow",
                 )
+
+                # edge.set_headport("nw")
+                edge.set_tailport("ne")
 
                 self.graph.add_edge(edge)
 
@@ -700,7 +710,12 @@ class DockerComposeGraph:
                     src=f"{service_name}__{port_host}__{port_container}",
                     dst=f"{dst}:<PLUG_{service_name}__{port_host}__{port_container}>",
                     color="red",
+                    arrowhead="dot",
+                    tailhead="dot",
                 )
+
+                # edge.set_headport("w")
+                edge.set_tailport("e")
 
                 self.graph.add_edge(edge)
 
@@ -772,8 +787,8 @@ class DockerComposeGraph:
                         volume_mode = split[2]
 
                     node_host = pydot.Node(
-                        name=f"{service_name}__{volume_host}__{volume_container}",
-                        label=f"{volume_host} ({volume_mode})",
+                        name=f"{volume_host}__{volume_container}",
+                        label=f"{volume_host}",
                         shape="box",
                         style="rounded",
                     )
@@ -787,10 +802,17 @@ class DockerComposeGraph:
 
                     dst = self.get_name(n)
                     edge = pydot.Edge(
-                        src=f"{service_name}__{volume_host}__{volume_container}",
-                        dst=f"{dst}:<PLUG_{service_name}__{volume_host}__{volume_container}>",
+                        src=node_host,
+                        dst=f"{dst}:<PLUG_{service_name}__{volume_container}>",
                         color="green",
+                        arrowhead="dot",
+                        # tailhead="dot",
                     )
+
+                    # edge.set_headport("w")
+                    edge.set_tailport("e")
+
+                    print(dir(edge))
 
                     self.graph.add_edge(edge)
 
