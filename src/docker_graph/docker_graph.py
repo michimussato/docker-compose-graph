@@ -299,50 +299,38 @@ class DockerComposeGraph:
         for tree in trees:
             _logger.debug(tree)
 
-            ports_services: dict = self._get_service_ports(tree=tree)
+            depends_on_dict = self._get_service_depends_on(tree)
+
+            # ports_services: dict = self._get_service_ports(tree=tree)
+
+            # print(tree.get("services", {}))
 
             for service_name, service_config in tree.get("services", {}).items():
 
-                ports: list = ports_services.get(service_name, [])
-                ports_container: list = [os.path.expandvars(p) for p in ports]
+                # ports: list = ports_services.get(service_name, [])
+                # ports_container: list = [os.path.expandvars(p) for p in ports]
                 # f"{service_name}__{port_host}__{port_container}"
-                _p = []
-                for p in ports_container:
-                    port_host, port_container = p.split(":", maxsplit=1)
-                    id_service_port = f"<TAG_{service_name}__{port_host}__{port_container}> {port_container}"
-                    _p.append(id_service_port)
-                    # str(p.split(":", maxsplit=1)[1])
+                # _p = []
+                # for p in ports_container:
+                #     port_host, port_container = p.split(":", maxsplit=1)
+                #     id_service_port = f"<PLUG_{service_name}__{port_host}__{port_container}> {port_container}"
+                #     _p.append(id_service_port)
+                #     # str(p.split(":", maxsplit=1)[1])
 
                 # print("|".join([p for p in _p]))
                 # # "|".join(["<" f"" ">" + p for p in _p])
 
-                depends_on: list = service_config.get("depends_on", [])
-
-                volumes: list = [os.path.expandvars(v.split(":", maxsplit=1)[1]) for v in service_config.get("volumes", [])]
-
-                restart: str = service_config.get("restart", "")
+                # depends_on: list = service_config.get("depends_on", [])
+                #
+                # volumes: list = [os.path.expandvars(v.split(":", maxsplit=1)[1]) for v in service_config.get("volumes", [])]
+                #
+                # restart: str = service_config.get("restart", "")
 
                 services.append(
-                    OrderedDict({
+                    {
                         "service_name": service_name,
-                        "container_name": "{container_name|{" +  os.path.expandvars(service_config.get("container_name", "-")) + "}}",
-                        "hostname": "{hostname|{" +  os.path.expandvars(service_config.get("hostname", "-")) + "}}",
-                        "domainname": "{domainname|{" +  os.path.expandvars(service_config.get("domainname", "-")) + "}}",
-                        "volumes": "{volumes|{" +  "|".join(volumes) + "}}",
-                        "restart": "{restart|{" + restart + "}}",
-                        "depends_on": "{depends_on|{" +  "|".join(depends_on) + "}}",
-                        "image": "{image|{" +  os.path.expandvars(service_config.get("image", "-")) + "}}",
-
-                        # "ports": "{exposed ports|{" +  "|".join(["<" + ">" + str(p.split(":", maxsplit=1)[1]) for p in ports_container]) + "}}",
-                        "ports": "{exposed ports|{" + "|".join([p for p in _p]) + "}}",
-                        "command": "{command|{" +  os.path.expandvars(service_config.get("command", "-")) + "}}",
-                        "environment": "{environment|{" + "|".join([
-                            os.path.expandvars(e) for e in service_config.get(
-                                "environment", [],
-                            )
-                        ]) + "}}",
-                        # "build": os.path.expandvars(service_config.get("build", "-")),
-                    })
+                        "service_config": service_config,
+                     }
                 )
 
         _logger.debug(f"All {services = }")
@@ -515,8 +503,8 @@ class DockerComposeGraph:
         # print(f"All {service_depends_mappings = }")
         return depends_on_mappings
 
-    @staticmethod
     def _get_service_depends_on(
+            self,
             tree: dict,
     ) -> dict[str, list[str]]:
 
@@ -528,36 +516,51 @@ class DockerComposeGraph:
             depends_on = service_config.get("depends_on", [])
 
             if len(depends_on) == 0:
-                # No need to keep these:
+                # No need to keep what didn't exist
+                # in the first place:
                 #  {'dagster_dev': []},
                 continue
 
-            # a depends_on dependency can come in the
-            # form of a dict[list]:
-            # {'deadline-repository-installer-10-2': ['mongodb-10-2']}
-            # or as a dict[dict[str, str]]:
-            # {'deadline-client-installer-10-2': {'deadline-repository-installer-10-2': {'condition': 'service_completed_successfully'}}}
-            #
-            # potentially even more schemas
-            #
-            # Hence: conform
-
-            _depends_on = depends_on
-
-            if isinstance(depends_on, list):
-                _depends_on = {}
-                for i in depends_on:
-                    _depends_on[i] = {
-                        "condition": None,
-                    }
+            _depends_on_conform = self._conform_depends_on(depends_on)
+            # print(depends_on)
+            # print(_depends_on_conform)
+            # print(depends_on_mappings)
 
             depends_on_mappings.update(
                 {
-                    service_name: _depends_on
+                    service_name: self._conform_depends_on(depends_on)
                 }
             )
 
+            # print(depends_on_mappings)
+
         return depends_on_mappings
+
+    def _conform_depends_on(
+            self,
+            depends_on: [list | dict],
+    ) -> dict:
+
+        # a depends_on dependency can come in the
+        # form of a dict[list]:
+        # {'deadline-repository-installer-10-2': ['mongodb-10-2']}
+        # or as a dict[dict[str, str]]:
+        # {'deadline-client-installer-10-2': {'deadline-repository-installer-10-2': {'condition': 'service_completed_successfully'}}}
+        #
+        # potentially even more schemas
+        #
+        # Hence: conform
+
+        _depends_on = depends_on
+
+        if isinstance(depends_on, list):
+            _depends_on = {}
+            for i in depends_on:
+                _depends_on[i] = {
+                    "condition": None,
+                }
+
+        return _depends_on
 
     def _get_root_ports(self, tree):
         # Todo
@@ -570,6 +573,70 @@ class DockerComposeGraph:
     def _get_root_volumes(self, tree):
         # Todo
         raise NotImplementedError
+
+    @staticmethod
+    def get_name(item):
+        # pydot seems to sometimes
+        # return strings that are
+        # wrapped inside quotation
+        # marks. No-Go!
+        assert isinstance(item, pydot.Common)
+        return item.get_name().replace('"', '')
+
+    @staticmethod
+    def _get_service_label(
+            service: dict,
+    ) -> str:
+        """
+        Generate a Service Node label
+        based on service[dict[str, str | dict]].
+        This is a bit hacky but it's mostly
+        cosmetics except for the TAGs/PLUGs.
+        We retain the original service_config
+        data this way.
+        """
+
+        service_name = service.get("service_name")
+        service_config = service.get("service_config")
+
+        ports: list = service_config.get("ports", [])
+        ports_container: list = [os.path.expandvars(p) for p in ports]
+
+        _p = []
+        for p in ports_container:
+            port_host, port_container = p.split(":", maxsplit=1)
+            id_service_port = f"<PLUG_{service_name}__{port_host}__{port_container}> {port_container}"
+            _p.append(id_service_port)
+
+        depends_on: list = service_config.get("depends_on", [])
+
+        volumes: list = [os.path.expandvars(v.split(":", maxsplit=1)[1]) for v in service_config.get("volumes", [])]
+
+        restart: str = service_config.get("restart", "")
+
+        fields = OrderedDict({
+            "service_name": service_name,
+            "container_name": "{container_name|{" + os.path.expandvars(
+                service_config.get("container_name", "-")) + "}}",
+            "hostname": "{hostname|{" + os.path.expandvars(service_config.get("hostname", "-")) + "}}",
+            "domainname": "{domainname|{" + os.path.expandvars(service_config.get("domainname", "-")) + "}}",
+            "volumes": "{volumes|{" + "|".join(volumes) + "}}",
+            "restart": "{restart|{" + restart + "}}",
+            "depends_on": "{depends_on|{" + "|".join(depends_on) + "}}",
+            "image": "{image|{" + os.path.expandvars(service_config.get("image", "-")) + "}}",
+            "ports": "{exposed ports|{" + "|".join([p for p in _p]) + "}}",
+            "command": "{command|{" + os.path.expandvars(service_config.get("command", "-")) + "}}",
+            "environment": "{environment|{" + "|".join([
+                os.path.expandvars(e) for e in service_config.get(
+                    "environment", [],
+                )
+            ]) + "}}",
+            # "build": os.path.expandvars(service_config.get("build", "-")),
+        })
+
+        ret = "|".join([v for k, v in fields.items()])
+
+        return ret
 
     def get_primary_graph(self):
 
@@ -586,6 +653,7 @@ class DockerComposeGraph:
         #######################
         # Get all Services and add them as clusters
         for service in self.services:
+            # print(service)
             # print(self.services)
             cluster_service = pydot.Cluster(
                 # graph_name=f"cluster_service_",
@@ -598,13 +666,24 @@ class DockerComposeGraph:
             )
 
             node_service = pydot.Node(
-                name=f"dummy_{service.get('service_name')}",
-                label="|".join([v for k, v in service.items()]),
+                name=f"NODE-SERVICE_{service.get('service_name')}",
+                label=self._get_service_label(service),
                 shape="record",
                 style="filled",
             )
 
             cluster_service.add_node(node_service)
+
+            _depends_on_conform = self._conform_depends_on(service["service_config"].get("depends_on", []))
+
+            for depends_on in _depends_on_conform:
+                print(depends_on)
+                edge = pydot.Edge(
+                    src=node_service,
+                    dst=f"NODE-SERVICE_{depends_on}",
+                )
+
+                self.graph.add_edge(edge)
 
             self.cluster_root_services.add_subgraph(cluster_service)
 
@@ -631,14 +710,14 @@ class DockerComposeGraph:
                 self.cluster_root_ports.add_node(node_host)
 
                 for sg in self.cluster_root_services.get_subgraphs():
-                    if sg.get_name().replace('"', '') == f"cluster_cluster_service_{service_name}":
-                        n = sg.get_node(name=f"dummy_{service_name}")[0]
+                    if self.get_name(sg) == f"cluster_cluster_service_{service_name}":
+                        n = sg.get_node(name=f"NODE-SERVICE_{service_name}")[0]
                         break
 
                 dst = n.get_name().replace('"', '')
                 edge = pydot.Edge(
                     src=f"{service_name}__{port_host}__{port_container}",
-                    dst=f"{dst}:<TAG_{service_name}__{port_host}__{port_container}>",
+                    dst=f"{dst}:<PLUG_{service_name}__{port_host}__{port_container}>",
                     color="red",
                 )
 
