@@ -780,6 +780,20 @@ class DockerComposeGraph:
 
                     self.cluster_root_volumes.add_node(node_host)
 
+                    for sg in self.cluster_root_services.get_subgraphs():
+                        if self.get_name(sg) == f"cluster_cluster_service_{service_name}":
+                            n = sg.get_node(name=f"NODE-SERVICE_{service_name}")[0]
+                            break
+
+                    dst = self.get_name(n)
+                    edge = pydot.Edge(
+                        src=f"{service_name}__{volume_host}__{volume_container}",
+                        dst=f"{dst}:<PLUG_{service_name}__{volume_host}__{volume_container}>",
+                        color="green",
+                    )
+
+                    self.graph.add_edge(edge)
+
         # Root Volumes
         # Todo
         for volume_mapping in self.volume_mappings["root"]:
