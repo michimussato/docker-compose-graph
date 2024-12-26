@@ -191,12 +191,6 @@ class DockerComposeGraph:
             color="blue",
         )
 
-    # def connect(self):
-    #
-    #     self._connect_ports()
-    #
-    # def _connect_ports(self):
-
     def write_png(self):
 
         self.graph.write(
@@ -498,17 +492,12 @@ class DockerComposeGraph:
                 continue
 
             _depends_on_conform = self._conform_depends_on(depends_on)
-            # print(depends_on)
-            # print(_depends_on_conform)
-            # print(depends_on_mappings)
 
             depends_on_mappings.update(
                 {
                     service_name: self._conform_depends_on(depends_on)
                 }
             )
-
-            # print(depends_on_mappings)
 
         return depends_on_mappings
 
@@ -591,14 +580,11 @@ class DockerComposeGraph:
             id_service_depends_on = f"<PLUG_DEPENDS_ON_NODE-SERVICE_{d}> {d}"
             _d.append(id_service_depends_on)
 
-        # volumes: list = [os.path.expandvars(v.split(":", maxsplit=1)[1]) for v in service_config.get("volumes", [])]
         volumes: list = [os.path.expandvars(v.split(":")[1]) for v in service_config.get("volumes", [])]
 
         _v = []
         for v in volumes:
-            # id_service_volume = f"<PLUG_DEPENDS_ON_NODE-SERVICE_{v}> {v}"
             id_service_volume = f"<PLUG_{service_name}__{v}> {v}"
-            print(v)
             _v.append(id_service_volume)
 
         restart: str = service_config.get("restart", "")
