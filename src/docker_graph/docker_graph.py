@@ -587,6 +587,15 @@ class DockerComposeGraph:
             id_service_volume = f"<PLUG_{service_name}__{v}> {v}"
             _v.append(id_service_volume)
 
+        networks: list = [os.path.expandvars(n) for n in service_config.get("networks", [])]
+
+        _n = []
+        for n in networks:
+            id_service_network = f"<PLUG_{n}> {n}"
+            _n.append(id_service_network)
+
+        print(networks)
+
         restart: str = service_config.get("restart", "")
 
         fields = OrderedDict({
@@ -600,6 +609,7 @@ class DockerComposeGraph:
             "depends_on": "{{" + "|".join([d for d in _d]) + "}|depends_on}",
             "image": "{image|{" + os.path.expandvars(service_config.get("image", "-")) + "}}",
             "ports": "{{" + "|".join([p for p in _p]) + "}|exposed ports}",
+            "networks": "{{" + "|".join([n for n in _n]) + "}|networks}",
             "command": "{command|{" + os.path.expandvars(service_config.get("command", "-")) + "}}",
             "environment": "{environment|{" + "|".join([
                 os.path.expandvars(e) for e in service_config.get(
@@ -856,13 +866,32 @@ class DockerComposeGraph:
                     #     volume_mode = split[2]
 
                     node_host = pydot.Node(
-                        name=f"{service_name}__{_mapping}",
+                        name=f"{_mapping}",
                         label=f"{_mapping}",
                         shape="box",
                         style="rounded",
                     )
 
                     self.cluster_root_networks.add_node(node_host)
+
+                    for sg in self.cluster_root_services.get_subgraphs():
+                        if self.get_name(sg) == f"cluster_cluster_service_{service_name}":
+                            n = sg.get_node(name=f"NODE-SERVICE_{service_name}")[0]
+                            break
+
+                    dst = self.get_name(n)
+                    edge = pydot.Edge(
+                        src=f"{_mapping}",
+                        dst=f"{dst}:<PLUG_{_mapping}>",
+                        color="orange",
+                        arrowhead="dot",
+                        tailhead="dot",
+                    )
+
+                    # edge.set_headport("w")
+                    edge.set_tailport("e")
+
+                    self.graph.add_edge(edge)
 
         # Root Networks
         # Todo
