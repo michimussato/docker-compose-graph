@@ -38,6 +38,7 @@ junit*.xml
 coverage.xml
 .pytest_cache/
 /tests/fixtures/out/
+/tests/fixtures/deadline-docker/*
 
 # Build and docs folder/files
 build/*
@@ -53,3 +54,4 @@ MANIFEST
 .venv*/
 .conda*/
 .python-version
+/tests/fixtures/deadline-docker/

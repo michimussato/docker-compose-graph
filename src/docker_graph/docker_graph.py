@@ -594,8 +594,6 @@ class DockerComposeGraph:
             id_service_network = f"<PLUG_{n}> {n}"
             _n.append(id_service_network)
 
-        print(networks)
-
         restart: str = service_config.get("restart", "")
 
         fields = OrderedDict({
@@ -807,8 +805,6 @@ class DockerComposeGraph:
 
                     # edge.set_headport("w")
                     edge.set_tailport("e")
-
-                    print(dir(edge))
 
                     self.graph.add_edge(edge)
 
