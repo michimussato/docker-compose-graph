@@ -596,6 +596,12 @@ class DockerComposeGraph:
 
         restart: str = service_config.get("restart", "")
 
+        _command = service_config.get("command", "-")
+        if isinstance(_command, list):
+            command = " ".join(_command)
+        elif isinstance(_command, str):
+            command = _command
+
         fields = OrderedDict({
             "service_name": service_name,
             "container_name": "{container_name|{" + os.path.expandvars(
@@ -608,7 +614,7 @@ class DockerComposeGraph:
             "image": "{image|{" + os.path.expandvars(service_config.get("image", "-")) + "}}",
             "ports": "{{" + "|".join([p for p in _p]) + "}|exposed ports}",
             "networks": "{{" + "|".join([n for n in _n]) + "}|networks}",
-            "command": "{command|{" + os.path.expandvars(service_config.get("command", "-")) + "}}",
+            "command": "{command|{" + os.path.expandvars(command) + "}}",
             "environment": "{environment|{" + "|".join([
                 os.path.expandvars(e) for e in service_config.get(
                     "environment", [],
