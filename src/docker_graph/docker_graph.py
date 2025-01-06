@@ -690,9 +690,9 @@ class DockerComposeGraph:
         # Service Ports
         # Todo
         #  - [ ] Sorted
-        for service_name, mappings in self.port_mappings["services"].items():
+        for service_name, mappings in sorted(self.port_mappings["services"].items()):
 
-            for _mapping in mappings:
+            for _mapping in sorted(mappings):
                 port_host, port_container = os.path.expandvars(_mapping).split(":", maxsplit=1)
                 node_host = pydot.Node(
                     name=f"{service_name}__{port_host}__{port_container}",
@@ -774,13 +774,13 @@ class DockerComposeGraph:
         # Service Volumes
         # Todo
         #  - [ ] Sorted
-        for volume_mapping in self.volume_mappings["services"]:
+        for volume_mapping in sorted(self.volume_mappings["services"]):
             # volume_mapping:
             # [{'mongodb-10-2': ['${NFS_ENTRY_POINT}/test_data/10.2/opt/Thinkbox/DeadlineDatabase10/mongo/data_LOCAL:/opt/Thinkbox/DeadlineDatabase10/mongo/data', '${NFS_ENTRY_POINT}:${NFS_ENTRY_POINT}:ro', '${NFS_ENTRY_POINT}:${NFS_ENTRY_POINT_LNS}:ro']}, {'mongo-express-10-2': ['${NFS_ENTRY_POINT}/test_data/10.2/opt/Thinkbox/DeadlineDatabase10/mongo/data_LOCAL:/opt/Thinkbox/DeadlineDatabase10/mongo/data', '${NFS_ENTRY_POINT}:${NFS_ENTRY_POINT}:ro', '${NFS_ENTRY_POINT}:${NFS_ENTRY_POINT_LNS}:ro']}, {'filebrowser': ['./databases/filebrowser/filebrowser.db:/filebrowser.db', './configs/filebrowser/filebrowser.json:/.filebrowser.json', '${NFS_ENTRY_POINT}/test_data/10.2/opt/Thinkbox/DeadlineDatabase10/mongo/data_LOCAL:/opt/Thinkbox/DeadlineDatabase10/mongo/data:ro', '${NFS_ENTRY_POINT}:${NFS_ENTRY_POINT}:ro', '${NFS_ENTRY_POINT}:${NFS_ENTRY_POINT_LNS}:ro']}, {'dagster_dev': ['./configs/dagster_shared/workspace.yaml:/dagster/workspace.yaml:ro', './configs/dagster_shared/dagster.yaml:/dagster/materializations/workspace.yaml:ro', '${NFS_ENTRY_POINT}:${NFS_ENTRY_POINT}', '${NFS_ENTRY_POINT}:${NFS_ENTRY_POINT_LNS}']}, {'deadline-repository-installer-10-2': ['${NFS_ENTRY_POINT}/test_data/10.2/opt/Thinkbox/DeadlineRepository10:/opt/Thinkbox/DeadlineRepository10', '${NFS_ENTRY_POINT}:${NFS_ENTRY_POINT}:ro', '${NFS_ENTRY_POINT}:${NFS_ENTRY_POINT_LNS}:ro']}, {'deadline-client-installer-10-2': ['${NFS_ENTRY_POINT}/test_data/10.2/opt/Thinkbox/Deadline10:/opt/Thinkbox/Deadline10', '${NFS_ENTRY_POINT}/test_data/10.2/opt/Thinkbox/DeadlineRepository10:/opt/Thinkbox/DeadlineRepository10', '${NFS_ENTRY_POINT}:${NFS_ENTRY_POINT}:ro', '${NFS_ENTRY_POINT}:${NFS_ENTRY_POINT_LNS}:ro']}, {'deadline-rcs-runner-10-2': ['./configs/Deadline10/deadline.ini:/var/lib/Thinkbox/Deadline10/deadline.ini:ro', '${NFS_ENTRY_POINT}/test_data/10.2/opt/Thinkbox/Deadline10:/opt/Thinkbox/Deadline10', '${NFS_ENTRY_POINT}/test_data/10.2/opt/Thinkbox/DeadlineRepository10:/opt/Thinkbox/DeadlineRepository10', '${NFS_ENTRY_POINT}:${NFS_ENTRY_POINT}:ro', '${NFS_ENTRY_POINT}:${NFS_ENTRY_POINT_LNS}:ro']}, {'deadline-pulse-runner-10-2': ['./configs/Deadline10/deadline.ini:/var/lib/Thinkbox/Deadline10/deadline.ini:ro', '${NFS_ENTRY_POINT}/test_data/10.2/opt/Thinkbox/Deadline10:/opt/Thinkbox/Deadline10', '${NFS_ENTRY_POINT}/test_data/10.2/opt/Thinkbox/DeadlineRepository10:/opt/Thinkbox/DeadlineRepository10', '${NFS_ENTRY_POINT}:${NFS_ENTRY_POINT}:ro', '${NFS_ENTRY_POINT}:${NFS_ENTRY_POINT_LNS}:ro']}, {'deadline-worker-runner-10-2': ['./configs/Deadline10/deadline.ini:/var/lib/Thinkbox/Deadline10/deadline.ini:ro', '${NFS_ENTRY_POINT}/test_data/10.2/opt/Thinkbox/Deadline10:/opt/Thinkbox/Deadline10', '${NFS_ENTRY_POINT}/test_data/10.2/opt/Thinkbox/DeadlineRepository10:/opt/Thinkbox/DeadlineRepository10', '${NFS_ENTRY_POINT}:${NFS_ENTRY_POINT}:ro', '${NFS_ENTRY_POINT}:${NFS_ENTRY_POINT_LNS}:ro']}, {'deadline-webservice-runner-10-2': ['./configs/Deadline10/deadline.ini:/var/lib/Thinkbox/Deadline10/deadline.ini:ro', '${NFS_ENTRY_POINT}/test_data/10.2/opt/Thinkbox/Deadline10:/opt/Thinkbox/Deadline10', '${NFS_ENTRY_POINT}/test_data/10.2/opt/Thinkbox/DeadlineRepository10:/opt/Thinkbox/DeadlineRepository10', '${NFS_ENTRY_POINT}:${NFS_ENTRY_POINT}:ro', '${NFS_ENTRY_POINT}:${NFS_ENTRY_POINT_LNS}:ro']}]
 
-            for service_name, mappings in volume_mapping.items():
+            for service_name, mappings in sorted(volume_mapping.items()):
 
-                for _mapping in mappings:
+                for _mapping in sorted(mappings):
                     split = os.path.expandvars(_mapping).split(":")
 
                     volume_host = split[0]
@@ -858,13 +858,13 @@ class DockerComposeGraph:
         # Service Networks
         # Todo
         #  - [ ] Sorted
-        for network_mapping in self.network_mappings["services"]:
+        for network_mapping in sorted(self.network_mappings["services"]):
             # network_mapping:
             # [{'mongodb-10-2': ['${NFS_ENTRY_POINT}/test_data/10.2/opt/Thinkbox/DeadlineDatabase10/mongo/data_LOCAL:/opt/Thinkbox/DeadlineDatabase10/mongo/data', '${NFS_ENTRY_POINT}:${NFS_ENTRY_POINT}:ro', '${NFS_ENTRY_POINT}:${NFS_ENTRY_POINT_LNS}:ro']}, {'mongo-express-10-2': ['${NFS_ENTRY_POINT}/test_data/10.2/opt/Thinkbox/DeadlineDatabase10/mongo/data_LOCAL:/opt/Thinkbox/DeadlineDatabase10/mongo/data', '${NFS_ENTRY_POINT}:${NFS_ENTRY_POINT}:ro', '${NFS_ENTRY_POINT}:${NFS_ENTRY_POINT_LNS}:ro']}, {'filebrowser': ['./databases/filebrowser/filebrowser.db:/filebrowser.db', './configs/filebrowser/filebrowser.json:/.filebrowser.json', '${NFS_ENTRY_POINT}/test_data/10.2/opt/Thinkbox/DeadlineDatabase10/mongo/data_LOCAL:/opt/Thinkbox/DeadlineDatabase10/mongo/data:ro', '${NFS_ENTRY_POINT}:${NFS_ENTRY_POINT}:ro', '${NFS_ENTRY_POINT}:${NFS_ENTRY_POINT_LNS}:ro']}, {'dagster_dev': ['./configs/dagster_shared/workspace.yaml:/dagster/workspace.yaml:ro', './configs/dagster_shared/dagster.yaml:/dagster/materializations/workspace.yaml:ro', '${NFS_ENTRY_POINT}:${NFS_ENTRY_POINT}', '${NFS_ENTRY_POINT}:${NFS_ENTRY_POINT_LNS}']}, {'deadline-repository-installer-10-2': ['${NFS_ENTRY_POINT}/test_data/10.2/opt/Thinkbox/DeadlineRepository10:/opt/Thinkbox/DeadlineRepository10', '${NFS_ENTRY_POINT}:${NFS_ENTRY_POINT}:ro', '${NFS_ENTRY_POINT}:${NFS_ENTRY_POINT_LNS}:ro']}, {'deadline-client-installer-10-2': ['${NFS_ENTRY_POINT}/test_data/10.2/opt/Thinkbox/Deadline10:/opt/Thinkbox/Deadline10', '${NFS_ENTRY_POINT}/test_data/10.2/opt/Thinkbox/DeadlineRepository10:/opt/Thinkbox/DeadlineRepository10', '${NFS_ENTRY_POINT}:${NFS_ENTRY_POINT}:ro', '${NFS_ENTRY_POINT}:${NFS_ENTRY_POINT_LNS}:ro']}, {'deadline-rcs-runner-10-2': ['./configs/Deadline10/deadline.ini:/var/lib/Thinkbox/Deadline10/deadline.ini:ro', '${NFS_ENTRY_POINT}/test_data/10.2/opt/Thinkbox/Deadline10:/opt/Thinkbox/Deadline10', '${NFS_ENTRY_POINT}/test_data/10.2/opt/Thinkbox/DeadlineRepository10:/opt/Thinkbox/DeadlineRepository10', '${NFS_ENTRY_POINT}:${NFS_ENTRY_POINT}:ro', '${NFS_ENTRY_POINT}:${NFS_ENTRY_POINT_LNS}:ro']}, {'deadline-pulse-runner-10-2': ['./configs/Deadline10/deadline.ini:/var/lib/Thinkbox/Deadline10/deadline.ini:ro', '${NFS_ENTRY_POINT}/test_data/10.2/opt/Thinkbox/Deadline10:/opt/Thinkbox/Deadline10', '${NFS_ENTRY_POINT}/test_data/10.2/opt/Thinkbox/DeadlineRepository10:/opt/Thinkbox/DeadlineRepository10', '${NFS_ENTRY_POINT}:${NFS_ENTRY_POINT}:ro', '${NFS_ENTRY_POINT}:${NFS_ENTRY_POINT_LNS}:ro']}, {'deadline-worker-runner-10-2': ['./configs/Deadline10/deadline.ini:/var/lib/Thinkbox/Deadline10/deadline.ini:ro', '${NFS_ENTRY_POINT}/test_data/10.2/opt/Thinkbox/Deadline10:/opt/Thinkbox/Deadline10', '${NFS_ENTRY_POINT}/test_data/10.2/opt/Thinkbox/DeadlineRepository10:/opt/Thinkbox/DeadlineRepository10', '${NFS_ENTRY_POINT}:${NFS_ENTRY_POINT}:ro', '${NFS_ENTRY_POINT}:${NFS_ENTRY_POINT_LNS}:ro']}, {'deadline-webservice-runner-10-2': ['./configs/Deadline10/deadline.ini:/var/lib/Thinkbox/Deadline10/deadline.ini:ro', '${NFS_ENTRY_POINT}/test_data/10.2/opt/Thinkbox/Deadline10:/opt/Thinkbox/Deadline10', '${NFS_ENTRY_POINT}/test_data/10.2/opt/Thinkbox/DeadlineRepository10:/opt/Thinkbox/DeadlineRepository10', '${NFS_ENTRY_POINT}:${NFS_ENTRY_POINT}:ro', '${NFS_ENTRY_POINT}:${NFS_ENTRY_POINT_LNS}:ro']}]
 
-            for service_name, mappings in network_mapping.items():
+            for service_name, mappings in sorted(network_mapping.items()):
 
-                for _mapping in mappings:
+                for _mapping in sorted(mappings):
                     # print(_mapping)
                     # split = os.path.expandvars(_mapping).split(":")
                     #
