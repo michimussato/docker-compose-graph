@@ -608,17 +608,17 @@ class DockerComposeGraph:
                 service_config.get("container_name", "-")) + "}}",
             "hostname": "{hostname|{" + os.path.expandvars(service_config.get("hostname", "-")) + "}}",
             "domainname": "{domainname|{" + os.path.expandvars(service_config.get("domainname", "-")) + "}}",
-            "volumes": "{{" + "|".join([v for v in _v]) + "}|volumes}",
+            "volumes": "{{" + "|".join([v for v in sorted(_v)]) + "}|volumes}",
             "restart": "{restart|{" + restart + "}}",
-            "depends_on": "{{" + "|".join([d for d in _d]) + "}|depends_on}",
+            "depends_on": "{{" + "|".join([d for d in sorted(_d)]) + "}|depends_on}",
             "image": "{image|{" + os.path.expandvars(service_config.get("image", "-")) + "}}",
-            "ports": "{{" + "|".join([p for p in _p]) + "}|exposed ports}",
-            "networks": "{{" + "|".join([n for n in _n]) + "}|networks}",
+            "ports": "{{" + "|".join([p for p in sorted(_p)]) + "}|exposed ports}",
+            "networks": "{{" + "|".join([n for n in sorted(_n)]) + "}|networks}",
             "command": "{command|{" + os.path.expandvars(command) + "}}",
             "environment": "{environment|{" + "|".join([
-                os.path.expandvars(e) for e in service_config.get(
+                os.path.expandvars(e) for e in sorted(service_config.get(
                     "environment", [],
-                )
+                ))
             ]) + "}}",
             # "build": os.path.expandvars(service_config.get("build", "-")),
         })
