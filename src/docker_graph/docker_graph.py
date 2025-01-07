@@ -191,18 +191,21 @@ class DockerComposeGraph:
             color="blue",
         )
 
-    def write_png(self):
+    def write_png(self, path):
 
         self.graph.write(
-            path=pathlib.Path(__file__).parent.parent.parent / "tests" / "fixtures" / "out" / "main_graph.png",
+            path=path,
             format="png",
         )
 
-    def write_dot(self):
+    def write_dot(self, path):
         self.graph.write(
-            path=pathlib.Path(__file__).parent.parent.parent / "tests" / "fixtures" / "out" / "main_graph.dot",
+            path=path,
             format="dot",
         )
+
+    def as_dot(self):
+        return self.graph
 
     def _to_abs_path(
             self,
