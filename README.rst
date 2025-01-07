@@ -46,6 +46,31 @@ A longer description of your project goes here...
 4. overlay graph_includes with graph_overrides
 
 
+Example::
+
+
+    from docker_graph.docker_graph import main, DockerComposeGraph
+
+
+    dcg = DockerComposeGraph()
+    trees = dcg.parse_docker_compose(
+        pathlib.Path("~/git/repos/docker-graph/tests/fixtures/deadline-docker/10.2/docker-compose.yaml")
+    )
+
+    # resolve environment variables (optional)
+    dcg.load_dotenv(pathlib.Path("/home/michael/git/repos/docker-graph/tests/fixtures/deadline-docker/10.2/.env"))
+
+    # dcg.expand_vars(tree)
+
+    # with open("tree.json", "w") as fw:
+    #     json.dump(tree, fw, indent=2)
+
+    dcg.iterate_trees(trees)
+    # dcg.connect()
+    dcg.write_png()
+    dcg.write_dot()
+
+
 .. image:: docs/img/main_graph.png
     :alt: Demo Graph
 

@@ -38,7 +38,7 @@ junit*.xml
 coverage.xml
 .pytest_cache/
 /tests/fixtures/out/
-/tests/fixtures/deadline-docker/*
+/tests/fixtures/deadline-docker/
 
 # Build and docs folder/files
 build/*
