@@ -665,22 +665,23 @@ class DockerComposeGraph:
 
             _depends_on_conform = self._conform_depends_on(service["service_config"].get("depends_on", []))
 
-            for depends_on in _depends_on_conform:
-
-                src = self.get_name(node_service)
-
-                edge = pydot.Edge(
-                    dst=f"{src}:<PLUG_DEPENDS_ON_NODE-SERVICE_{depends_on}>",
-                    src=f"NODE-SERVICE_{depends_on}",
-                    arrowhead="dot",
-                    # tailhead="dot",
-                    color="yellow",
-                )
-
-                # edge.set_headport("nw")
-                edge.set_tailport("ne")
-
-                self.graph.add_edge(edge)
+            # Todo:
+            # for depends_on in _depends_on_conform:
+            #
+            #     src = self.get_name(node_service)
+            #
+            #     edge = pydot.Edge(
+            #         dst=f"{src}:<PLUG_DEPENDS_ON_NODE-SERVICE_{depends_on}>",
+            #         src=f"NODE-SERVICE_{depends_on}",
+            #         arrowhead="dot",
+            #         # tailhead="dot",
+            #         color="yellow",
+            #     )
+            #
+            #     edge.set_headport("nw")
+            #     edge.set_tailport("ne")
+            #
+            #     self.graph.add_edge(edge)
 
             self.cluster_root_services.add_subgraph(cluster_service)
 
