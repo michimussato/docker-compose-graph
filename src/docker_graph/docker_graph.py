@@ -678,8 +678,8 @@ class DockerComposeGraph:
                     color="yellow",
                 )
 
-                edge.set_headport("nw")
-                edge.set_tailport("ne")
+                # edge.set_headport("nw")
+                # edge.set_tailport("ne")
 
                 self.graph.add_edge(edge)
 
