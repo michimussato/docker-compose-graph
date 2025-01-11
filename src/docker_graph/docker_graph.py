@@ -930,7 +930,9 @@ class DockerComposeGraph:
                     dst = self.get_name(n)
                     edge = pydot.Edge(
                         src=f"{_mapping}",
-                        dst=f"{dst}:<PLUG_{_mapping}>",
+                        # dst="%s" % dst,
+                        dst="%s:PLUG_%s:w" % (dst, _mapping),
+                        # dst=f"{dst}:<PLUG_{_mapping}>",
                         color=_fillcolor,
                         # fillcolor=_fillcolor,
                         dir="both",
