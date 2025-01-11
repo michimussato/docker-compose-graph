@@ -680,9 +680,10 @@ class DockerComposeGraph:
                     dst=f"{src}:<PLUG_DEPENDS_ON_NODE-SERVICE_{depends_on}>",
                     src=f"NODE-SERVICE_{depends_on}",
                     # arrowhead="normal",
-                    # tailhead="dot",
+                    tailhead="dot",
                     dir="back",
                     color="yellow",
+                    style="dashed",
                 )
 
                 # edge.set_headport("nw")
