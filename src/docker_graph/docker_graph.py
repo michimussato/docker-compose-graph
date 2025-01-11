@@ -937,7 +937,7 @@ class DockerComposeGraph:
                         arrowhead="dot",
                         arrowtail="dot",
                         headport="w",
-                        tailport="e",
+                        # tailport="e",
                     )
 
                     self.graph.add_edge(edge)
