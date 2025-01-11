@@ -568,9 +568,12 @@ class DockerComposeGraph:
         service_config = service.get("service_config")
 
         ports: list = service_config.get("ports", [])
-        ports_container: list = [os.path.expandvars(p) for p in ports]
-
+        if isinstance(ports, list):
+            ports_container: list = [os.path.expandvars(p) for p in ports]
+        elif isinstance(ports, pyyaml.YAMLObject):
+            ports_container: list = [os.path.expandvars(p) for p in ports.from_yaml()]
         _p = []
+
         for p in ports_container:
             port_host, port_container = p.split(":", maxsplit=1)
             id_service_port = f"<PLUG_{service_name}__{port_host}__{port_container}> {port_container}"
