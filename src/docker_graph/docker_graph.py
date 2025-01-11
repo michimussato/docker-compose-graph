@@ -738,6 +738,7 @@ class DockerComposeGraph:
                     dst=f"{dst}:<PLUG_{service_name}__{port_host}__{port_container}>",
                     color=_fillcolor,
                     # fillcolor=_fillcolor,
+                    dir="both",
                     arrowhead="dot",
                     tailhead="dot",
                 )
@@ -842,8 +843,9 @@ class DockerComposeGraph:
                         dst=f"{dst}:<PLUG_{service_name}__{volume_container}>",
                         color=_fillcolor,
                         # fillcolor=_fillcolor,
+                        dir="both",
                         arrowhead="dot",
-                        # tailhead="dot",
+                        tailhead="dot",
                     )
 
                     # edge.set_headport("w")
@@ -934,6 +936,7 @@ class DockerComposeGraph:
                         dst=f"{dst}:<PLUG_{_mapping}>",
                         color=_fillcolor,
                         # fillcolor=_fillcolor,
+                        dir="both",
                         arrowhead="dot",
                         tailhead="dot",
                     )
