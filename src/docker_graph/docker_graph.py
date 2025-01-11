@@ -848,7 +848,7 @@ class DockerComposeGraph:
                         arrowtail="dot",
                     )
 
-                    # edge.set_headport("w")
+                    edge.set_headport("w")
                     edge.set_tailport("e")
 
                     self.graph.add_edge(edge)
