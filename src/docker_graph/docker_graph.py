@@ -701,7 +701,8 @@ class DockerComposeGraph:
         # Todo
         #  - [ ] Sorted
 
-        _color = "white"
+        _color = "black"
+        _fillcolor = "white"
 
         for service_name, mappings in sorted(self.port_mappings["services"].items()):
 
@@ -718,6 +719,7 @@ class DockerComposeGraph:
                     label=port_host,
                     shape="circle",
                     color=_color,
+                    fillcolor=_fillcolor,
                 )
 
                 self.cluster_root_ports.add_node(node_host)
@@ -732,6 +734,7 @@ class DockerComposeGraph:
                     src=f"{service_name}__{port_host}__{port_container}",
                     dst=f"{dst}:<PLUG_{service_name}__{port_host}__{port_container}>",
                     color=_color,
+                    fillcolor=_fillcolor,
                     arrowhead="dot",
                     tailhead="dot",
                 )
@@ -795,7 +798,8 @@ class DockerComposeGraph:
         # Todo
         #  - [ ] Sorted
 
-        _color = "green"
+        _color = "black"
+        _fillcolor = "green"
 
         for volume_mapping in self.volume_mappings["services"]:
             # volume_mapping:
@@ -819,6 +823,7 @@ class DockerComposeGraph:
                         shape="box",
                         style="rounded",
                         color=_color,
+                        fillcolor=_fillcolor,
                     )
 
                     self.cluster_root_volumes.add_node(node_host)
@@ -833,6 +838,7 @@ class DockerComposeGraph:
                         src=node_host,
                         dst=f"{dst}:<PLUG_{service_name}__{volume_container}>",
                         color=_color,
+                        fillcolor=_fillcolor,
                         arrowhead="dot",
                         # tailhead="dot",
                     )
@@ -883,7 +889,8 @@ class DockerComposeGraph:
         # Todo
         #  - [ ] Sorted
 
-        _color = "orange"
+        _color = "black"
+        _fillcolor = "orange"
 
         for network_mapping in self.network_mappings["services"]:
             # network_mapping:
@@ -908,6 +915,7 @@ class DockerComposeGraph:
                         shape="box",
                         style="rounded",
                         color=_color,
+                        fillcolor=_fillcolor,
                     )
 
                     self.cluster_root_networks.add_node(node_host)
@@ -922,6 +930,7 @@ class DockerComposeGraph:
                         src=f"{_mapping}",
                         dst=f"{dst}:<PLUG_{_mapping}>",
                         color=_color,
+                        fillcolor=_fillcolor,
                         arrowhead="dot",
                         tailhead="dot",
                     )
