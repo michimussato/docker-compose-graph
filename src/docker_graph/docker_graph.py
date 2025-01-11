@@ -720,6 +720,7 @@ class DockerComposeGraph:
                     shape="circle",
                     color=_color,
                     fillcolor=_fillcolor,
+                    style="filled",
                 )
 
                 self.cluster_root_ports.add_node(node_host)
@@ -734,7 +735,7 @@ class DockerComposeGraph:
                     src=f"{service_name}__{port_host}__{port_container}",
                     dst=f"{dst}:<PLUG_{service_name}__{port_host}__{port_container}>",
                     color=_color,
-                    fillcolor=_fillcolor,
+                    # fillcolor=_fillcolor,
                     arrowhead="dot",
                     tailhead="dot",
                 )
@@ -821,7 +822,7 @@ class DockerComposeGraph:
                         name=f"{volume_host}__{volume_container}",
                         label=f"{volume_host}",
                         shape="box",
-                        style="rounded",
+                        style="filled,rounded",
                         color=_color,
                         fillcolor=_fillcolor,
                     )
@@ -838,7 +839,7 @@ class DockerComposeGraph:
                         src=node_host,
                         dst=f"{dst}:<PLUG_{service_name}__{volume_container}>",
                         color=_color,
-                        fillcolor=_fillcolor,
+                        # fillcolor=_fillcolor,
                         arrowhead="dot",
                         # tailhead="dot",
                     )
@@ -913,7 +914,7 @@ class DockerComposeGraph:
                         name=f"{_mapping}",
                         label=f"{_mapping}",
                         shape="box",
-                        style="rounded",
+                        style="filled,rounded",
                         color=_color,
                         fillcolor=_fillcolor,
                     )
@@ -930,7 +931,7 @@ class DockerComposeGraph:
                         src=f"{_mapping}",
                         dst=f"{dst}:<PLUG_{_mapping}>",
                         color=_color,
-                        fillcolor=_fillcolor,
+                        # fillcolor=_fillcolor,
                         arrowhead="dot",
                         tailhead="dot",
                     )
