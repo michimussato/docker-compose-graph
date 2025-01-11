@@ -930,14 +930,14 @@ class DockerComposeGraph:
                     dst = self.get_name(n)
                     edge = pydot.Edge(
                         src=f"{_mapping}",
-                        dst=f"{dst}:PLUG_{_mapping}",
+                        dst=f"{dst}:<PLUG_{_mapping}>",
                         color=_fillcolor,
                         # fillcolor=_fillcolor,
                         dir="both",
                         arrowhead="dot",
                         arrowtail="dot",
-                        headport="w",
-                        # tailport="e",
+                        # headport="w",
+                        tailport="e",
                     )
 
                     self.graph.add_edge(edge)
