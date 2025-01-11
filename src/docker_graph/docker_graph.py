@@ -735,7 +735,7 @@ class DockerComposeGraph:
                     src=f"{service_name}__{port_host}__{port_container}",
                     dst=f"{dst}:<PLUG_{service_name}__{port_host}__{port_container}>",
                     color=_color,
-                    # fillcolor=_fillcolor,
+                    fillcolor=_fillcolor,
                     arrowhead="dot",
                     tailhead="dot",
                 )
@@ -839,7 +839,7 @@ class DockerComposeGraph:
                         src=node_host,
                         dst=f"{dst}:<PLUG_{service_name}__{volume_container}>",
                         color=_color,
-                        # fillcolor=_fillcolor,
+                        fillcolor=_fillcolor,
                         arrowhead="dot",
                         # tailhead="dot",
                     )
@@ -931,7 +931,7 @@ class DockerComposeGraph:
                         src=f"{_mapping}",
                         dst=f"{dst}:<PLUG_{_mapping}>",
                         color=_color,
-                        # fillcolor=_fillcolor,
+                        fillcolor=_fillcolor,
                         arrowhead="dot",
                         tailhead="dot",
                     )
