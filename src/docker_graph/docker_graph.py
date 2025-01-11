@@ -571,7 +571,10 @@ class DockerComposeGraph:
         if isinstance(ports, list):
             ports_container: list = [os.path.expandvars(p) for p in ports]
         elif isinstance(ports, pyyaml.YAMLObject):
-            ports_container: list = [os.path.expandvars(p) for p in ports.from_yaml()]
+            # OverrideArray() in
+            # ~/repos/deadline-docker/src/Deadline/deadline_docker/assets.py
+            # Todo: find a better solution
+            ports_container: list = [os.path.expandvars(p) for p in ports.array]
         _p = []
 
         for p in ports_container:
