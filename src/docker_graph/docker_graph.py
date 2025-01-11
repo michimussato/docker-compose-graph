@@ -936,7 +936,7 @@ class DockerComposeGraph:
                         dir="both",
                         arrowhead="dot",
                         arrowtail="dot",
-                        # headport="w",
+                        headport="w",
                         tailport="e",
                     )
 
