@@ -684,10 +684,9 @@ class DockerComposeGraph:
                     dir="both",
                     color="yellow",
                     style="dashed",
+                    # headport="nw",
+                    # tailport="ne",
                 )
-
-                # edge.set_headport("nw")
-                # edge.set_tailport("ne")
 
                 self.graph.add_edge(edge)
 
@@ -741,10 +740,9 @@ class DockerComposeGraph:
                     dir="both",
                     arrowhead="dot",
                     arrowtail="dot",
+                    # headport="w",
+                    tailport="e",
                 )
-
-                # edge.set_headport("w")
-                edge.set_tailport("e")
 
                 self.graph.add_edge(edge)
 
@@ -846,10 +844,9 @@ class DockerComposeGraph:
                         dir="both",
                         arrowhead="dot",
                         arrowtail="dot",
+                        # headport="w",
+                        tailport="e",
                     )
-
-                    edge.set_headport("w")
-                    edge.set_tailport("e")
 
                     self.graph.add_edge(edge)
 
@@ -939,10 +936,9 @@ class DockerComposeGraph:
                         dir="both",
                         arrowhead="dot",
                         arrowtail="dot",
+                        # headport="w",
+                        tailport="e",
                     )
-
-                    edge.set_headport("w")
-                    edge.set_tailport("e")
 
                     self.graph.add_edge(edge)
 
