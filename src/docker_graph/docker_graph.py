@@ -246,7 +246,7 @@ class DockerComposeGraph:
         _logger.info(f"Processing {_abs_yaml.as_posix()}")
 
         with open(_abs_yaml, "r") as fr:
-            docker_compose_chainmap = pyyaml.safe_load(fr)
+            docker_compose_chainmap = pyyaml.full_load(fr)
 
         # the first iteration
         # of recursive function
