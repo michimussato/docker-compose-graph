@@ -734,8 +734,8 @@ class DockerComposeGraph:
                 edge = pydot.Edge(
                     src=f"{service_name}__{port_host}__{port_container}",
                     dst=f"{dst}:<PLUG_{service_name}__{port_host}__{port_container}>",
-                    color=_color,
-                    fillcolor=_fillcolor,
+                    color=_fillcolor,
+                    # fillcolor=_fillcolor,
                     arrowhead="dot",
                     tailhead="dot",
                 )
@@ -838,8 +838,8 @@ class DockerComposeGraph:
                     edge = pydot.Edge(
                         src=node_host,
                         dst=f"{dst}:<PLUG_{service_name}__{volume_container}>",
-                        color=_color,
-                        fillcolor=_fillcolor,
+                        color=_fillcolor,
+                        # fillcolor=_fillcolor,
                         arrowhead="dot",
                         # tailhead="dot",
                     )
@@ -930,8 +930,8 @@ class DockerComposeGraph:
                     edge = pydot.Edge(
                         src=f"{_mapping}",
                         dst=f"{dst}:<PLUG_{_mapping}>",
-                        color=_color,
-                        fillcolor=_fillcolor,
+                        color=_fillcolor,
+                        # fillcolor=_fillcolor,
                         arrowhead="dot",
                         tailhead="dot",
                     )
