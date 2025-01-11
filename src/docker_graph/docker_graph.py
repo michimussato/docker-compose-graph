@@ -680,7 +680,7 @@ class DockerComposeGraph:
                     dst=f"{src}:<PLUG_DEPENDS_ON_NODE-SERVICE_{depends_on}>",
                     src=f"NODE-SERVICE_{depends_on}",
                     arrowhead="dot",
-                    tailhead="normal",
+                    arrowtail="normal",
                     dir="both",
                     color="yellow",
                     style="dashed",
@@ -740,7 +740,7 @@ class DockerComposeGraph:
                     # fillcolor=_fillcolor,
                     dir="both",
                     arrowhead="dot",
-                    tailhead="dot",
+                    arrowtail="dot",
                 )
 
                 # edge.set_headport("w")
@@ -845,7 +845,7 @@ class DockerComposeGraph:
                         # fillcolor=_fillcolor,
                         dir="both",
                         arrowhead="dot",
-                        tailhead="dot",
+                        arrowtail="dot",
                     )
 
                     # edge.set_headport("w")
@@ -938,7 +938,7 @@ class DockerComposeGraph:
                         # fillcolor=_fillcolor,
                         dir="both",
                         arrowhead="dot",
-                        tailhead="dot",
+                        arrowtail="dot",
                     )
 
                     # edge.set_headport("w")
