@@ -702,6 +702,12 @@ class DockerComposeGraph:
         #  - [ ] Sorted
         for service_name, mappings in sorted(self.port_mappings["services"].items()):
 
+            if isinstance(mappings, pyyaml.YAMLObject):
+                # OverrideArray() in
+                # ~/repos/deadline-docker/src/Deadline/deadline_docker/assets.py
+                # Todo: find a better solution
+                mappings = mappings.array
+
             for _mapping in sorted(mappings):
                 port_host, port_container = os.path.expandvars(_mapping).split(":", maxsplit=1)
                 node_host = pydot.Node(
