@@ -677,10 +677,11 @@ class DockerComposeGraph:
                 src = self.get_name(node_service)
 
                 edge = pydot.Edge(
-                    src=f"{src}:<PLUG_DEPENDS_ON_NODE-SERVICE_{depends_on}>",
-                    dst=f"NODE-SERVICE_{depends_on}",
-                    # arrowhead="dot",
+                    dst=f"{src}:<PLUG_DEPENDS_ON_NODE-SERVICE_{depends_on}>",
+                    src=f"NODE-SERVICE_{depends_on}",
+                    # arrowhead="normal",
                     # tailhead="dot",
+                    dir="back",
                     color="yellow",
                 )
 
