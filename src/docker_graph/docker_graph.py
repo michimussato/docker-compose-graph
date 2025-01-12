@@ -931,8 +931,8 @@ class DockerComposeGraph:
                     edge = pydot.Edge(
                         src=f"{_mapping}",
                         # dst="%s" % dst,
-                        dst="%s:<PLUG_%s>" % (dst, _mapping),
-                        # dst=f"{dst}:<PLUG_{_mapping}>",
+                        # dst="%s:<PLUG_%s>" % (dst, _mapping),
+                        dst=f"{dst}:<PLUG_{_mapping}>",
                         color=_fillcolor,
                         # fillcolor=_fillcolor,
                         dir="both",
@@ -942,11 +942,26 @@ class DockerComposeGraph:
                         tailport="e",
                     )
 
-                    # Working:
+                    edge.set_headport("w")
+
+                    # edge = pydot.Edge(
+                    #     src=f"{_mapping}",
+                    #     dst="%s:<PLUG_%s>" % (dst, _mapping),
+                    #     color=_fillcolor,
+                    #     dir="both",
+                    #     arrowhead="dot",
+                    #     arrowtail="dot",
+                    #     tailport="e",
+                    # )
+                    #
+                    # edge.set_headport("w")
+                    #
+                    # Results in
+                    # mongodb:e -> "NODE-SERVICE_dagster-dev":w
+
+                    # Expected:
                     # mongodb:e -> "NODE-SERVICE_dagster-dev":<PLUG_mongodb>:w
                     #
-
-                    edge.set_headport("w")
 
                     self.graph.add_edge(edge)
 
