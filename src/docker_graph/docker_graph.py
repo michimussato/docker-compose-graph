@@ -938,9 +938,15 @@ class DockerComposeGraph:
                         dir="both",
                         arrowhead="dot",
                         arrowtail="dot",
-                        headport="w",
+                        # headport="w",
                         tailport="e",
                     )
+
+                    # Working:
+                    # mongodb:e -> "NODE-SERVICE_dagster-dev":<PLUG_mongodb>:w
+                    #
+
+                    edge.set_headport("w")
 
                     self.graph.add_edge(edge)
 
