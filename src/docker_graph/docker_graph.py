@@ -942,8 +942,6 @@ class DockerComposeGraph:
                         tailport="e",
                     )
 
-                    edge.set_headport("w")
-
                     # edge = pydot.Edge(
                     #     src=f"{_mapping}",
                     #     dst="%s:<PLUG_%s>" % (dst, _mapping),
