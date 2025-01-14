@@ -62,6 +62,11 @@ import pathlib
 import sys
 import yaml as pyyaml
 import pydot
+import diagrams
+from diagrams import custom
+from diagrams.generic.network import Subnet, Switch
+from diagrams.generic.storage import Storage
+from diagrams.onprem.container import Docker
 import dotenv
 from collections import OrderedDict
 
@@ -81,6 +86,16 @@ _logger = logging.getLogger(__name__)
 # when using this Python module as a library.
 
 
+class NetworkPort(custom.Custom):
+    def __init__(self, label, *args, **kwargs):
+        super().__init__(
+            label=label,
+            icon_path="/home/michael/git/repos/docker-graph/src/docker_graph/resources/network-port.png",
+            *args,
+            **kwargs,
+        )
+
+
 class DockerComposeGraph:
 
     def __init__(
@@ -97,99 +112,107 @@ class DockerComposeGraph:
 
         # Main Graph
 
-        self.graph = pydot.Dot(
-            graph_name="main_graph",
-            label="my_graph",
-            rankdir="LR",
-            graph_type="digraph",
-            bgcolor="#2f2f2f",
-            # splines="polyline",
-            splines=False,
-            pad="1.5", nodesep="0.3", ranksep="10"
-        )
+        # self.graph = diagrams.Diagram(
+        #     show=True,
+        #     name="main_graph",
+        #     # direction="LR",
+        #     graph_attr={
+        #         "label": "my_graph",
+        #         # "rankdir": "LR",
+        #         "graph_type": "digraph",
+        #         "splines": False,
+        #         "pad": 1.5,
+        #         "nodesep": 0.3,
+        #         "ranksep": 10,
+        #         "bgcolor": "#2f2f2f",
+        #     },
+        # )
 
         # Clusters
 
-        ## Root Clusters
+        # ## Root Clusters
+        #
+        # self.cluster_root_include = diagrams.Cluster(
+        #     label="cluster_root_include",
+        #     direction="TB",
+        #     graph_attr={
+        #         "color": "magenta",
+        #         # "rankdir": "TB",
+        #     },
+        # )
+        #
+        # self.cluster_root_services = diagrams.Cluster(
+        #     label="cluster_root_services",
+        #     direction="TB",
+        #     graph_attr={
+        #         "color": "magenta",
+        #         # "rankdir": "TB",
+        #     },
+        # )
+        #
+        # ### Collection Clusters
+        # # Clusters summarize root and
+        # # services into one for easy
+        # # overview
+        #
+        # #### images
+        #
+        # # self.cluster_root_images = pydot.Cluster(
+        # #     graph_name="cluster_root_images",
+        # #     label="cluster_root_images",
+        # #     color="yellow",
+        # # )
 
-        self.cluster_root_include = pydot.Cluster(
-            graph_name="cluster_root_include",
-            label="cluster_root_include",
-            color="magenta",
-            rankdir="TB",
-        )
-
-        self.cluster_root_services = pydot.Cluster(
-            graph_name="cluster_root_services",
-            label="cluster_root_services",
-            color="magenta",
-            rankdir="TB",
-        )
-
-        ### Collection Clusters
-        # Clusters summarize root and
-        # services into one for easy
-        # overview
-
-        #### images
-
-        # self.cluster_root_images = pydot.Cluster(
-        #     graph_name="cluster_root_images",
-        #     label="cluster_root_images",
-        #     color="yellow",
+        # #### ports
+        #
+        # self.cluster_root_ports = diagrams.Cluster(
+        #     label="cluster_root_ports",
+        #     graph_attr={
+        #         "color": "red",
+        #     },
         # )
 
-        #### ports
-
-        self.cluster_root_ports = pydot.Cluster(
-            graph_name="cluster_root_ports",
-            label="cluster_root_ports",
-            color="red",
-        )
-
-        #### volumes
-
-        self.cluster_root_volumes = pydot.Cluster(
-            graph_name="cluster_root_volumes",
-            label="cluster_root_volumes",
-            color="red",
-            rankdir="TB",
-            graph_type="digraph",
-            # shape="box",
-            # style="rounded",
-        )
-
-        #### networks
-
-        self.cluster_root_networks = pydot.Cluster(
-            graph_name="cluster_root_networks",
-            label="cluster_root_networks",
-            color="red",
-            rankdir="TB",
-            graph_type="digraph",
-            # shape="box",
-            # style="rounded",
-        )
-
-        ## Service Clusters
-
-        ### ports
-
-        ### volumes
-
-        # self.cluster_service_volumes = pydot.Cluster(
-        #     graph_name="cluster_service_volumes",
-        #     label="cluster_service_volumes",
-        #     color="blue",
+        # #### volumes
+        #
+        # self.cluster_root_volumes = diagrams.Cluster(
+        #     label="cluster_root_volumes",
+        #     direction="TB",
+        #     graph_attr={
+        #         "color": "red",
+        #     },
         # )
-
-        ### networks
-
-        self.cluster_service_networks = pydot.Cluster(
-            graph_name="cluster_service_networks",
-            label="cluster_service_networks",
-            color="blue",
-        )
+        #
+        # #### networks
+        #
+        # self.cluster_root_networks = diagrams.Cluster(
+        #     label="cluster_root_networks",
+        #     direction="TB",
+        #     graph_attr={
+        #         "color": "red",
+        #     },
+        # )
+        #
+        # ## Service Clusters
+        #
+        # ### ports
+        #
+        # ### volumes
+        #
+        # # self.cluster_service_volumes = pydot.Cluster(
+        # #     graph_name="cluster_service_volumes",
+        # #     label="cluster_service_volumes",
+        # #     color="blue",
+        # # )
+        #
+        # ### networks
+        #
+        # self.cluster_service_networks = diagrams.Cluster(
+        #     label="cluster_service_networks",
+        #     direction="TB",
+        #     graph_attr={
+        #         "color": "blue",
+        #     },
+        # )
 
     def write_png(self, path):
 
@@ -228,7 +251,7 @@ class DockerComposeGraph:
 
         if self.docker_yaml is None:
             self.docker_yaml = yaml
-            self.graph.set_label(self.docker_yaml.as_posix())
+            # self.graph.set_label(self.docker_yaml.as_posix())
 
         if not yaml.is_absolute():
             _logger.debug(yaml)
@@ -283,6 +306,87 @@ class DockerComposeGraph:
         self.network_mappings = self._get_networks(trees)
 
         primary_graph = self.get_primary_graph()
+
+        root_services_cluster = self.add_root_services_cluster(primary_graph)
+
+        # _service_clusters = []
+        for service in self.services:
+            print(service)
+            service_cluster = self.add_service_cluster(
+                primary_graph,
+                root_services_cluster,
+                service
+            )
+
+            self.add_service_networks(
+                primary_graph,
+                root_services_cluster,
+                service_cluster,
+                service,
+            )
+
+            self.add_service_volumes(
+                primary_graph,
+                root_services_cluster,
+                service_cluster,
+                service,
+            )
+
+            self.add_service_ports(
+                primary_graph,
+                root_services_cluster,
+                service_cluster,
+                service,
+            )
+
+            # _service_clusters.append(service_cluster)
+
+            # print(service)
+
+        # for service in self.services:
+        #     src = None
+        #     dst = None
+        #     _depends_on_conform = self._conform_depends_on(service["service_config"].get("depends_on", []))
+        #
+        #     for _service_cluster in _service_clusters:
+        #         print(service)
+        #         if _service_cluster.name == f"cluster_cluster_service_{service.get('service_name')}":
+        #             src = _service_cluster
+        #             break
+        #
+        #     # print(_depends_on_conform)
+        #     for depends_on in _depends_on_conform:
+        #         for _service_cluster in _service_clusters:
+        #             if _service_cluster.name == f"cluster_cluster_service_{depends_on}":
+        #                 dst = _service_cluster
+        #                 break
+        #                 # raise Exception(f"Service cluster {_service_cluster.label} already exists")
+        #
+        #     if all([src, dst]):
+        #         with primary_graph:
+        #             src >> dst
+        #
+        #         print(service, depends_on)
+            #     for _service_cluster in _service_clusters:
+            #         # print(_service_cluster)
+            #         # print(_service_cluster.name)
+            #         # print(_service_cluster.label)
+            #         if f"cluster_cluster_service_{depends_on}" == _service_cluster.name:
+            #             print(_service_cluster)
+            #             # with primary_graph:
+            #             #     _service_cluster >>
+
+
+        self.add_root_ports_cluster(primary_graph)
+        self.add_root_networks_cluster(primary_graph)
+
+        # print(primary_graph)
+
+        primary_graph.dot.render(
+            format="png",
+            view=False,
+            quiet=True,
+        )
 
         # for secondary_tree in trees:
         #     print
@@ -636,389 +740,569 @@ class DockerComposeGraph:
 
         return ret
 
-    def get_primary_graph(self):
+    @staticmethod
+    def get_primary_graph():
+        with diagrams.Diagram(
+            show=False,
+            name="main_graph",
+            # direction="LR",
+            graph_attr={
+                "label": "my_graph",
+                # "rankdir": "LR",
+                "graph_type": "digraph",
+                "splines": "False",
+                "pad": "1.5",
+                "nodesep": "0.3",
+                "ranksep": "10",
+                "bgcolor": "#2f2f2f",
+            },
+        ) as main_graph:
+            return main_graph
 
-        self.graph.add_subgraph(self.cluster_root_services)
-        self.graph.add_subgraph(self.cluster_root_ports)
-        self.graph.add_subgraph(self.cluster_root_volumes)
-        self.graph.add_subgraph(self.cluster_root_networks)
-        # self.graph.add_subgraph(self.cluster_root_services)
-        # self.graph.add_subgraph(self.cluster_service_depends_on)
-        # self.graph.add_subgraph(self.cluster_root_images)
-        # self.graph.add_subgraph(self.cluster_service_volumes)
-        # self.graph.add_subgraph(self.cluster_service_networks)
+    def add_root_services_cluster(self, main_graph):
+        with main_graph:
+            with diagrams.Cluster(
+                label="cluster_root_services",
+                direction="TB",
+                graph_attr={
+                    "color": "magenta",
+                    # "rankdir": "TB",
+                },
+            ) as cluster_root_services:
+                return cluster_root_services
 
-        #######################
-        # Get all Services and add them as clusters
-        for service in self.services:
-            cluster_service = pydot.Cluster(
-                graph_name=f"cluster_service_{service.get('service_name')}",
-                label=f"cluster_service_{service.get('service_name')}",
-                color="white",
-                rankdir="TB",
-                shape="square",
-                style="rounded",
-            )
+    def add_service_cluster(self, primary_graph, services_cluster, service):
+        with primary_graph:
+            with services_cluster:
+                with diagrams.Cluster(
+                    label=f"cluster_service_{service.get('service_name')}",
+                    # graph_name=f"cluster_service_{service.get('service_name')}",
+                    direction="TB",
+                    # graph_attr={
+                    #     "color": "white",
+                    #     "shape": "square",
+                    #     "style": "rounded",
+                    # },
+                ) as service_cluster:
+                    return service_cluster
 
-            node_service = pydot.Node(
-                name=f"NODE-SERVICE_{service.get('service_name')}",
-                label=self._get_service_label(service),
-                shape="record",
-                style="filled",
-            )
+    def add_service_networks(
+            self,
+            primary_graph,
+            root_services_cluster,
+            services_cluster,
+            service,
+    ):
+        with primary_graph:
+            with root_services_cluster:
+                with services_cluster:
+                    with diagrams.Cluster(
+                        label="networks",
+                    ):
+                        _networks = []
+                        for network in service.get("service_config", {}).get("networks", []):
+                            _networks.append(
+                                Subnet(
+                                    nodeid=f"{service.get('service_name')}_{network}",
+                                    label=network,
+                                )
+                            )
 
-            cluster_service.add_node(node_service)
+    def add_service_volumes(
+            self,
+            primary_graph,
+            root_services_cluster,
+            services_cluster,
+            service,
+    ):
+        with primary_graph:
+            with root_services_cluster:
+                with services_cluster:
+                    with diagrams.Cluster(
+                        label="volumes",
+                    ):
+                        _volumes = []
+                        for volume in service.get("service_config", {}).get("volumes", []):
+                            _volumes.append(
+                                Storage(
+                                    nodeid=f"{service.get('service_name')}_{volume}",
+                                    label=volume,
+                                )
+                            )
 
-            _depends_on_conform = self._conform_depends_on(service["service_config"].get("depends_on", []))
+    def add_service_ports(
+            self,
+            primary_graph,
+            root_services_cluster,
+            services_cluster,
+            service,
+    ):
+        with primary_graph:
+            with root_services_cluster:
+                with services_cluster:
+                    with diagrams.Cluster(
+                        label="ports",
+                    ):
+                        _ports = []
+                        for port in service.get("service_config", {}).get("ports", []):
+                            _ports.append(
+                                NetworkPort(
+                                    nodeid=f"{service.get('service_name')}_{port}",
+                                    label=port,
+                                )
+                            )
 
-            # Todo:
-            for depends_on in _depends_on_conform:
-
-                src = self.get_name(node_service)
-
-                edge = pydot.Edge(
-                    dst=f"{src}:<PLUG_DEPENDS_ON_NODE-SERVICE_{depends_on}>",
-                    src=f"NODE-SERVICE_{depends_on}",
-                    arrowhead="dot",
-                    arrowtail="normal",
-                    dir="both",
-                    color="yellow",
-                    style="dashed",
-                    # headport="nw",
-                    # tailport="ne",
-                )
-
-                self.graph.add_edge(edge)
-
-            self.cluster_root_services.add_subgraph(cluster_service)
-
-        # all services
-        #######################
-
-        #######################
-        # Get all Ports
-
-        # Service Ports
-        # Todo
-        #  - [ ] Sorted
-
-        _color = "black"
-        _fillcolor = "white"
-
-        for service_name, mappings in sorted(self.port_mappings["services"].items()):
-
-            if isinstance(mappings, pyyaml.YAMLObject):
-                # OverrideArray() in
-                # ~/repos/deadline-docker/src/Deadline/deadline_docker/assets.py
-                # Todo: find a better solution
-                mappings = mappings.array
-
-            for _mapping in sorted(mappings):
-                port_host, port_container = os.path.expandvars(_mapping).split(":", maxsplit=1)
-                node_host = pydot.Node(
-                    name=f"{service_name}__{port_host}__{port_container}",
-                    label=port_host,
-                    shape="circle",
-                    color=_color,
-                    fillcolor=_fillcolor,
-                    style="filled",
-                )
-
-                self.cluster_root_ports.add_node(node_host)
-
-                for sg in self.cluster_root_services.get_subgraphs():
-                    if self.get_name(sg) == f"cluster_cluster_service_{service_name}":
-                        n = sg.get_node(name=f"NODE-SERVICE_{service_name}")[0]
-                        break
-
-                dst = self.get_name(n)
-                edge = pydot.Edge(
-                    src=f"{service_name}__{port_host}__{port_container}",
-                    dst=f"{dst}:<PLUG_{service_name}__{port_host}__{port_container}>",
-                    color=_fillcolor,
-                    # fillcolor=_fillcolor,
-                    dir="both",
-                    arrowhead="dot",
-                    arrowtail="dot",
-                    # headport="w",
-                    tailport="e",
-                )
-
-                self.graph.add_edge(edge)
-
-        # # Root Ports
-        # # Todo
-        # for port_mappings in self.port_mappings["root"]:
-        #     # port_mapping:
-        #     #
-        #
-        #     _logger.debug(f"Not Implemented yet.")
-        #
-        #     # for service_name, mappings in port_mapping.items():
-        #     #
-        #     #     for _mapping in mappings:
-        #     #         port_host, port_container = os.path.expandvars(_mapping).split(":", maxsplit=1)
-        #     #         # print(service_mapping)
-        #     #         node_host = pydot.Node(
-        #     #             name=f"{service_name}__{port_host}__{port_container}",
-        #     #             label=port_host,
-        #     #             shape="circle",
-        #     #         )
-        #     #
-        #     #         self.cluster_root_ports.add_node(node_host)
-
-        # all ports
-        #######################
-
-        # #######################
-        # # Get all images
-        # _images = []
-        # for service_name, service_values in services.items():
-        #     image = service_values.get("image", None)
-        #     if image is not None:
-        #         _images.append({
-        #             f"image_host": image,
-        #             f"image_{service_name}": image
-        #         })
-        #
-        # # _images = list(set(_images))
-        #
-        # for image in _images:
-        #     node = pydot.Node(
-        #         name=image["image_host"],
-        #         label=image["image_host"],
-        #     )
-        #
-        #     self.cluster_root_images.add_node(node)
-        # # all images
-        # #######################
-
-        #######################
-        # Get all Volumes
-
-        # Service Volumes
-        # Todo
-        #  - [ ] Sorted
-
-        _color = "black"
-        _fillcolor = "green"
-
-        for volume_mapping in self.volume_mappings["services"]:
-            # volume_mapping:
-            # [{'mongodb-10-2': ['${NFS_ENTRY_POINT}/test_data/10.2/opt/Thinkbox/DeadlineDatabase10/mongo/data_LOCAL:/opt/Thinkbox/DeadlineDatabase10/mongo/data', '${NFS_ENTRY_POINT}:${NFS_ENTRY_POINT}:ro', '${NFS_ENTRY_POINT}:${NFS_ENTRY_POINT_LNS}:ro']}, {'mongo-express-10-2': ['${NFS_ENTRY_POINT}/test_data/10.2/opt/Thinkbox/DeadlineDatabase10/mongo/data_LOCAL:/opt/Thinkbox/DeadlineDatabase10/mongo/data', '${NFS_ENTRY_POINT}:${NFS_ENTRY_POINT}:ro', '${NFS_ENTRY_POINT}:${NFS_ENTRY_POINT_LNS}:ro']}, {'filebrowser': ['./databases/filebrowser/filebrowser.db:/filebrowser.db', './configs/filebrowser/filebrowser.json:/.filebrowser.json', '${NFS_ENTRY_POINT}/test_data/10.2/opt/Thinkbox/DeadlineDatabase10/mongo/data_LOCAL:/opt/Thinkbox/DeadlineDatabase10/mongo/data:ro', '${NFS_ENTRY_POINT}:${NFS_ENTRY_POINT}:ro', '${NFS_ENTRY_POINT}:${NFS_ENTRY_POINT_LNS}:ro']}, {'dagster_dev': ['./configs/dagster_shared/workspace.yaml:/dagster/workspace.yaml:ro', './configs/dagster_shared/dagster.yaml:/dagster/materializations/workspace.yaml:ro', '${NFS_ENTRY_POINT}:${NFS_ENTRY_POINT}', '${NFS_ENTRY_POINT}:${NFS_ENTRY_POINT_LNS}']}, {'deadline-repository-installer-10-2': ['${NFS_ENTRY_POINT}/test_data/10.2/opt/Thinkbox/DeadlineRepository10:/opt/Thinkbox/DeadlineRepository10', '${NFS_ENTRY_POINT}:${NFS_ENTRY_POINT}:ro', '${NFS_ENTRY_POINT}:${NFS_ENTRY_POINT_LNS}:ro']}, {'deadline-client-installer-10-2': ['${NFS_ENTRY_POINT}/test_data/10.2/opt/Thinkbox/Deadline10:/opt/Thinkbox/Deadline10', '${NFS_ENTRY_POINT}/test_data/10.2/opt/Thinkbox/DeadlineRepository10:/opt/Thinkbox/DeadlineRepository10', '${NFS_ENTRY_POINT}:${NFS_ENTRY_POINT}:ro', '${NFS_ENTRY_POINT}:${NFS_ENTRY_POINT_LNS}:ro']}, {'deadline-rcs-runner-10-2': ['./configs/Deadline10/deadline.ini:/var/lib/Thinkbox/Deadline10/deadline.ini:ro', '${NFS_ENTRY_POINT}/test_data/10.2/opt/Thinkbox/Deadline10:/opt/Thinkbox/Deadline10', '${NFS_ENTRY_POINT}/test_data/10.2/opt/Thinkbox/DeadlineRepository10:/opt/Thinkbox/DeadlineRepository10', '${NFS_ENTRY_POINT}:${NFS_ENTRY_POINT}:ro', '${NFS_ENTRY_POINT}:${NFS_ENTRY_POINT_LNS}:ro']}, {'deadline-pulse-runner-10-2': ['./configs/Deadline10/deadline.ini:/var/lib/Thinkbox/Deadline10/deadline.ini:ro', '${NFS_ENTRY_POINT}/test_data/10.2/opt/Thinkbox/Deadline10:/opt/Thinkbox/Deadline10', '${NFS_ENTRY_POINT}/test_data/10.2/opt/Thinkbox/DeadlineRepository10:/opt/Thinkbox/DeadlineRepository10', '${NFS_ENTRY_POINT}:${NFS_ENTRY_POINT}:ro', '${NFS_ENTRY_POINT}:${NFS_ENTRY_POINT_LNS}:ro']}, {'deadline-worker-runner-10-2': ['./configs/Deadline10/deadline.ini:/var/lib/Thinkbox/Deadline10/deadline.ini:ro', '${NFS_ENTRY_POINT}/test_data/10.2/opt/Thinkbox/Deadline10:/opt/Thinkbox/Deadline10', '${NFS_ENTRY_POINT}/test_data/10.2/opt/Thinkbox/DeadlineRepository10:/opt/Thinkbox/DeadlineRepository10', '${NFS_ENTRY_POINT}:${NFS_ENTRY_POINT}:ro', '${NFS_ENTRY_POINT}:${NFS_ENTRY_POINT_LNS}:ro']}, {'deadline-webservice-runner-10-2': ['./configs/Deadline10/deadline.ini:/var/lib/Thinkbox/Deadline10/deadline.ini:ro', '${NFS_ENTRY_POINT}/test_data/10.2/opt/Thinkbox/Deadline10:/opt/Thinkbox/Deadline10', '${NFS_ENTRY_POINT}/test_data/10.2/opt/Thinkbox/DeadlineRepository10:/opt/Thinkbox/DeadlineRepository10', '${NFS_ENTRY_POINT}:${NFS_ENTRY_POINT}:ro', '${NFS_ENTRY_POINT}:${NFS_ENTRY_POINT_LNS}:ro']}]
-
-            for service_name, mappings in sorted(volume_mapping.items()):
-
-                for _mapping in sorted(mappings):
-                    split = os.path.expandvars(_mapping).split(":")
-
-                    volume_host = split[0]
-                    volume_container = split[1]
-                    volume_mode = "rw"
-
-                    if len(split) > 2:
-                        volume_mode = split[2]
-
-                    node_host = pydot.Node(
-                        name=f"{volume_host}__{volume_container}",
-                        label=f"{volume_host}",
-                        shape="box",
-                        style="filled,rounded",
-                        color=_color,
-                        fillcolor=_fillcolor,
-                    )
-
-                    self.cluster_root_volumes.add_node(node_host)
-
-                    for sg in self.cluster_root_services.get_subgraphs():
-                        if self.get_name(sg) == f"cluster_cluster_service_{service_name}":
-                            n = sg.get_node(name=f"NODE-SERVICE_{service_name}")[0]
-                            break
-
-                    dst = self.get_name(n)
-                    edge = pydot.Edge(
-                        src=node_host,
-                        dst=f"{dst}:<PLUG_{service_name}__{volume_container}>",
-                        color=_fillcolor,
-                        # fillcolor=_fillcolor,
-                        dir="both",
-                        arrowhead="dot",
-                        arrowtail="dot",
-                        # headport="w",
-                        tailport="e",
-                    )
-
-                    self.graph.add_edge(edge)
-
-        # Root Volumes
-        # Todo
-        #  - [ ] Sorted
-        # Todo
-        for volume_mapping in self.volume_mappings["root"]:
-            # volume_mapping:
-            #
-
-            _logger.debug(f"Not Implemented yet.")
-
-            # for service_name, mappings in volume_mapping.items():
-            #
-            #     for _mapping in mappings:
-            #         split = os.path.expandvars(_mapping).split(":")
-            #
-            #         volume_host = split[0]
-            #         volume_container = split[1]
-            #         volume_mode = "rw"
-            #
-            #         if len(split) > 2:
-            #             volume_mode = split[2]
-            #
-            #         node_host = pydot.Node(
-            #             name=f"{service_name}__{volume_host}__{volume_container}",
-            #             label=f"{volume_host} ({volume_mode})",
-            #             shape="box",
-            #             style="rounded",
-            #         )
-            #
-            #         self.cluster_root_volumes.add_node(node_host)
-
-        # all volumes
-        #######################
-
-        #######################
-        # Get all Networks
-
-        # Service Networks
-        # Todo
-        #  - [ ] Sorted
-
-        _color = "black"
-        _fillcolor = "orange"
-
-        for network_mapping in self.network_mappings["services"]:
-            # network_mapping:
-            # [{'mongodb-10-2': ['${NFS_ENTRY_POINT}/test_data/10.2/opt/Thinkbox/DeadlineDatabase10/mongo/data_LOCAL:/opt/Thinkbox/DeadlineDatabase10/mongo/data', '${NFS_ENTRY_POINT}:${NFS_ENTRY_POINT}:ro', '${NFS_ENTRY_POINT}:${NFS_ENTRY_POINT_LNS}:ro']}, {'mongo-express-10-2': ['${NFS_ENTRY_POINT}/test_data/10.2/opt/Thinkbox/DeadlineDatabase10/mongo/data_LOCAL:/opt/Thinkbox/DeadlineDatabase10/mongo/data', '${NFS_ENTRY_POINT}:${NFS_ENTRY_POINT}:ro', '${NFS_ENTRY_POINT}:${NFS_ENTRY_POINT_LNS}:ro']}, {'filebrowser': ['./databases/filebrowser/filebrowser.db:/filebrowser.db', './configs/filebrowser/filebrowser.json:/.filebrowser.json', '${NFS_ENTRY_POINT}/test_data/10.2/opt/Thinkbox/DeadlineDatabase10/mongo/data_LOCAL:/opt/Thinkbox/DeadlineDatabase10/mongo/data:ro', '${NFS_ENTRY_POINT}:${NFS_ENTRY_POINT}:ro', '${NFS_ENTRY_POINT}:${NFS_ENTRY_POINT_LNS}:ro']}, {'dagster_dev': ['./configs/dagster_shared/workspace.yaml:/dagster/workspace.yaml:ro', './configs/dagster_shared/dagster.yaml:/dagster/materializations/workspace.yaml:ro', '${NFS_ENTRY_POINT}:${NFS_ENTRY_POINT}', '${NFS_ENTRY_POINT}:${NFS_ENTRY_POINT_LNS}']}, {'deadline-repository-installer-10-2': ['${NFS_ENTRY_POINT}/test_data/10.2/opt/Thinkbox/DeadlineRepository10:/opt/Thinkbox/DeadlineRepository10', '${NFS_ENTRY_POINT}:${NFS_ENTRY_POINT}:ro', '${NFS_ENTRY_POINT}:${NFS_ENTRY_POINT_LNS}:ro']}, {'deadline-client-installer-10-2': ['${NFS_ENTRY_POINT}/test_data/10.2/opt/Thinkbox/Deadline10:/opt/Thinkbox/Deadline10', '${NFS_ENTRY_POINT}/test_data/10.2/opt/Thinkbox/DeadlineRepository10:/opt/Thinkbox/DeadlineRepository10', '${NFS_ENTRY_POINT}:${NFS_ENTRY_POINT}:ro', '${NFS_ENTRY_POINT}:${NFS_ENTRY_POINT_LNS}:ro']}, {'deadline-rcs-runner-10-2': ['./configs/Deadline10/deadline.ini:/var/lib/Thinkbox/Deadline10/deadline.ini:ro', '${NFS_ENTRY_POINT}/test_data/10.2/opt/Thinkbox/Deadline10:/opt/Thinkbox/Deadline10', '${NFS_ENTRY_POINT}/test_data/10.2/opt/Thinkbox/DeadlineRepository10:/opt/Thinkbox/DeadlineRepository10', '${NFS_ENTRY_POINT}:${NFS_ENTRY_POINT}:ro', '${NFS_ENTRY_POINT}:${NFS_ENTRY_POINT_LNS}:ro']}, {'deadline-pulse-runner-10-2': ['./configs/Deadline10/deadline.ini:/var/lib/Thinkbox/Deadline10/deadline.ini:ro', '${NFS_ENTRY_POINT}/test_data/10.2/opt/Thinkbox/Deadline10:/opt/Thinkbox/Deadline10', '${NFS_ENTRY_POINT}/test_data/10.2/opt/Thinkbox/DeadlineRepository10:/opt/Thinkbox/DeadlineRepository10', '${NFS_ENTRY_POINT}:${NFS_ENTRY_POINT}:ro', '${NFS_ENTRY_POINT}:${NFS_ENTRY_POINT_LNS}:ro']}, {'deadline-worker-runner-10-2': ['./configs/Deadline10/deadline.ini:/var/lib/Thinkbox/Deadline10/deadline.ini:ro', '${NFS_ENTRY_POINT}/test_data/10.2/opt/Thinkbox/Deadline10:/opt/Thinkbox/Deadline10', '${NFS_ENTRY_POINT}/test_data/10.2/opt/Thinkbox/DeadlineRepository10:/opt/Thinkbox/DeadlineRepository10', '${NFS_ENTRY_POINT}:${NFS_ENTRY_POINT}:ro', '${NFS_ENTRY_POINT}:${NFS_ENTRY_POINT_LNS}:ro']}, {'deadline-webservice-runner-10-2': ['./configs/Deadline10/deadline.ini:/var/lib/Thinkbox/Deadline10/deadline.ini:ro', '${NFS_ENTRY_POINT}/test_data/10.2/opt/Thinkbox/Deadline10:/opt/Thinkbox/Deadline10', '${NFS_ENTRY_POINT}/test_data/10.2/opt/Thinkbox/DeadlineRepository10:/opt/Thinkbox/DeadlineRepository10', '${NFS_ENTRY_POINT}:${NFS_ENTRY_POINT}:ro', '${NFS_ENTRY_POINT}:${NFS_ENTRY_POINT_LNS}:ro']}]
-
-            for service_name, mappings in sorted(network_mapping.items()):
-
-                for _mapping in sorted(mappings):
-                    # print(_mapping)
-                    # split = os.path.expandvars(_mapping).split(":")
+                    # _docker_nodes = []
                     #
-                    # network_host = split[0]
-                    # network_container = split[1]
-                    # network_mode = "rw"
-
-                    # if len(split) > 2:
-                    #     volume_mode = split[2]
-
-                    node_host = pydot.Node(
-                        name=f"{_mapping}",
-                        label=f"{_mapping}",
-                        shape="box",
-                        style="filled,rounded",
-                        color=_color,
-                        fillcolor=_fillcolor,
-                    )
-
-                    self.cluster_root_networks.add_node(node_host)
-
-                    for sg in self.cluster_root_services.get_subgraphs():
-                        if self.get_name(sg) == f"cluster_cluster_service_{service_name}":
-                            n = sg.get_node(name=f"NODE-SERVICE_{service_name}")[0]
-                            break
-
-                    dst = self.get_name(n)
-                    edge = pydot.Edge(
-                        src=f"{_mapping}",
-                        # dst="%s" % dst,
-                        # dst="%s:<PLUG_%s>" % (dst, _mapping),
-                        dst=f"{dst}:<PLUG_{_mapping}>",
-                        color=_fillcolor,
-                        # fillcolor=_fillcolor,
-                        dir="both",
-                        arrowhead="dot",
-                        arrowtail="dot",
-                        # headport="w",
-                        tailport="e",
-                    )
-
-                    # edge = pydot.Edge(
-                    #     src=f"{_mapping}",
-                    #     dst="%s:<PLUG_%s>" % (dst, _mapping),
-                    #     color=_fillcolor,
-                    #     dir="both",
-                    #     arrowhead="dot",
-                    #     arrowtail="dot",
-                    #     tailport="e",
+                    # docker_node = Docker(
+                    #     label=self._get_service_label(service),
+                    #     nodeid=f"NODE-SERVICE_{service.get('service_name')}",
+                    #     # shape="record",
+                    #     # style="filled",
                     # )
                     #
-                    # edge.set_headport("w")
+                    # _docker_nodes.append(docker_node)
                     #
-                    # Results in
-                    # mongodb:e -> "NODE-SERVICE_dagster-dev":w
+                    # return
+            #
+            # _depends_on_conform = self._conform_depends_on(service["service_config"].get("depends_on", []))
+            #
+            # for depends_on in _depends_on_conform:
+            #     src = docker_node
+            #     dst = depends_on
+            #
+            #     print(src)
+            #     print(dir(src))
+            #     print(src.label)
+            #     print(dst)
+            #
+            #     for docker_node in _docker_nodes:
+            #         if docker_node.label == f"cluster_service_{dst}":
+            #             raise Exception()
+            #
+            #     print(dst)
+            #
+            #     # src >> dst
 
-                    # Expected:
-                    # mongodb:e -> "NODE-SERVICE_dagster-dev":<PLUG_mongodb>:w
+    def add_root_ports_cluster(self, main_graph):
+        with main_graph:
+            with diagrams.Cluster(
+                label="cluster_root_ports",
+                graph_attr={
+                    "color": "red",
+                },
+            ):
+                _ports = []
+
+                # # self.graph.add_subgraph(self.cluster_root_services)
+                # # self.graph.add_subgraph(self.cluster_root_ports)
+                # # self.graph.add_subgraph(self.cluster_root_volumes)
+                # # self.graph.add_subgraph(self.cluster_root_networks)
+                #
+                # # self.graph.add_subgraph(self.cluster_root_services)
+                # # self.graph.add_subgraph(self.cluster_service_depends_on)
+                # # self.graph.add_subgraph(self.cluster_root_images)
+                # # self.graph.add_subgraph(self.cluster_service_volumes)
+                # # self.graph.add_subgraph(self.cluster_service_networks)
+                #
+                # #######################
+                # # Get all Services and add them as clusters
+                # for service in self.services:
+                #     cluster_service = pydot.Cluster(
+                #         graph_name=f"cluster_service_{service.get('service_name')}",
+                #         label=f"cluster_service_{service.get('service_name')}",
+                #         color="white",
+                #         rankdir="TB",
+                #         shape="square",
+                #         style="rounded",
+                #     )
+                #
+                #     node_service = pydot.Node(
+                #         name=f"NODE-SERVICE_{service.get('service_name')}",
+                #         label=self._get_service_label(service),
+                #         shape="record",
+                #         style="filled",
+                #     )
+                #
+                #     cluster_service.add_node(node_service)
+                #
+                #     _depends_on_conform = self._conform_depends_on(service["service_config"].get("depends_on", []))
+                #
+                #     # Todo:
+                #     for depends_on in _depends_on_conform:
+                #
+                #         src = self.get_name(node_service)
+                #
+                #         edge = pydot.Edge(
+                #             dst=f"{src}:<PLUG_DEPENDS_ON_NODE-SERVICE_{depends_on}>",
+                #             src=f"NODE-SERVICE_{depends_on}",
+                #             arrowhead="dot",
+                #             arrowtail="normal",
+                #             dir="both",
+                #             color="yellow",
+                #             style="dashed",
+                #             # headport="nw",
+                #             # tailport="ne",
+                #         )
+                #
+                #         self.graph.add_edge(edge)
+                #
+                #     self.cluster_root_services.add_subgraph(cluster_service)
+
+                # all services
+                #######################
+
+                #######################
+                # Get all Ports
+
+                # Service Ports
+                # Todo
+                #  - [ ] Sorted
+
+                _color = "black"
+                _fillcolor = "white"
+
+                for service_name, mappings in sorted(self.port_mappings["services"].items()):
+
+                    if isinstance(mappings, pyyaml.YAMLObject):
+                        # OverrideArray() in
+                        # ~/repos/deadline-docker/src/Deadline/deadline_docker/assets.py
+                        # Todo: find a better solution
+                        mappings = mappings.array
+
+                    for _mapping in sorted(mappings):
+                        port_host, port_container = os.path.expandvars(_mapping).split(":", maxsplit=1)
+                        _ports.append(
+                            NetworkPort(
+                                label=port_host,
+                                nodeid=f"{service_name}__{port_host}__{port_container}",
+                                # shape="circle",
+                                # color=_color,
+                                # fillcolor=_fillcolor,
+                                # style="filled",
+
+                            )
+                        )
+
+                        # self.cluster_root_ports.add_node(node_host)
+                        #
+                        # for sg in self.cluster_root_services.get_subgraphs():
+                        #     if self.get_name(sg) == f"cluster_cluster_service_{service_name}":
+                        #         n = sg.get_node(name=f"NODE-SERVICE_{service_name}")[0]
+                        #         break
+                        #
+                        # dst = self.get_name(n)
+                        # edge = pydot.Edge(
+                        #     src=f"{service_name}__{port_host}__{port_container}",
+                        #     dst=f"{dst}:<PLUG_{service_name}__{port_host}__{port_container}>",
+                        #     color=_fillcolor,
+                        #     # fillcolor=_fillcolor,
+                        #     dir="both",
+                        #     arrowhead="dot",
+                        #     arrowtail="dot",
+                        #     # headport="w",
+                        #     tailport="e",
+                        # )
+                        #
+                        # self.graph.add_edge(edge)
+
+                # # Root Ports
+                # # Todo
+                # for port_mappings in self.port_mappings["root"]:
+                #     # port_mapping:
+                #     #
+                #
+                #     _logger.debug(f"Not Implemented yet.")
+                #
+                #     # for service_name, mappings in port_mapping.items():
+                #     #
+                #     #     for _mapping in mappings:
+                #     #         port_host, port_container = os.path.expandvars(_mapping).split(":", maxsplit=1)
+                #     #         # print(service_mapping)
+                #     #         node_host = pydot.Node(
+                #     #             name=f"{service_name}__{port_host}__{port_container}",
+                #     #             label=port_host,
+                #     #             shape="circle",
+                #     #         )
+                #     #
+                #     #         self.cluster_root_ports.add_node(node_host)
+
+                # return root_ports_cluster
+
+                # all ports
+                #######################
+
+        # # #######################
+        # # # Get all images
+        # # _images = []
+        # # for service_name, service_values in services.items():
+        # #     image = service_values.get("image", None)
+        # #     if image is not None:
+        # #         _images.append({
+        # #             f"image_host": image,
+        # #             f"image_{service_name}": image
+        # #         })
+        # #
+        # # # _images = list(set(_images))
+        # #
+        # # for image in _images:
+        # #     node = pydot.Node(
+        # #         name=image["image_host"],
+        # #         label=image["image_host"],
+        # #     )
+        # #
+        # #     self.cluster_root_images.add_node(node)
+        # # # all images
+        # # #######################
+
+            with diagrams.Cluster(
+                    label="cluster_root_volumes",
+                    graph_attr={
+                        "color": "red",
+                    },
+                ):
+                    _volumes = []
+
+                    #######################
+                    # Get all Volumes
+
+                    # Service Volumes
+                    # Todo
+                    #  - [ ] Sorted
+
+                    _color = "black"
+                    _fillcolor = "green"
+
+                    for volume_mapping in self.volume_mappings["services"]:
+                        # volume_mapping:
+                        # [{'mongodb-10-2': ['${NFS_ENTRY_POINT}/test_data/10.2/opt/Thinkbox/DeadlineDatabase10/mongo/data_LOCAL:/opt/Thinkbox/DeadlineDatabase10/mongo/data', '${NFS_ENTRY_POINT}:${NFS_ENTRY_POINT}:ro', '${NFS_ENTRY_POINT}:${NFS_ENTRY_POINT_LNS}:ro']}, {'mongo-express-10-2': ['${NFS_ENTRY_POINT}/test_data/10.2/opt/Thinkbox/DeadlineDatabase10/mongo/data_LOCAL:/opt/Thinkbox/DeadlineDatabase10/mongo/data', '${NFS_ENTRY_POINT}:${NFS_ENTRY_POINT}:ro', '${NFS_ENTRY_POINT}:${NFS_ENTRY_POINT_LNS}:ro']}, {'filebrowser': ['./databases/filebrowser/filebrowser.db:/filebrowser.db', './configs/filebrowser/filebrowser.json:/.filebrowser.json', '${NFS_ENTRY_POINT}/test_data/10.2/opt/Thinkbox/DeadlineDatabase10/mongo/data_LOCAL:/opt/Thinkbox/DeadlineDatabase10/mongo/data:ro', '${NFS_ENTRY_POINT}:${NFS_ENTRY_POINT}:ro', '${NFS_ENTRY_POINT}:${NFS_ENTRY_POINT_LNS}:ro']}, {'dagster_dev': ['./configs/dagster_shared/workspace.yaml:/dagster/workspace.yaml:ro', './configs/dagster_shared/dagster.yaml:/dagster/materializations/workspace.yaml:ro', '${NFS_ENTRY_POINT}:${NFS_ENTRY_POINT}', '${NFS_ENTRY_POINT}:${NFS_ENTRY_POINT_LNS}']}, {'deadline-repository-installer-10-2': ['${NFS_ENTRY_POINT}/test_data/10.2/opt/Thinkbox/DeadlineRepository10:/opt/Thinkbox/DeadlineRepository10', '${NFS_ENTRY_POINT}:${NFS_ENTRY_POINT}:ro', '${NFS_ENTRY_POINT}:${NFS_ENTRY_POINT_LNS}:ro']}, {'deadline-client-installer-10-2': ['${NFS_ENTRY_POINT}/test_data/10.2/opt/Thinkbox/Deadline10:/opt/Thinkbox/Deadline10', '${NFS_ENTRY_POINT}/test_data/10.2/opt/Thinkbox/DeadlineRepository10:/opt/Thinkbox/DeadlineRepository10', '${NFS_ENTRY_POINT}:${NFS_ENTRY_POINT}:ro', '${NFS_ENTRY_POINT}:${NFS_ENTRY_POINT_LNS}:ro']}, {'deadline-rcs-runner-10-2': ['./configs/Deadline10/deadline.ini:/var/lib/Thinkbox/Deadline10/deadline.ini:ro', '${NFS_ENTRY_POINT}/test_data/10.2/opt/Thinkbox/Deadline10:/opt/Thinkbox/Deadline10', '${NFS_ENTRY_POINT}/test_data/10.2/opt/Thinkbox/DeadlineRepository10:/opt/Thinkbox/DeadlineRepository10', '${NFS_ENTRY_POINT}:${NFS_ENTRY_POINT}:ro', '${NFS_ENTRY_POINT}:${NFS_ENTRY_POINT_LNS}:ro']}, {'deadline-pulse-runner-10-2': ['./configs/Deadline10/deadline.ini:/var/lib/Thinkbox/Deadline10/deadline.ini:ro', '${NFS_ENTRY_POINT}/test_data/10.2/opt/Thinkbox/Deadline10:/opt/Thinkbox/Deadline10', '${NFS_ENTRY_POINT}/test_data/10.2/opt/Thinkbox/DeadlineRepository10:/opt/Thinkbox/DeadlineRepository10', '${NFS_ENTRY_POINT}:${NFS_ENTRY_POINT}:ro', '${NFS_ENTRY_POINT}:${NFS_ENTRY_POINT_LNS}:ro']}, {'deadline-worker-runner-10-2': ['./configs/Deadline10/deadline.ini:/var/lib/Thinkbox/Deadline10/deadline.ini:ro', '${NFS_ENTRY_POINT}/test_data/10.2/opt/Thinkbox/Deadline10:/opt/Thinkbox/Deadline10', '${NFS_ENTRY_POINT}/test_data/10.2/opt/Thinkbox/DeadlineRepository10:/opt/Thinkbox/DeadlineRepository10', '${NFS_ENTRY_POINT}:${NFS_ENTRY_POINT}:ro', '${NFS_ENTRY_POINT}:${NFS_ENTRY_POINT_LNS}:ro']}, {'deadline-webservice-runner-10-2': ['./configs/Deadline10/deadline.ini:/var/lib/Thinkbox/Deadline10/deadline.ini:ro', '${NFS_ENTRY_POINT}/test_data/10.2/opt/Thinkbox/Deadline10:/opt/Thinkbox/Deadline10', '${NFS_ENTRY_POINT}/test_data/10.2/opt/Thinkbox/DeadlineRepository10:/opt/Thinkbox/DeadlineRepository10', '${NFS_ENTRY_POINT}:${NFS_ENTRY_POINT}:ro', '${NFS_ENTRY_POINT}:${NFS_ENTRY_POINT_LNS}:ro']}]
+
+                        for service_name, mappings in sorted(volume_mapping.items()):
+
+                            for _mapping in sorted(mappings):
+                                split = os.path.expandvars(_mapping).split(":")
+
+                                volume_host = split[0]
+                                volume_container = split[1]
+                                volume_mode = "rw"
+
+                                if len(split) > 2:
+                                    volume_mode = split[2]
+
+                                _volumes.append(
+                                    Storage(
+                                        label=f"{volume_host}",
+                                        nodeid=f"{volume_host}__{volume_container}",
+                                        shape="box",
+                                        style="filled,rounded",
+                                        color=_color,
+                                        fillcolor=_fillcolor,
+                                    )
+                                )
+
+                                # # self.cluster_root_volumes.add_node(node_host)
+                                #
+                                # for sg in self.cluster_root_services.get_subgraphs():
+                                #     if self.get_name(sg) == f"cluster_cluster_service_{service_name}":
+                                #         n = sg.get_node(name=f"NODE-SERVICE_{service_name}")[0]
+                                #         break
+                                #
+                                # dst = self.get_name(n)
+                                # edge = pydot.Edge(
+                                #     src=node_host,
+                                #     dst=f"{dst}:<PLUG_{service_name}__{volume_container}>",
+                                #     color=_fillcolor,
+                                #     # fillcolor=_fillcolor,
+                                #     dir="both",
+                                #     arrowhead="dot",
+                                #     arrowtail="dot",
+                                #     # headport="w",
+                                #     tailport="e",
+                                # )
+                                #
+                                # self.graph.add_edge(edge)
+
+                    # Root Volumes
+                    # Todo
+                    #  - [ ] Sorted
+                    # Todo
+                    for volume_mapping in self.volume_mappings["root"]:
+                        # volume_mapping:
+                        #
+
+                        _logger.debug(f"Not Implemented yet.")
+
+                        # for service_name, mappings in volume_mapping.items():
+                        #
+                        #     for _mapping in mappings:
+                        #         split = os.path.expandvars(_mapping).split(":")
+                        #
+                        #         volume_host = split[0]
+                        #         volume_container = split[1]
+                        #         volume_mode = "rw"
+                        #
+                        #         if len(split) > 2:
+                        #             volume_mode = split[2]
+                        #
+                        #         node_host = pydot.Node(
+                        #             name=f"{service_name}__{volume_host}__{volume_container}",
+                        #             label=f"{volume_host} ({volume_mode})",
+                        #             shape="box",
+                        #             style="rounded",
+                        #         )
+                        #
+                        #         self.cluster_root_volumes.add_node(node_host)
+
+                    # all volumes
+                    #######################
+
+    def add_root_networks_cluster(self, main_graph):
+        with main_graph:
+            with diagrams.Cluster(
+                label="cluster_root_networks",
+                graph_attr={
+                    "color": "red",
+                },
+            ):
+                _networks = []
+
+                #######################
+                # Get all Networks
+
+                # Service Networks
+                # Todo
+                #  - [ ] Sorted
+
+                _color = "black"
+                _fillcolor = "orange"
+
+                for network_mapping in self.network_mappings["services"]:
+                    # network_mapping:
+                    # [{'mongodb-10-2': ['${NFS_ENTRY_POINT}/test_data/10.2/opt/Thinkbox/DeadlineDatabase10/mongo/data_LOCAL:/opt/Thinkbox/DeadlineDatabase10/mongo/data', '${NFS_ENTRY_POINT}:${NFS_ENTRY_POINT}:ro', '${NFS_ENTRY_POINT}:${NFS_ENTRY_POINT_LNS}:ro']}, {'mongo-express-10-2': ['${NFS_ENTRY_POINT}/test_data/10.2/opt/Thinkbox/DeadlineDatabase10/mongo/data_LOCAL:/opt/Thinkbox/DeadlineDatabase10/mongo/data', '${NFS_ENTRY_POINT}:${NFS_ENTRY_POINT}:ro', '${NFS_ENTRY_POINT}:${NFS_ENTRY_POINT_LNS}:ro']}, {'filebrowser': ['./databases/filebrowser/filebrowser.db:/filebrowser.db', './configs/filebrowser/filebrowser.json:/.filebrowser.json', '${NFS_ENTRY_POINT}/test_data/10.2/opt/Thinkbox/DeadlineDatabase10/mongo/data_LOCAL:/opt/Thinkbox/DeadlineDatabase10/mongo/data:ro', '${NFS_ENTRY_POINT}:${NFS_ENTRY_POINT}:ro', '${NFS_ENTRY_POINT}:${NFS_ENTRY_POINT_LNS}:ro']}, {'dagster_dev': ['./configs/dagster_shared/workspace.yaml:/dagster/workspace.yaml:ro', './configs/dagster_shared/dagster.yaml:/dagster/materializations/workspace.yaml:ro', '${NFS_ENTRY_POINT}:${NFS_ENTRY_POINT}', '${NFS_ENTRY_POINT}:${NFS_ENTRY_POINT_LNS}']}, {'deadline-repository-installer-10-2': ['${NFS_ENTRY_POINT}/test_data/10.2/opt/Thinkbox/DeadlineRepository10:/opt/Thinkbox/DeadlineRepository10', '${NFS_ENTRY_POINT}:${NFS_ENTRY_POINT}:ro', '${NFS_ENTRY_POINT}:${NFS_ENTRY_POINT_LNS}:ro']}, {'deadline-client-installer-10-2': ['${NFS_ENTRY_POINT}/test_data/10.2/opt/Thinkbox/Deadline10:/opt/Thinkbox/Deadline10', '${NFS_ENTRY_POINT}/test_data/10.2/opt/Thinkbox/DeadlineRepository10:/opt/Thinkbox/DeadlineRepository10', '${NFS_ENTRY_POINT}:${NFS_ENTRY_POINT}:ro', '${NFS_ENTRY_POINT}:${NFS_ENTRY_POINT_LNS}:ro']}, {'deadline-rcs-runner-10-2': ['./configs/Deadline10/deadline.ini:/var/lib/Thinkbox/Deadline10/deadline.ini:ro', '${NFS_ENTRY_POINT}/test_data/10.2/opt/Thinkbox/Deadline10:/opt/Thinkbox/Deadline10', '${NFS_ENTRY_POINT}/test_data/10.2/opt/Thinkbox/DeadlineRepository10:/opt/Thinkbox/DeadlineRepository10', '${NFS_ENTRY_POINT}:${NFS_ENTRY_POINT}:ro', '${NFS_ENTRY_POINT}:${NFS_ENTRY_POINT_LNS}:ro']}, {'deadline-pulse-runner-10-2': ['./configs/Deadline10/deadline.ini:/var/lib/Thinkbox/Deadline10/deadline.ini:ro', '${NFS_ENTRY_POINT}/test_data/10.2/opt/Thinkbox/Deadline10:/opt/Thinkbox/Deadline10', '${NFS_ENTRY_POINT}/test_data/10.2/opt/Thinkbox/DeadlineRepository10:/opt/Thinkbox/DeadlineRepository10', '${NFS_ENTRY_POINT}:${NFS_ENTRY_POINT}:ro', '${NFS_ENTRY_POINT}:${NFS_ENTRY_POINT_LNS}:ro']}, {'deadline-worker-runner-10-2': ['./configs/Deadline10/deadline.ini:/var/lib/Thinkbox/Deadline10/deadline.ini:ro', '${NFS_ENTRY_POINT}/test_data/10.2/opt/Thinkbox/Deadline10:/opt/Thinkbox/Deadline10', '${NFS_ENTRY_POINT}/test_data/10.2/opt/Thinkbox/DeadlineRepository10:/opt/Thinkbox/DeadlineRepository10', '${NFS_ENTRY_POINT}:${NFS_ENTRY_POINT}:ro', '${NFS_ENTRY_POINT}:${NFS_ENTRY_POINT_LNS}:ro']}, {'deadline-webservice-runner-10-2': ['./configs/Deadline10/deadline.ini:/var/lib/Thinkbox/Deadline10/deadline.ini:ro', '${NFS_ENTRY_POINT}/test_data/10.2/opt/Thinkbox/Deadline10:/opt/Thinkbox/Deadline10', '${NFS_ENTRY_POINT}/test_data/10.2/opt/Thinkbox/DeadlineRepository10:/opt/Thinkbox/DeadlineRepository10', '${NFS_ENTRY_POINT}:${NFS_ENTRY_POINT}:ro', '${NFS_ENTRY_POINT}:${NFS_ENTRY_POINT_LNS}:ro']}]
+
+                    for service_name, mappings in sorted(network_mapping.items()):
+
+                        for _mapping in sorted(mappings):
+                            # print(_mapping)
+                            # split = os.path.expandvars(_mapping).split(":")
+                            #
+                            # network_host = split[0]
+                            # network_container = split[1]
+                            # network_mode = "rw"
+
+                            # if len(split) > 2:
+                            #     volume_mode = split[2]
+
+                            _networks.append(
+                                Subnet(
+                                    label=f"{_mapping}",
+                                    nodeid=f"{_mapping}",
+                                    shape="box",
+                                    style="filled,rounded",
+                                    color=_color,
+                                    fillcolor=_fillcolor,
+                                )
+                            )
+
+                            # self.cluster_root_networks.add_node(node_host)
+                            #
+                            # for sg in self.cluster_root_services.get_subgraphs():
+                            #     if self.get_name(sg) == f"cluster_cluster_service_{service_name}":
+                            #         n = sg.get_node(name=f"NODE-SERVICE_{service_name}")[0]
+                            #         break
+                            #
+                            # dst = self.get_name(n)
+                            # edge = pydot.Edge(
+                            #     src=f"{_mapping}",
+                            #     # dst="%s" % dst,
+                            #     # dst="%s:<PLUG_%s>" % (dst, _mapping),
+                            #     dst=f"{dst}:<PLUG_{_mapping}>",
+                            #     color=_fillcolor,
+                            #     # fillcolor=_fillcolor,
+                            #     dir="both",
+                            #     arrowhead="dot",
+                            #     arrowtail="dot",
+                            #     # headport="w",
+                            #     tailport="e",
+                            # )
+                            #
+                            # # edge = pydot.Edge(
+                            # #     src=f"{_mapping}",
+                            # #     dst="%s:<PLUG_%s>" % (dst, _mapping),
+                            # #     color=_fillcolor,
+                            # #     dir="both",
+                            # #     arrowhead="dot",
+                            # #     arrowtail="dot",
+                            # #     tailport="e",
+                            # # )
+                            # #
+                            # # edge.set_headport("w")
+                            # #
+                            # # Results in
+                            # # mongodb:e -> "NODE-SERVICE_dagster-dev":w
+                            #
+                            # # Expected:
+                            # # mongodb:e -> "NODE-SERVICE_dagster-dev":<PLUG_mongodb>:w
+                            # #
+                            #
+                            # self.graph.add_edge(edge)
+
+                # Root Networks
+                # Todo
+                for network_mapping in self.network_mappings["root"]:
+                    # network_mapping:
                     #
 
-                    self.graph.add_edge(edge)
+                    _logger.debug(f"Not Implemented yet.")
 
-        # Root Networks
-        # Todo
-        for network_mapping in self.network_mappings["root"]:
-            # network_mapping:
-            #
+                    # for service_name, mappings in network_mapping.items():
+                    #
+                    #     for _mapping in mappings:
+                    #         split = os.path.expandvars(_mapping).split(":")
+                    #
+                    #         network_host = split[0]
+                    #         network_container = split[1]
+                    #         # network_mode = "rw"
+                    #
+                    #         # if len(split) > 2:
+                    #         #     network_mode = split[2]
+                    #
+                    #         node_host = pydot.Node(
+                    #             name=f"{service_name}__{network_host}__{network_container}",
+                    #             label=f"{network_host}",
+                    #             shape="box",
+                    #             style="rounded",
+                    #         )
+                    #
+                    #         self.cluster_root_networks.add_node(node_host)
 
-            _logger.debug(f"Not Implemented yet.")
-
-            # for service_name, mappings in network_mapping.items():
-            #
-            #     for _mapping in mappings:
-            #         split = os.path.expandvars(_mapping).split(":")
-            #
-            #         network_host = split[0]
-            #         network_container = split[1]
-            #         # network_mode = "rw"
-            #
-            #         # if len(split) > 2:
-            #         #     network_mode = split[2]
-            #
-            #         node_host = pydot.Node(
-            #             name=f"{service_name}__{network_host}__{network_container}",
-            #             label=f"{network_host}",
-            #             shape="box",
-            #             style="rounded",
-            #         )
-            #
-            #         self.cluster_root_networks.add_node(node_host)
-
-        # all networks
-        #######################
-
-
-
-
-        #     cluster_volumes.add_node(node)
-        # service volumes
-        #############################
-
-        # #######################
-        # # Get all service networks
-        # _networks = []
-        # for service_name, service_values in services.items():
-        #     _networks.extend(service_values.get("networks", []))
+                # all networks
+                #######################
         #
-        # _networks = list(set(_networks))
         #
-        # for network in _networks:
-        #     node = pydot.Node(
-        #         name=network,
-        #         label=network,
-        #     )
         #
-        #     self.cluster_service_networks.add_node(node)
-        # # service networks
-        # ##############################
+        #
+        # #     cluster_volumes.add_node(node)
+        # # service volumes
+        # #############################
+        #
+        # # #######################
+        # # # Get all service networks
+        # # _networks = []
+        # # for service_name, service_values in services.items():
+        # #     _networks.extend(service_values.get("networks", []))
+        # #
+        # # _networks = list(set(_networks))
+        # #
+        # # for network in _networks:
+        # #     node = pydot.Node(
+        # #         name=network,
+        # #         label=network,
+        # #     )
+        # #
+        # #     self.cluster_service_networks.add_node(node)
+        # # # service networks
+        # # ##############################
 
         # # Individual Services
         # for service_name, service_values in services.items():
@@ -1108,8 +1392,8 @@ class DockerComposeGraph:
         #     ##############
         #
         #     self.cluster_root_services.add_subgraph(cluster_service)
-
-        return self.graph
+        #
+        # return self.graph
 
 
 # ---- CLI ----
