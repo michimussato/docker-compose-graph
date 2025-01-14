@@ -97,9 +97,7 @@ class NetworkPort(custom.Custom):
 
 class DockerComposeGraph:
 
-    def __init__(
-            self,
-    ):
+    def __init__(self):
 
         self.docker_yaml: [pathlib.Path | None] = None
 
@@ -113,90 +111,15 @@ class DockerComposeGraph:
         self.graph = self.get_primary_graph()
 
         # Clusters
-
-        # ## Root Clusters
-        #
-        # self.cluster_root_include = diagrams.Cluster(
-        #     label="cluster_root_include",
-        #     direction="TB",
-        #     graph_attr={
-        #         "color": "magenta",
-        #         # "rankdir": "TB",
-        #     },
-        # )
-        #
-        # self.cluster_root_services = diagrams.Cluster(
-        #     label="cluster_root_services",
-        #     direction="TB",
-        #     graph_attr={
-        #         "color": "magenta",
-        #         # "rankdir": "TB",
-        #     },
-        # )
-        #
-        # ### Collection Clusters
-        # # Clusters summarize root and
-        # # services into one for easy
-        # # overview
-        #
-        # #### images
-        #
-        # # self.cluster_root_images = pydot.Cluster(
-        # #     graph_name="cluster_root_images",
-        # #     label="cluster_root_images",
-        # #     color="yellow",
-        # # )
-
-        # #### ports
-        #
-        # self.cluster_root_ports = diagrams.Cluster(
-        #     label="cluster_root_ports",
-        #     graph_attr={
-        #         "color": "red",
-        #     },
-        # )
-
-        # #### volumes
-        #
-        # self.cluster_root_volumes = diagrams.Cluster(
-        #     label="cluster_root_volumes",
-        #     direction="TB",
-        #     graph_attr={
-        #         "color": "red",
-        #     },
-        # )
-        #
-        # #### networks
-        #
-        # self.cluster_root_networks = diagrams.Cluster(
-        #     label="cluster_root_networks",
-        #     direction="TB",
-        #     graph_attr={
-        #         "color": "red",
-        #     },
-        # )
-        #
-        # ## Service Clusters
-        #
-        # ### ports
-        #
-        # ### volumes
-        #
-        # # self.cluster_service_volumes = pydot.Cluster(
-        # #     graph_name="cluster_service_volumes",
-        # #     label="cluster_service_volumes",
-        # #     color="blue",
-        # # )
-        #
-        # ### networks
-        #
-        # self.cluster_service_networks = diagrams.Cluster(
-        #     label="cluster_service_networks",
-        #     direction="TB",
-        #     graph_attr={
-        #         "color": "blue",
-        #     },
-        # )
+        ## Root Clusters
+        ### Services
+        self.root_services_cluster = self.add_cluster_root_services()
+        ### Networks
+        self.root_networks_cluster = self.add_cluster_root_networks()
+        ### Volumes
+        self.root_volumes_cluster = self.add_cluster_root_volumes()
+        ### Ports
+        self.root_ports_cluster = self.add_cluster_root_ports()
 
     def write_png(self, path):
 
@@ -283,7 +206,7 @@ class DockerComposeGraph:
 
     def iterate_trees(self, trees):
 
-        self.services = self._get_serivces(trees)
+        self.services = self._get_services(trees)
         self.depends_on = self._get_depends_on(trees)
         self.port_mappings = self._get_ports(trees)
         self.volume_mappings = self._get_volumes(trees)
@@ -293,46 +216,44 @@ class DockerComposeGraph:
 
     def compute_graph(self):
 
-        root_services_cluster = self.add_cluster_root_services()
-
-        root_networks_cluster = self.add_cluster_root_networks()
-        root_network_nodes = self.add_nodes_network(
-            root_networks_cluster,
-        )
-
-        root_volumes_cluster = self.add_cluster_root_volumes()
-        root_volume_nodes = self.add_volume_nodes(
-            root_volumes_cluster,
-        )
-
-        root_ports_cluster = self.add_cluster_root_ports()
-        root_port_nodes = self.add_nodes_port(
-            root_ports_cluster,
-        )
+        root_network_nodes = self.add_nodes_network()
+        root_volume_nodes = self.add_volume_nodes()
+        root_port_nodes = self.add_nodes_port()
 
         # _service_clusters = []
         for service in self.services:
             service_cluster = self.add_cluster_service(
-                root_services_cluster,
                 service,
             )
 
-            self.add_service_networks(
-                root_services_cluster,
+            service_networks = self.add_service_networks(
                 service_cluster,
                 service,
             )
 
-            self.add_service_volumes(
-                root_services_cluster,
+            self.get_links_networks(
+                root_network_nodes,
+                service_networks,
+            )
+
+            service_volumes = self.add_service_volumes(
                 service_cluster,
                 service,
             )
 
-            self.add_service_ports(
-                root_services_cluster,
+            self.get_links_volumes(
+                root_volume_nodes,
+                service_volumes,
+            )
+
+            service_ports = self.add_service_ports(
                 service_cluster,
                 service,
+            )
+
+            self.get_links_ports(
+                root_port_nodes,
+                service_ports,
             )
 
         self.graph.dot.render(
@@ -341,7 +262,7 @@ class DockerComposeGraph:
             quiet=True,
         )
 
-    def _get_serivces(
+    def _get_services(
             self,
             trees: list[dict]
     ):
@@ -401,7 +322,8 @@ class DockerComposeGraph:
 
             port_mappings.append(
                 {
-                    service_name: ports
+                    # service_name: ports
+                    service_name: [os.path.expandvars(p) for p in ports]
                 }
             )
 
@@ -442,7 +364,8 @@ class DockerComposeGraph:
 
             volume_mappings.append(
                 {
-                    service_name: volumes
+                    # service_name: volumes
+                    service_name: [os.path.expandvars(v) for v in volumes]
                 }
             )
 
@@ -623,9 +546,9 @@ class DockerComposeGraph:
             ) as networks_cluster:
                 return networks_cluster
 
-    def add_cluster_service(self, services_cluster, service):
+    def add_cluster_service(self, service):
         with self.graph:
-            with services_cluster:
+            with self.root_services_cluster:
                 with diagrams.Cluster(
                     label=f"service_{service.get('service_name')}",
                     # graph_name=f"cluster_service_{service.get('service_name')}",
@@ -640,66 +563,68 @@ class DockerComposeGraph:
 
     def add_service_networks(
             self,
-            root_services_cluster,
             services_cluster,
             service,
     ):
         with self.graph:
-            with root_services_cluster:
+            with self.root_services_cluster:
                 with services_cluster:
                     with diagrams.Cluster(
                         label="networks",
                     ):
-                        _networks = []
+                        _network_nodes = []
                         for network in service.get("service_config", {}).get("networks", []):
-                            _networks.append(
+                            _network_nodes.append(
                                 Subnet(
                                     nodeid=f"{service.get('service_name')}_{network}",
                                     label=network,
                                 )
                             )
+                        return _network_nodes
 
     def add_service_volumes(
             self,
-            root_services_cluster,
             services_cluster,
             service,
     ):
         with self.graph:
-            with root_services_cluster:
+            with self.root_services_cluster:
                 with services_cluster:
                     with diagrams.Cluster(
                         label="volumes",
                     ):
-                        _volumes = []
+                        _volume_nodes = []
                         for volume in service.get("service_config", {}).get("volumes", []):
-                            _volumes.append(
+                            _volume_nodes.append(
                                 Storage(
-                                    nodeid=f"{service.get('service_name')}_{volume}",
-                                    label=volume,
+                                    # nodeid=f"{service.get('service_name')}_{volume}",
+                                    nodeid="%s_%s" % (service.get('service_name'), os.path.expandvars(volume).replace(":", "%")),
+                                    label=os.path.expandvars(volume),
                                 )
                             )
+                        return _volume_nodes
 
     def add_service_ports(
             self,
-            root_services_cluster,
             services_cluster,
             service,
     ):
         with self.graph:
-            with root_services_cluster:
+            with self.root_services_cluster:
                 with services_cluster:
                     with diagrams.Cluster(
                         label="ports",
                     ):
-                        _ports = []
+                        _port_nodes = []
                         for port in service.get("service_config", {}).get("ports", []):
-                            _ports.append(
+                            _port_nodes.append(
                                 NetworkPort(
-                                    nodeid=f"{service.get('service_name')}_{port}",
-                                    label=port,
+                                    # nodeid=f"{service.get('service_name')}_{port}",
+                                    nodeid="%s_%s" % (service.get('service_name'), os.path.expandvars(port).replace(":", "%")),
+                                    label=os.path.expandvars(port),
                                 )
                             )
+                        return _port_nodes
 
 
     #     # # #######################
@@ -752,18 +677,15 @@ class DockerComposeGraph:
                 root_network_nodes.extend(v)
         return list(dict.fromkeys(root_network_nodes))
 
-    def add_nodes_network(
-            self,
-            root_networks_cluster,
-    ):
+    def add_nodes_network(self):
 
         root_network_nodes = self._get_root_network_nodes()
 
         with self.graph:
-            with root_networks_cluster:
+            with self.root_networks_cluster:
                 _root_network_nodes = [
                     Subnet(
-                        nodeid=root_network_node,
+                        nodeid=root_network_node.replace(":", "%"),
                         label=root_network_node,
                     ) for root_network_node in root_network_nodes
                 ]
@@ -773,23 +695,19 @@ class DockerComposeGraph:
     def _get_root_volume_nodes(self):
         root_volume_nodes = []
         for volume_mapping in self.volume_mappings.get("services", []):
-            print(volume_mapping)
             for v in volume_mapping.values():
                 root_volume_nodes.extend(v)
         return list(dict.fromkeys(root_volume_nodes))
 
-    def add_volume_nodes(
-            self,
-            root_volumes_cluster,
-    ):
+    def add_volume_nodes(self):
 
         root_volume_nodes = self._get_root_volume_nodes()
 
         with self.graph:
-            with root_volumes_cluster:
+            with self.root_volumes_cluster:
                 _root_volume_nodes = [
                     Storage(
-                        nodeid=root_volume_node,
+                        nodeid=root_volume_node.replace(":", "%"),
                         label=root_volume_node,
                     ) for root_volume_node in root_volume_nodes
                 ]
@@ -803,23 +721,80 @@ class DockerComposeGraph:
                 root_port_nodes.extend(v)
         return list(dict.fromkeys(root_port_nodes))
 
-    def add_nodes_port(
-            self,
-            root_ports_cluster,
-    ):
+    def add_nodes_port(self):
 
         root_port_nodes = self._get_root_port_nodes()
 
         with self.graph:
-            with root_ports_cluster:
+            with self.root_ports_cluster:
                 _root_port_nodes = [
                     NetworkPort(
-                        nodeid=root_port_node,
+                        nodeid=root_port_node.replace(":", "%"),
                         label=root_port_node,
                     ) for root_port_node in root_port_nodes
                 ]
 
                 return _root_port_nodes
+
+    def get_links_networks(
+            self,
+            root_network_nodes,
+            service_networks,
+    ):
+        for root_network_node in root_network_nodes:
+            src = root_network_node
+            for service_network in service_networks:
+                if src.label == service_network.label:
+                    dst = service_network
+                    src << diagrams.Edge(
+                        tailport="e",
+                        headport="w",
+                        # dir="both",
+                        arrowhead="dot",
+                        arrowtail="dot",
+                    ) >> dst
+
+    def get_links_volumes(
+            self,
+            root_volume_nodes,
+            service_volumes,
+    ):
+        # print(root_volume_nodes)
+        # print(service_volumes)
+        # import pdb; pdb.set_trace()
+        for root_volume_node in root_volume_nodes:
+            src = root_volume_node
+            print(src.label)
+            for service_volume in service_volumes:
+                print("   " + service_volume.label)
+                if src.label == service_volume.label:
+                    print("hello")
+                    dst = service_volume
+                    src >> diagrams.Edge(
+                        tailport="e",
+                        headport="w",
+                        # dir="both",
+                        arrowhead="dot",
+                        arrowtail="dot",
+                    ) >> dst
+
+    def get_links_ports(
+            self,
+            root_port_nodes,
+            service_ports,
+    ):
+        for root_port_node in root_port_nodes:
+            src = root_port_node
+            for service_port in service_ports:
+                if src.label == service_port.label:
+                    dst = service_port
+                    src << diagrams.Edge(
+                        tailport="e",
+                        headport="w",
+                        # dir="both",
+                        arrowhead="dot",
+                        arrowtail="dot",
+                    ) >> dst
 
 
 # ---- CLI ----
@@ -902,18 +877,39 @@ def run():
 
 
 if __name__ == "__main__":
-    # ^  This is a guard statement that will prevent the following code from
-    #    being executed in the case someone imports this file instead of
-    #    executing it as a script.
-    #    https://docs.python.org/3/library/__main__.html
+    # # ^  This is a guard statement that will prevent the following code from
+    # #    being executed in the case someone imports this file instead of
+    # #    executing it as a script.
+    # #    https://docs.python.org/3/library/__main__.html
+    #
+    # # After installing your project with pip, users can also run your Python
+    # # modules as scripts via the ``-m`` flag, as defined in PEP 338::
+    # #
+    # #     python -m docker_graph.skeleton 42
+    # #
+    # setup_logging(logging.DEBUG)
+    # run()
+    dcg = DockerComposeGraph()
+    trees = dcg.parse_docker_compose(
+        pathlib.Path("/home/michael/git/repos/docker-graph/tests/fixtures/deadline-docker/10.2/docker-compose.yaml")
+    )
 
-    # After installing your project with pip, users can also run your Python
-    # modules as scripts via the ``-m`` flag, as defined in PEP 338::
-    #
-    #     python -m docker_graph.skeleton 42
-    #
-    setup_logging(logging.DEBUG)
-    run()
+    # resolve environment variables (optional)
+    dcg.load_dotenv(pathlib.Path("/home/michael/git/repos/docker-graph/tests/fixtures/deadline-docker/10.2/.env"))
+
+    # dcg.expand_vars(tree)
+
+    # with open("tree.json", "w") as fw:
+    #     json.dump(tree, fw, indent=2)
+
+    dcg.iterate_trees(trees)
+    # # dcg.connect()
+    # dcg.write_png(
+    #     path=pathlib.Path(__file__).parent / "fixtures" / "out" / "main_graph.png",
+    # )
+    # dcg.write_dot(
+    #     path=pathlib.Path(__file__).parent / "fixtures" / "out" / "main_graph.dot",
+    # )
 
 else:
     setup_logging(logging.DEBUG)
