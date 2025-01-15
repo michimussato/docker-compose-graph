@@ -83,6 +83,10 @@ _logger = logging.getLogger(__name__)
 
 class DockerComposeGraph:
 
+    global_dot_settings = {
+        "fontname": "Helvetica",
+    }
+
     def __init__(
             self,
             expandvars: bool = False,
@@ -108,7 +112,8 @@ class DockerComposeGraph:
             bgcolor="#2f2f2f",
             # splines="polyline",
             splines=False,
-            pad="1.5", nodesep="0.3", ranksep="10"
+            pad="1.5", nodesep="0.3", ranksep="10",
+            **self.global_dot_settings,
         )
 
         # Clusters
@@ -120,6 +125,7 @@ class DockerComposeGraph:
             label="cluster_root_include",
             color="magenta",
             rankdir="TB",
+            **self.global_dot_settings,
         )
 
         self.cluster_root_services = pydot.Cluster(
@@ -127,6 +133,7 @@ class DockerComposeGraph:
             label="cluster_root_services",
             color="magenta",
             rankdir="TB",
+            **self.global_dot_settings,
         )
 
         ### Collection Clusters
@@ -148,6 +155,7 @@ class DockerComposeGraph:
             graph_name="cluster_root_ports",
             label="cluster_root_ports",
             color="red",
+            **self.global_dot_settings,
         )
 
         #### volumes
@@ -158,6 +166,7 @@ class DockerComposeGraph:
             color="red",
             rankdir="TB",
             graph_type="digraph",
+            **self.global_dot_settings,
             # shape="box",
             # style="rounded",
         )
@@ -170,6 +179,7 @@ class DockerComposeGraph:
             color="red",
             rankdir="TB",
             graph_type="digraph",
+            **self.global_dot_settings,
             # shape="box",
             # style="rounded",
         )
@@ -192,6 +202,7 @@ class DockerComposeGraph:
             graph_name="cluster_service_networks",
             label="cluster_service_networks",
             color="blue",
+            **self.global_dot_settings,
         )
 
     def write_png(self, path):
@@ -277,16 +288,16 @@ class DockerComposeGraph:
     def load_dotenv(self, env: pathlib.Path):
         dotenv.load_dotenv(env)
 
-    def get_fixed_graph(self):
-        # This is a hacky fix for the wrong compass_direction
-        # of dst port for nodes after first row. Couldn't
-        # get it to work within the DockerComposeGraph logic yet.
-        dot_str = self.graph.to_string()
-        dot_str = dot_str.replace("> [", ">:w [")
-
-        graph = pydot.graph_from_dot_data(dot_str)[0]
-
-        return graph
+    # def get_fixed_graph(self):
+    #     # This is a hacky fix for the wrong compass_direction
+    #     # of dst port for nodes after first row. Couldn't
+    #     # get it to work within the DockerComposeGraph logic yet.
+    #     dot_str = self.graph.to_string()
+    #     dot_str = dot_str.replace("> [", ">:w [")
+    #
+    #     graph = pydot.graph_from_dot_data(dot_str)[0]
+    #
+    #     return graph
 
     def iterate_trees(self, trees):
 
@@ -666,6 +677,7 @@ class DockerComposeGraph:
                 rankdir="TB",
                 shape="square",
                 style="rounded",
+                **self.global_dot_settings,
             )
 
             node_service = pydot.Node(
@@ -673,6 +685,7 @@ class DockerComposeGraph:
                 label=self._get_service_label(service),
                 shape="record",
                 style="filled",
+                **self.global_dot_settings,
             )
 
             cluster_service.add_node(node_service)
@@ -684,14 +697,14 @@ class DockerComposeGraph:
                 src = self.get_name(node_service)
 
                 edge = pydot.Edge(
-                    dst=f"{src}:<PLUG_DEPENDS_ON_NODE-SERVICE_{depends_on}>",
-                    src=f"NODE-SERVICE_{depends_on}",
+                    dst=f'"{src}":"PLUG_DEPENDS_ON_NODE-SERVICE_{depends_on}":w',
+                    src=f'"NODE-SERVICE_{depends_on}":ne',
                     arrowhead="dot",
-                    arrowtail="normal",
+                    arrowtail="dot",
                     dir="both",
                     color="yellow",
                     style="dashed",
-                    tailport="ne",
+                    **self.global_dot_settings,
                 )
 
                 self.graph.add_edge(edge)
@@ -726,6 +739,7 @@ class DockerComposeGraph:
                     color=_color,
                     fillcolor=_fillcolor,
                     style="filled",
+                    **self.global_dot_settings,
                 )
 
                 self.cluster_root_ports.add_node(node_host)
@@ -738,7 +752,7 @@ class DockerComposeGraph:
                 dst = self.get_name(n)
                 edge = pydot.Edge(
                     src=f"{service_name}__{port_host}__{port_container}",
-                    dst=f"{dst}:<PLUG_{service_name}__{port_host}__{port_container}>",
+                    dst=f'"{dst}":"PLUG_{service_name}__{port_host}__{port_container}":w',
                     color=_fillcolor,
                     # fillcolor=_fillcolor,
                     dir="both",
@@ -746,6 +760,7 @@ class DockerComposeGraph:
                     arrowtail="dot",
                     # headport="w",
                     tailport="e",
+                    **self.global_dot_settings,
                 )
 
                 self.graph.add_edge(edge)
@@ -828,6 +843,7 @@ class DockerComposeGraph:
                     style="filled,rounded",
                     color=_color,
                     fillcolor=_fillcolor,
+                    **self.global_dot_settings,
                 )
 
                 self.cluster_root_volumes.add_node(node_host)
@@ -840,7 +856,7 @@ class DockerComposeGraph:
                 dst = self.get_name(n)
                 edge = pydot.Edge(
                     src=node_host,
-                    dst=f"{dst}:<PLUG_{service_name}__{volume_container}>",
+                    dst=f'"{dst}":"PLUG_{service_name}__{volume_container}":w',
                     color=_fillcolor,
                     # fillcolor=_fillcolor,
                     dir="both",
@@ -848,6 +864,7 @@ class DockerComposeGraph:
                     arrowtail="dot",
                     # headport="w",
                     tailport="e",
+                    **self.global_dot_settings,
                 )
 
                 self.graph.add_edge(edge)
@@ -918,6 +935,7 @@ class DockerComposeGraph:
                         style="filled,rounded",
                         color=_color,
                         fillcolor=_fillcolor,
+                        **self.global_dot_settings,
                     )
 
                     self.cluster_root_networks.add_node(node_host)
@@ -932,7 +950,7 @@ class DockerComposeGraph:
                         src=f"{_mapping}",
                         # dst="%s" % dst,
                         # dst="%s:<PLUG_%s>" % (dst, _mapping),
-                        dst=f"{dst}:<PLUG_{_mapping}>",
+                        dst=f'"{dst}":"PLUG_{_mapping}":w',
                         color=_fillcolor,
                         # fillcolor=_fillcolor,
                         dir="both",
@@ -940,6 +958,7 @@ class DockerComposeGraph:
                         arrowtail="dot",
                         # headport="w",
                         tailport="e",
+                        **self.global_dot_settings,
                     )
 
                     # edge = pydot.Edge(

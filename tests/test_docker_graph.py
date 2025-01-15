@@ -1,4 +1,3 @@
-import pydot
 import pathlib
 
 from docker_graph.docker_graph import main, DockerComposeGraph
@@ -18,7 +17,7 @@ def test_get_service_ports():
         expandvars=False
     )
     trees = dcg.parse_docker_compose(
-        pathlib.Path("/home/michael/git/repos/docker-graph/tests/fixtures/deadline-docker/10.2/docker-compose.yaml")
+        pathlib.Path(__file__).parent / "fixtures" / "deadline-docker" / "10.2" / "docker-compose.yaml"
     )
 
     # resolve environment variables (optional)
@@ -50,7 +49,7 @@ def test_get_service_volumes():
         expandvars=False
     )
     trees = dcg.parse_docker_compose(
-        pathlib.Path("/home/michael/git/repos/docker-graph/tests/fixtures/deadline-docker/10.2/docker-compose.yaml")
+        pathlib.Path(__file__).parent / "fixtures" / "deadline-docker" / "10.2" / "docker-compose.yaml"
     )
 
     # resolve environment variables (optional)
@@ -125,7 +124,7 @@ def test_get_service_volumes():
 def test_get_service_networks():
     dcg = DockerComposeGraph()
     trees = dcg.parse_docker_compose(
-        pathlib.Path("/home/michael/git/repos/docker-graph/tests/fixtures/deadline-docker/10.2/docker-compose.yaml")
+        pathlib.Path(__file__).parent / "fixtures" / "deadline-docker" / "10.2" / "docker-compose.yaml"
     )
 
     # resolve environment variables (optional)
@@ -155,7 +154,7 @@ def test_get_service_networks():
 def test_get_service_depends_on():
     dcg = DockerComposeGraph()
     trees = dcg.parse_docker_compose(
-        pathlib.Path("/home/michael/git/repos/docker-graph/tests/fixtures/deadline-docker/10.2/docker-compose.yaml")
+        pathlib.Path(__file__).parent / "fixtures" / "deadline-docker" / "10.2" / "docker-compose.yaml"
     )
 
     # resolve environment variables (optional)
@@ -193,20 +192,22 @@ def test_get_service_depends_on():
 def test_iterate_trees():
     dcg = DockerComposeGraph()
     trees = dcg.parse_docker_compose(
-        pathlib.Path("/home/michael/git/repos/docker-graph/tests/fixtures/deadline-docker/10.2/docker-compose.yaml")
+        pathlib.Path(__file__).parent / "fixtures" / "deadline-docker" / "10.2" / "docker-compose.yaml"
     )
 
     # resolve environment variables (optional)
-    dcg.load_dotenv(pathlib.Path("/home/michael/git/repos/docker-graph/tests/fixtures/deadline-docker/10.2/.env"))
+    dcg.load_dotenv(
+        pathlib.Path(__file__).parent / "fixtures" / "deadline-docker" / "10.2" / ".env"
+    )
 
     dcg.iterate_trees(trees)
 
-    fixed_graph = dcg.get_fixed_graph()
+    # fixed_graph = dcg.get_fixed_graph()
 
-    fixed_graph.write_png(
+    dcg.write_png(
         path=pathlib.Path(__file__).parent / "fixtures" / "out" / "main_graph.png",
     )
-    fixed_graph.write_dot(
+    dcg.write_dot(
         path=pathlib.Path(__file__).parent / "fixtures" / "out" / "main_graph.dot",
     )
 
