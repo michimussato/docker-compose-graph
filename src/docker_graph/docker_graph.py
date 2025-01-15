@@ -60,6 +60,8 @@ import argparse
 import logging
 import pathlib
 import sys
+from typing import Any
+
 import yaml as pyyaml
 import diagrams
 from diagrams import custom
@@ -67,6 +69,7 @@ from diagrams.generic.network import Subnet, Switch
 from diagrams.generic.storage import Storage
 from diagrams.onprem.container import Docker
 import dotenv
+import uuid
 from collections import OrderedDict
 
 # from docker_graph import __version__
@@ -90,6 +93,16 @@ class NetworkPort(custom.Custom):
         super().__init__(
             label=label,
             icon_path="/home/michael/git/repos/docker-graph/src/docker_graph/resources/network-port.png",
+            *args,
+            **kwargs,
+        )
+
+
+class DummyPort(custom.Custom):
+    def __init__(self, label, *args, **kwargs):
+        super().__init__(
+            label=label,
+            icon_path="",
             *args,
             **kwargs,
         )
@@ -220,10 +233,25 @@ class DockerComposeGraph:
         root_volume_nodes = self.add_volume_nodes()
         root_port_nodes = self.add_nodes_port()
 
-        # _service_clusters = []
+        _service_clusters = []
         for service in self.services:
-            service_cluster = self.add_cluster_service(
+            service_cluster, dummy_port = self.add_cluster_service(
                 service,
+            )
+
+            _depends_on = service.get("service_config", {}).get("depends_on", {})
+            if isinstance(_depends_on, list):
+                _depends_on = self._conform_depends_on(_depends_on)
+
+            # print(service)
+            # print(_depends_on)
+
+            _service_clusters.append(
+                {
+                    service_cluster: {
+                        "dummy_port": dummy_port,
+                        **_depends_on},
+                }
             )
 
             service_networks = self.add_service_networks(
@@ -231,7 +259,7 @@ class DockerComposeGraph:
                 service,
             )
 
-            self.get_links_networks(
+            self.link_networks(
                 root_network_nodes,
                 service_networks,
             )
@@ -241,7 +269,7 @@ class DockerComposeGraph:
                 service,
             )
 
-            self.get_links_volumes(
+            self.link_volumes(
                 root_volume_nodes,
                 service_volumes,
             )
@@ -251,10 +279,12 @@ class DockerComposeGraph:
                 service,
             )
 
-            self.get_links_ports(
+            self.link_ports(
                 root_port_nodes,
                 service_ports,
             )
+
+        self.link_depends_on(_service_clusters)
 
         self.graph.dot.render(
             format="png",
@@ -419,15 +449,15 @@ class DockerComposeGraph:
 
         depends_on_mappings = {
             "root": [],
-            "services": {},
+            "services": [],
         }
 
         for tree in trees:
-            service_depends_on: dict = self._get_service_depends_on(
+            service_depends_on = self._get_service_depends_on(
                 tree=tree,
             )
 
-            depends_on_mappings["services"].update(service_depends_on)
+            depends_on_mappings["services"].extend(service_depends_on)
 
             # Todo
             # root_volumes = self._get_root_volumes(
@@ -442,9 +472,9 @@ class DockerComposeGraph:
     def _get_service_depends_on(
             self,
             tree: dict,
-    ) -> dict[str, list[str]]:
+    ) -> list[dict[Any, dict]]:
 
-        depends_on_mappings = {}
+        depends_on_mappings = []
 
         services: dict = tree.get("services", {})
 
@@ -459,7 +489,7 @@ class DockerComposeGraph:
 
             _depends_on_conform = self._conform_depends_on(depends_on)
 
-            depends_on_mappings.update(
+            depends_on_mappings.append(
                 {
                     service_name: self._conform_depends_on(depends_on)
                 }
@@ -559,7 +589,10 @@ class DockerComposeGraph:
                     #     "style": "rounded",
                     # },
                 ) as service_cluster:
-                    return service_cluster
+                    dummy_port = DummyPort(
+                        label=f"dummyport_service_{service.get('service_name')}"
+                    )
+                    return service_cluster, dummy_port
 
     def add_service_networks(
             self,
@@ -736,7 +769,7 @@ class DockerComposeGraph:
 
                 return _root_port_nodes
 
-    def get_links_networks(
+    def link_networks(
             self,
             root_network_nodes,
             service_networks,
@@ -749,36 +782,30 @@ class DockerComposeGraph:
                     src << diagrams.Edge(
                         tailport="e",
                         headport="w",
-                        # dir="both",
+                        color="orange",
                         arrowhead="dot",
                         arrowtail="dot",
                     ) >> dst
 
-    def get_links_volumes(
+    def link_volumes(
             self,
             root_volume_nodes,
             service_volumes,
     ):
-        # print(root_volume_nodes)
-        # print(service_volumes)
-        # import pdb; pdb.set_trace()
         for root_volume_node in root_volume_nodes:
             src = root_volume_node
-            print(src.label)
             for service_volume in service_volumes:
-                print("   " + service_volume.label)
                 if src.label == service_volume.label:
-                    print("hello")
                     dst = service_volume
-                    src >> diagrams.Edge(
+                    src << diagrams.Edge(
                         tailport="e",
                         headport="w",
-                        # dir="both",
+                        color="green",
                         arrowhead="dot",
                         arrowtail="dot",
                     ) >> dst
 
-    def get_links_ports(
+    def link_ports(
             self,
             root_port_nodes,
             service_ports,
@@ -791,10 +818,89 @@ class DockerComposeGraph:
                     src << diagrams.Edge(
                         tailport="e",
                         headport="w",
-                        # dir="both",
+                        color="red",
                         arrowhead="dot",
                         arrowtail="dot",
                     ) >> dst
+
+    def link_depends_on(
+            self,
+            service_clusters,
+    ):
+        print(service_clusters)
+
+        clusters = []
+        for i in service_clusters:
+            clusters.extend(i.keys())
+
+        clusters = list(set(clusters))
+
+        # clusters = [i for i in service_clusters]
+        print(clusters)
+
+        for service_cluster in service_clusters:
+            for src, dst_dict in service_cluster.items():
+
+                if len(dst_dict) < 2:
+                    # print(dst_dict)
+                    continue
+
+                # print(k)  # <diagrams.Cluster object at 0x71360c3c6390>
+                print(f"{src.label = }")  # service_server
+
+                src = dst_dict.get("dummy_port", None)
+                # print(k.node())
+                # print(v)  # {'postgres': {'condition': 'service_healthy'}, 'redis': {'condition': 'service_started'}}
+
+                for _service in dst_dict.keys():
+                    service = f"service_{_service}"
+                    print(f"{service = }")
+                    for cluster in clusters:
+                        if cluster.label == service:
+                            dst = cluster
+                            with self.graph:
+                                with self.root_services_cluster:
+                                    with dst:
+                                        _dst = DummyPort(
+                                            nodeid=str(uuid.uuid4()),
+                                            label="",
+                                        )
+                            src << diagrams.Edge(
+                                tailport="e",
+                                headport="w",
+                                color="purple",
+                                arrowhead="dot",
+                                arrowtail="normal",
+                                # ltail=src.label,
+                                # lhead=dst.label,
+                            ) << _dst
+
+                # for k_, v_ in v.items():
+                #     for service_cluster_ in service_clusters:
+                #         for k__, v__ in service_cluster_.items():
+                #             if k__.label == f"service_{k_}":
+                #                 # print(k__.label)
+                #                 dst = k__
+                #                 print(f"{dst.label = }")
+                #                 # src << diagrams.Edge(
+                #                 #     tailport="e",
+                #                 #     headport="w",
+                #                 #     color="purple",
+                #                 #     arrowhead="dot",
+                #                 #     arrowtail="dot",
+                #                 # ) >> dst
+
+            # src = service_cluster
+            # for service_port in service_ports:
+            #     if src.label == service_port.label:
+            #         dst = service_port
+            #         src << diagrams.Edge(
+            #             tailport="e",
+            #             headport="w",
+            #             color="red",
+            #             arrowhead="dot",
+            #             arrowtail="dot",
+            #         ) >> dst
 
 
 # ---- CLI ----
