@@ -85,7 +85,10 @@ class DockerComposeGraph:
 
     def __init__(
             self,
+            expandvars: bool = False,
     ):
+
+        self.expanded_vars = expandvars
 
         self.docker_yaml: [pathlib.Path | None] = None
 
@@ -318,7 +321,7 @@ class DockerComposeGraph:
 
         port_mappings = {
             "root": [],
-            "services": [],
+            "services": {},
         }
 
         for tree in trees:
@@ -326,7 +329,7 @@ class DockerComposeGraph:
                 tree=tree,
             )
 
-            port_mappings["services"].extend(service_ports)
+            port_mappings["services"].update(service_ports)
 
             # Todo
             # root_ports = self._get_root_ports(
@@ -339,25 +342,22 @@ class DockerComposeGraph:
 
         return port_mappings
 
-    @staticmethod
     def _get_service_ports(
+            self,
             tree: dict,
-    ) -> list[dict[str, list[str]]]:
+    ) -> dict[str, list[str]]:
 
-        port_mappings = []
+        port_mappings = {}
 
         services: dict = tree.get("services", {})
 
         for service_name, service_config in services.items():
             ports = service_config.get("ports", [])
 
-            port_mappings.append(
-                {
-                    # Todo: Switch
-                    # service_name: ports
-                    service_name: [os.path.expandvars(p) for p in ports]
-                }
-            )
+            if self.expanded_vars:
+                port_mappings[service_name] = [os.path.expandvars(p) for p in ports]
+            else:
+                port_mappings[service_name] = ports
 
         return port_mappings
 
@@ -368,14 +368,14 @@ class DockerComposeGraph:
 
         volume_mappings = {
             "root": [],
-            "services": [],
+            "services": {},
         }
 
         for tree in trees:
             service_volumes = self._get_service_volumes(
                 tree=tree,
             )
-            volume_mappings["services"].extend(service_volumes)
+            volume_mappings["services"].update(service_volumes)
 
             # Todo
             # root_volumes = self._get_root_volumes(
@@ -388,25 +388,22 @@ class DockerComposeGraph:
 
         return volume_mappings
 
-    @staticmethod
     def _get_service_volumes(
+            self,
             tree: dict,
-    ) -> list[dict[str, list[str]]]:
+    ) -> dict[str, list[str]]:
 
-        volume_mappings = []
+        volume_mappings = {}
 
         services: dict = tree.get("services", {})
 
         for service_name, service_config in services.items():
-            volumes = service_config.get("volumes", [])
+            volumes = service_config.get("volumes", {})
 
-            volume_mappings.append(
-                {
-                    # Todo: Switch
-                    # service_name: volumes
-                    service_name: [os.path.expandvars(v) for v in volumes]
-                }
-            )
+            if self.expanded_vars:
+                volume_mappings[service_name] = [os.path.expandvars(v) for v in volumes]
+            else:
+                volume_mappings[service_name] = volumes
 
         return volume_mappings
 
@@ -417,14 +414,14 @@ class DockerComposeGraph:
 
         network_mappings = {
             "root": [],
-            "services": [],
+            "services": {},
         }
 
         for tree in trees:
             service_networks = self._get_service_networks(
                 tree=tree,
             )
-            network_mappings["services"].extend(service_networks)
+            network_mappings["services"].update(service_networks)
 
             # Todo
             # root_volumes = self._get_root_volumes(
@@ -440,20 +437,16 @@ class DockerComposeGraph:
     @staticmethod
     def _get_service_networks(
             tree: dict,
-    ) -> list[dict[str, list[str]]]:
+    ) -> dict[str, list[str]]:
 
-        network_mappings = []
+        network_mappings = {}
 
         services: dict = tree.get("services", {})
 
         for service_name, service_config in services.items():
             networks = service_config.get("networks", [])
 
-            network_mappings.append(
-                {
-                    service_name: networks
-                }
-            )
+            network_mappings[service_name] = networks
 
         return network_mappings
 
@@ -464,7 +457,7 @@ class DockerComposeGraph:
 
         depends_on_mappings = {
             "root": [],
-            "services": [],
+            "services": {},
         }
 
         for tree in trees:
@@ -472,7 +465,7 @@ class DockerComposeGraph:
                 tree=tree,
             )
 
-            depends_on_mappings["services"].extend(service_depends_on)
+            depends_on_mappings["services"].update(service_depends_on)
 
             # Todo
             # root_volumes = self._get_root_volumes(
@@ -487,9 +480,9 @@ class DockerComposeGraph:
     def _get_service_depends_on(
             self,
             tree: dict,
-    ) -> list[dict[str, list[str]]]:
+    ) -> dict[str, list[str]]:
 
-        depends_on_mappings = []
+        depends_on_mappings = {}
 
         services: dict = tree.get("services", {})
 
@@ -504,11 +497,7 @@ class DockerComposeGraph:
 
             _depends_on_conform = self._conform_depends_on(depends_on)
 
-            depends_on_mappings.append(
-                {
-                    service_name: self._conform_depends_on(depends_on)
-                }
-            )
+            depends_on_mappings[service_name] = _depends_on_conform
 
         return depends_on_mappings
 
@@ -811,52 +800,50 @@ class DockerComposeGraph:
         _color = "black"
         _fillcolor = "green"
 
-        for volume_mapping in self.volume_mappings["services"]:
-            # volume_mapping:
-            # [{'mongodb-10-2': ['${NFS_ENTRY_POINT}/test_data/10.2/opt/Thinkbox/DeadlineDatabase10/mongo/data_LOCAL:/opt/Thinkbox/DeadlineDatabase10/mongo/data', '${NFS_ENTRY_POINT}:${NFS_ENTRY_POINT}:ro', '${NFS_ENTRY_POINT}:${NFS_ENTRY_POINT_LNS}:ro']}, {'mongo-express-10-2': ['${NFS_ENTRY_POINT}/test_data/10.2/opt/Thinkbox/DeadlineDatabase10/mongo/data_LOCAL:/opt/Thinkbox/DeadlineDatabase10/mongo/data', '${NFS_ENTRY_POINT}:${NFS_ENTRY_POINT}:ro', '${NFS_ENTRY_POINT}:${NFS_ENTRY_POINT_LNS}:ro']}, {'filebrowser': ['./databases/filebrowser/filebrowser.db:/filebrowser.db', './configs/filebrowser/filebrowser.json:/.filebrowser.json', '${NFS_ENTRY_POINT}/test_data/10.2/opt/Thinkbox/DeadlineDatabase10/mongo/data_LOCAL:/opt/Thinkbox/DeadlineDatabase10/mongo/data:ro', '${NFS_ENTRY_POINT}:${NFS_ENTRY_POINT}:ro', '${NFS_ENTRY_POINT}:${NFS_ENTRY_POINT_LNS}:ro']}, {'dagster_dev': ['./configs/dagster_shared/workspace.yaml:/dagster/workspace.yaml:ro', './configs/dagster_shared/dagster.yaml:/dagster/materializations/workspace.yaml:ro', '${NFS_ENTRY_POINT}:${NFS_ENTRY_POINT}', '${NFS_ENTRY_POINT}:${NFS_ENTRY_POINT_LNS}']}, {'deadline-repository-installer-10-2': ['${NFS_ENTRY_POINT}/test_data/10.2/opt/Thinkbox/DeadlineRepository10:/opt/Thinkbox/DeadlineRepository10', '${NFS_ENTRY_POINT}:${NFS_ENTRY_POINT}:ro', '${NFS_ENTRY_POINT}:${NFS_ENTRY_POINT_LNS}:ro']}, {'deadline-client-installer-10-2': ['${NFS_ENTRY_POINT}/test_data/10.2/opt/Thinkbox/Deadline10:/opt/Thinkbox/Deadline10', '${NFS_ENTRY_POINT}/test_data/10.2/opt/Thinkbox/DeadlineRepository10:/opt/Thinkbox/DeadlineRepository10', '${NFS_ENTRY_POINT}:${NFS_ENTRY_POINT}:ro', '${NFS_ENTRY_POINT}:${NFS_ENTRY_POINT_LNS}:ro']}, {'deadline-rcs-runner-10-2': ['./configs/Deadline10/deadline.ini:/var/lib/Thinkbox/Deadline10/deadline.ini:ro', '${NFS_ENTRY_POINT}/test_data/10.2/opt/Thinkbox/Deadline10:/opt/Thinkbox/Deadline10', '${NFS_ENTRY_POINT}/test_data/10.2/opt/Thinkbox/DeadlineRepository10:/opt/Thinkbox/DeadlineRepository10', '${NFS_ENTRY_POINT}:${NFS_ENTRY_POINT}:ro', '${NFS_ENTRY_POINT}:${NFS_ENTRY_POINT_LNS}:ro']}, {'deadline-pulse-runner-10-2': ['./configs/Deadline10/deadline.ini:/var/lib/Thinkbox/Deadline10/deadline.ini:ro', '${NFS_ENTRY_POINT}/test_data/10.2/opt/Thinkbox/Deadline10:/opt/Thinkbox/Deadline10', '${NFS_ENTRY_POINT}/test_data/10.2/opt/Thinkbox/DeadlineRepository10:/opt/Thinkbox/DeadlineRepository10', '${NFS_ENTRY_POINT}:${NFS_ENTRY_POINT}:ro', '${NFS_ENTRY_POINT}:${NFS_ENTRY_POINT_LNS}:ro']}, {'deadline-worker-runner-10-2': ['./configs/Deadline10/deadline.ini:/var/lib/Thinkbox/Deadline10/deadline.ini:ro', '${NFS_ENTRY_POINT}/test_data/10.2/opt/Thinkbox/Deadline10:/opt/Thinkbox/Deadline10', '${NFS_ENTRY_POINT}/test_data/10.2/opt/Thinkbox/DeadlineRepository10:/opt/Thinkbox/DeadlineRepository10', '${NFS_ENTRY_POINT}:${NFS_ENTRY_POINT}:ro', '${NFS_ENTRY_POINT}:${NFS_ENTRY_POINT_LNS}:ro']}, {'deadline-webservice-runner-10-2': ['./configs/Deadline10/deadline.ini:/var/lib/Thinkbox/Deadline10/deadline.ini:ro', '${NFS_ENTRY_POINT}/test_data/10.2/opt/Thinkbox/Deadline10:/opt/Thinkbox/Deadline10', '${NFS_ENTRY_POINT}/test_data/10.2/opt/Thinkbox/DeadlineRepository10:/opt/Thinkbox/DeadlineRepository10', '${NFS_ENTRY_POINT}:${NFS_ENTRY_POINT}:ro', '${NFS_ENTRY_POINT}:${NFS_ENTRY_POINT_LNS}:ro']}]
+        for service_name, mappings in sorted(self.volume_mappings.get("services", {}).items()):
+            # volume_mappings:
+            # {'mongodb-10-2': ['/data/share/nfs/test_data/10.2/opt/Thinkbox/DeadlineDatabase10/mongo/data_LOCAL:/opt/Thinkbox/DeadlineDatabase10/mongo/data', '/data/share/nfs:/data/share/nfs:ro', '/data/share/nfs:/nfs:ro'], 'mongo-express-10-2': ['/data/share/nfs/test_data/10.2/opt/Thinkbox/DeadlineDatabase10/mongo/data_LOCAL:/opt/Thinkbox/DeadlineDatabase10/mongo/data', '/data/share/nfs:/data/share/nfs:ro', '/data/share/nfs:/nfs:ro'], 'filebrowser': ['./databases/filebrowser/filebrowser.db:/filebrowser.db', './configs/filebrowser/filebrowser.json:/.filebrowser.json', '/data/share/nfs/test_data/10.2/opt/Thinkbox/DeadlineDatabase10/mongo/data_LOCAL:/opt/Thinkbox/DeadlineDatabase10/mongo/data:ro', '/data/share/nfs:/data/share/nfs:ro', '/data/share/nfs:/nfs:ro'], 'dagster_dev': ['./configs/dagster_shared/workspace.yaml:/dagster/workspace.yaml:ro', './configs/dagster_shared/dagster.yaml:/dagster/materializations/workspace.yaml:ro', '/data/share/nfs:/data/share/nfs', '/data/share/nfs:/nfs'], 'likec4_dev': [], 'deadline-repository-installer-10-2': ['/data/share/nfs/test_data/10.2/opt/Thinkbox/DeadlineRepository10:/opt/Thinkbox/DeadlineRepository10', '/data/share/nfs:/data/share/nfs:ro', '/data/share/nfs:/nfs:ro'], 'deadline-client-installer-10-2': ['/data/share/nfs/test_data/10.2/opt/Thinkbox/Deadline10:/opt/Thinkbox/Deadline10', '/data/share/nfs/test_data/10.2/opt/Thinkbox/DeadlineRepository10:/opt/Thinkbox/DeadlineRepository10', '/data/share/nfs:/data/share/nfs:ro', '/data/share/nfs:/nfs:ro'], 'deadline-rcs-runner-10-2': ['./configs/Deadline10/deadline.ini:/var/lib/Thinkbox/Deadline10/deadline.ini:ro', '/data/share/nfs/test_data/10.2/opt/Thinkbox/Deadline10:/opt/Thinkbox/Deadline10', '/data/share/nfs/test_data/10.2/opt/Thinkbox/DeadlineRepository10:/opt/Thinkbox/DeadlineRepository10', '/data/share/nfs:/data/share/nfs:ro', '/data/share/nfs:/nfs:ro'], 'deadline-pulse-runner-10-2': ['./configs/Deadline10/deadline.ini:/var/lib/Thinkbox/Deadline10/deadline.ini:ro', '/data/share/nfs/test_data/10.2/opt/Thinkbox/Deadline10:/opt/Thinkbox/Deadline10', '/data/share/nfs/test_data/10.2/opt/Thinkbox/DeadlineRepository10:/opt/Thinkbox/DeadlineRepository10', '/data/share/nfs:/data/share/nfs:ro', '/data/share/nfs:/nfs:ro'], 'deadline-worker-runner-10-2': ['./configs/Deadline10/deadline.ini:/var/lib/Thinkbox/Deadline10/deadline.ini:ro', '/data/share/nfs/test_data/10.2/opt/Thinkbox/Deadline10:/opt/Thinkbox/Deadline10', '/data/share/nfs/test_data/10.2/opt/Thinkbox/DeadlineRepository10:/opt/Thinkbox/DeadlineRepository10', '/data/share/nfs:/data/share/nfs:ro', '/data/share/nfs:/nfs:ro'], 'deadline-webservice-runner-10-2': ['./configs/Deadline10/deadline.ini:/var/lib/Thinkbox/Deadline10/deadline.ini:ro', '/data/share/nfs/test_data/10.2/opt/Thinkbox/Deadline10:/opt/Thinkbox/Deadline10', '/data/share/nfs/test_data/10.2/opt/Thinkbox/DeadlineRepository10:/opt/Thinkbox/DeadlineRepository10', '/data/share/nfs:/data/share/nfs:ro', '/data/share/nfs:/nfs:ro'], 'kitsu-10-2': ['./postgres/postgresql.conf:/etc/postgresql/14/main/postgresql.conf:ro', '/data/share/nfs:/data/share/nfs', '/data/share/nfs:/nfs'], 'postgres': ['/etc/localtime:/etc/localtime:ro', '/data/share/nfs/databases/ayon/postgresql/data:/var/lib/postgresql/data'], 'redis': [], 'server': []}
 
-            for service_name, mappings in sorted(volume_mapping.items()):
+            for _mapping in sorted(mappings):
+                split = os.path.expandvars(_mapping).split(":")
 
-                for _mapping in sorted(mappings):
-                    split = os.path.expandvars(_mapping).split(":")
+                volume_host = split[0]
+                volume_container = split[1]
+                volume_mode = "rw"
 
-                    volume_host = split[0]
-                    volume_container = split[1]
-                    volume_mode = "rw"
+                if len(split) > 2:
+                    volume_mode = split[2]
 
-                    if len(split) > 2:
-                        volume_mode = split[2]
+                node_host = pydot.Node(
+                    name=f"{volume_host}__{volume_container}",
+                    label=f"{volume_host}",
+                    shape="box",
+                    style="filled,rounded",
+                    color=_color,
+                    fillcolor=_fillcolor,
+                )
 
-                    node_host = pydot.Node(
-                        name=f"{volume_host}__{volume_container}",
-                        label=f"{volume_host}",
-                        shape="box",
-                        style="filled,rounded",
-                        color=_color,
-                        fillcolor=_fillcolor,
-                    )
+                self.cluster_root_volumes.add_node(node_host)
 
-                    self.cluster_root_volumes.add_node(node_host)
+                for sg in self.cluster_root_services.get_subgraphs():
+                    if self.get_name(sg) == f"cluster_cluster_service_{service_name}":
+                        n = sg.get_node(name=f"NODE-SERVICE_{service_name}")[0]
+                        break
 
-                    for sg in self.cluster_root_services.get_subgraphs():
-                        if self.get_name(sg) == f"cluster_cluster_service_{service_name}":
-                            n = sg.get_node(name=f"NODE-SERVICE_{service_name}")[0]
-                            break
+                dst = self.get_name(n)
+                edge = pydot.Edge(
+                    src=node_host,
+                    dst=f"{dst}:<PLUG_{service_name}__{volume_container}>",
+                    color=_fillcolor,
+                    # fillcolor=_fillcolor,
+                    dir="both",
+                    arrowhead="dot",
+                    arrowtail="dot",
+                    # headport="w",
+                    tailport="e",
+                )
 
-                    dst = self.get_name(n)
-                    edge = pydot.Edge(
-                        src=node_host,
-                        dst=f"{dst}:<PLUG_{service_name}__{volume_container}>",
-                        color=_fillcolor,
-                        # fillcolor=_fillcolor,
-                        dir="both",
-                        arrowhead="dot",
-                        arrowtail="dot",
-                        # headport="w",
-                        tailport="e",
-                    )
-
-                    self.graph.add_edge(edge)
+                self.graph.add_edge(edge)
 
         # Root Volumes
         # Todo
@@ -902,11 +889,9 @@ class DockerComposeGraph:
         _color = "black"
         _fillcolor = "orange"
 
-        for network_mapping in self.network_mappings["services"]:
-            # network_mapping:
-            # [{'mongodb-10-2': ['${NFS_ENTRY_POINT}/test_data/10.2/opt/Thinkbox/DeadlineDatabase10/mongo/data_LOCAL:/opt/Thinkbox/DeadlineDatabase10/mongo/data', '${NFS_ENTRY_POINT}:${NFS_ENTRY_POINT}:ro', '${NFS_ENTRY_POINT}:${NFS_ENTRY_POINT_LNS}:ro']}, {'mongo-express-10-2': ['${NFS_ENTRY_POINT}/test_data/10.2/opt/Thinkbox/DeadlineDatabase10/mongo/data_LOCAL:/opt/Thinkbox/DeadlineDatabase10/mongo/data', '${NFS_ENTRY_POINT}:${NFS_ENTRY_POINT}:ro', '${NFS_ENTRY_POINT}:${NFS_ENTRY_POINT_LNS}:ro']}, {'filebrowser': ['./databases/filebrowser/filebrowser.db:/filebrowser.db', './configs/filebrowser/filebrowser.json:/.filebrowser.json', '${NFS_ENTRY_POINT}/test_data/10.2/opt/Thinkbox/DeadlineDatabase10/mongo/data_LOCAL:/opt/Thinkbox/DeadlineDatabase10/mongo/data:ro', '${NFS_ENTRY_POINT}:${NFS_ENTRY_POINT}:ro', '${NFS_ENTRY_POINT}:${NFS_ENTRY_POINT_LNS}:ro']}, {'dagster_dev': ['./configs/dagster_shared/workspace.yaml:/dagster/workspace.yaml:ro', './configs/dagster_shared/dagster.yaml:/dagster/materializations/workspace.yaml:ro', '${NFS_ENTRY_POINT}:${NFS_ENTRY_POINT}', '${NFS_ENTRY_POINT}:${NFS_ENTRY_POINT_LNS}']}, {'deadline-repository-installer-10-2': ['${NFS_ENTRY_POINT}/test_data/10.2/opt/Thinkbox/DeadlineRepository10:/opt/Thinkbox/DeadlineRepository10', '${NFS_ENTRY_POINT}:${NFS_ENTRY_POINT}:ro', '${NFS_ENTRY_POINT}:${NFS_ENTRY_POINT_LNS}:ro']}, {'deadline-client-installer-10-2': ['${NFS_ENTRY_POINT}/test_data/10.2/opt/Thinkbox/Deadline10:/opt/Thinkbox/Deadline10', '${NFS_ENTRY_POINT}/test_data/10.2/opt/Thinkbox/DeadlineRepository10:/opt/Thinkbox/DeadlineRepository10', '${NFS_ENTRY_POINT}:${NFS_ENTRY_POINT}:ro', '${NFS_ENTRY_POINT}:${NFS_ENTRY_POINT_LNS}:ro']}, {'deadline-rcs-runner-10-2': ['./configs/Deadline10/deadline.ini:/var/lib/Thinkbox/Deadline10/deadline.ini:ro', '${NFS_ENTRY_POINT}/test_data/10.2/opt/Thinkbox/Deadline10:/opt/Thinkbox/Deadline10', '${NFS_ENTRY_POINT}/test_data/10.2/opt/Thinkbox/DeadlineRepository10:/opt/Thinkbox/DeadlineRepository10', '${NFS_ENTRY_POINT}:${NFS_ENTRY_POINT}:ro', '${NFS_ENTRY_POINT}:${NFS_ENTRY_POINT_LNS}:ro']}, {'deadline-pulse-runner-10-2': ['./configs/Deadline10/deadline.ini:/var/lib/Thinkbox/Deadline10/deadline.ini:ro', '${NFS_ENTRY_POINT}/test_data/10.2/opt/Thinkbox/Deadline10:/opt/Thinkbox/Deadline10', '${NFS_ENTRY_POINT}/test_data/10.2/opt/Thinkbox/DeadlineRepository10:/opt/Thinkbox/DeadlineRepository10', '${NFS_ENTRY_POINT}:${NFS_ENTRY_POINT}:ro', '${NFS_ENTRY_POINT}:${NFS_ENTRY_POINT_LNS}:ro']}, {'deadline-worker-runner-10-2': ['./configs/Deadline10/deadline.ini:/var/lib/Thinkbox/Deadline10/deadline.ini:ro', '${NFS_ENTRY_POINT}/test_data/10.2/opt/Thinkbox/Deadline10:/opt/Thinkbox/Deadline10', '${NFS_ENTRY_POINT}/test_data/10.2/opt/Thinkbox/DeadlineRepository10:/opt/Thinkbox/DeadlineRepository10', '${NFS_ENTRY_POINT}:${NFS_ENTRY_POINT}:ro', '${NFS_ENTRY_POINT}:${NFS_ENTRY_POINT_LNS}:ro']}, {'deadline-webservice-runner-10-2': ['./configs/Deadline10/deadline.ini:/var/lib/Thinkbox/Deadline10/deadline.ini:ro', '${NFS_ENTRY_POINT}/test_data/10.2/opt/Thinkbox/Deadline10:/opt/Thinkbox/Deadline10', '${NFS_ENTRY_POINT}/test_data/10.2/opt/Thinkbox/DeadlineRepository10:/opt/Thinkbox/DeadlineRepository10', '${NFS_ENTRY_POINT}:${NFS_ENTRY_POINT}:ro', '${NFS_ENTRY_POINT}:${NFS_ENTRY_POINT_LNS}:ro']}]
-
-            for service_name, mappings in sorted(network_mapping.items()):
+        for service_name, mappings in sorted(self.network_mappings.get("services", {}).items()):
+                # network_mappings:
+                # {'mongodb-10-2': ['mongodb', 'repository'], 'mongo-express-10-2': ['mongodb'], 'filebrowser': ['repository'], 'dagster_dev': ['repository', 'mongodb'], 'likec4_dev': [], 'deadline-repository-installer-10-2': ['mongodb', 'repository'], 'deadline-client-installer-10-2': ['mongodb', 'repository'], 'deadline-rcs-runner-10-2': ['mongodb', 'repository'], 'deadline-pulse-runner-10-2': ['mongodb', 'repository'], 'deadline-worker-runner-10-2': ['mongodb', 'repository'], 'deadline-webservice-runner-10-2': ['mongodb', 'repository'], 'kitsu-10-2': [], 'postgres': ['repository', 'mongodb'], 'redis': ['repository', 'mongodb'], 'server': ['repository', 'mongodb']}
 
                 for _mapping in sorted(mappings):
                     # print(_mapping)
