@@ -276,7 +276,7 @@ class DockerComposeGraph:
 
     def iterate_trees(self, trees):
 
-        self.services = self._get_serivces(trees)
+        self.services = self._get_services(trees)
         self.depends_on = self._get_depends_on(trees)
         self.port_mappings = self._get_ports(trees)
         self.volume_mappings = self._get_volumes(trees)
@@ -287,7 +287,7 @@ class DockerComposeGraph:
         # for secondary_tree in trees:
         #     print
 
-    def _get_serivces(
+    def _get_services(
             self,
             trees: list[dict]
     ):
@@ -318,15 +318,15 @@ class DockerComposeGraph:
 
         port_mappings = {
             "root": [],
-            "services": {},
+            "services": [],
         }
 
         for tree in trees:
-            service_ports: dict = self._get_service_ports(
+            service_ports = self._get_service_ports(
                 tree=tree,
             )
 
-            port_mappings["services"].update(service_ports)
+            port_mappings["services"].extend(service_ports)
 
             # Todo
             # root_ports = self._get_root_ports(
@@ -342,16 +342,22 @@ class DockerComposeGraph:
     @staticmethod
     def _get_service_ports(
             tree: dict,
-    ) -> dict[str, list[str]]:
+    ) -> list[dict[str, list[str]]]:
 
-        port_mappings = {}
+        port_mappings = []
 
         services: dict = tree.get("services", {})
 
         for service_name, service_config in services.items():
             ports = service_config.get("ports", [])
 
-            port_mappings[service_name] = ports
+            port_mappings.append(
+                {
+                    # Todo: Switch
+                    # service_name: ports
+                    service_name: [os.path.expandvars(p) for p in ports]
+                }
+            )
 
         return port_mappings
 
@@ -396,7 +402,9 @@ class DockerComposeGraph:
 
             volume_mappings.append(
                 {
-                    service_name: volumes
+                    # Todo: Switch
+                    # service_name: volumes
+                    service_name: [os.path.expandvars(v) for v in volumes]
                 }
             )
 
@@ -456,15 +464,15 @@ class DockerComposeGraph:
 
         depends_on_mappings = {
             "root": [],
-            "services": {},
+            "services": [],
         }
 
         for tree in trees:
-            service_depends_on: dict = self._get_service_depends_on(
+            service_depends_on = self._get_service_depends_on(
                 tree=tree,
             )
 
-            depends_on_mappings["services"].update(service_depends_on)
+            depends_on_mappings["services"].extend(service_depends_on)
 
             # Todo
             # root_volumes = self._get_root_volumes(
@@ -479,9 +487,9 @@ class DockerComposeGraph:
     def _get_service_depends_on(
             self,
             tree: dict,
-    ) -> dict[str, list[str]]:
+    ) -> list[dict[str, list[str]]]:
 
-        depends_on_mappings = {}
+        depends_on_mappings = []
 
         services: dict = tree.get("services", {})
 
@@ -496,7 +504,7 @@ class DockerComposeGraph:
 
             _depends_on_conform = self._conform_depends_on(depends_on)
 
-            depends_on_mappings.update(
+            depends_on_mappings.append(
                 {
                     service_name: self._conform_depends_on(depends_on)
                 }
