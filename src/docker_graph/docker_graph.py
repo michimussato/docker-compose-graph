@@ -277,16 +277,16 @@ class DockerComposeGraph:
     def load_dotenv(self, env: pathlib.Path):
         dotenv.load_dotenv(env)
 
-    def fix_graph(self):
+    def get_fixed_graph(self):
         # This is a hacky fix for the wrong compass_direction
         # of dst port for nodes after first row. Couldn't
         # get it to work within the DockerComposeGraph logic yet.
         dot_str = self.graph.to_string()
         dot_str = dot_str.replace("> [", ">:w [")
 
-        self.graph = pydot.graph_from_dot_data(dot_str)[0]
+        graph = pydot.graph_from_dot_data(dot_str)[0]
 
-        return self.graph
+        return graph
 
     def iterate_trees(self, trees):
 
