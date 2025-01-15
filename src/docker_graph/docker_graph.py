@@ -63,6 +63,7 @@ import sys
 import yaml as pyyaml
 import pydot
 import dotenv
+import copy
 from collections import OrderedDict
 
 # from docker_graph import __version__
@@ -85,6 +86,7 @@ class DockerComposeGraph:
 
     global_dot_settings = {
         "fontname": "Helvetica",
+        "style": "rounded",
     }
 
     def __init__(
@@ -122,7 +124,7 @@ class DockerComposeGraph:
 
         self.cluster_root_include = pydot.Cluster(
             graph_name="cluster_root_include",
-            label="cluster_root_include",
+            label="root_include",
             color="magenta",
             rankdir="TB",
             **self.global_dot_settings,
@@ -130,7 +132,7 @@ class DockerComposeGraph:
 
         self.cluster_root_services = pydot.Cluster(
             graph_name="cluster_root_services",
-            label="cluster_root_services",
+            label="root_services",
             color="magenta",
             rankdir="TB",
             **self.global_dot_settings,
@@ -153,7 +155,7 @@ class DockerComposeGraph:
 
         self.cluster_root_ports = pydot.Cluster(
             graph_name="cluster_root_ports",
-            label="cluster_root_ports",
+            label="root_ports",
             color="red",
             **self.global_dot_settings,
         )
@@ -162,7 +164,7 @@ class DockerComposeGraph:
 
         self.cluster_root_volumes = pydot.Cluster(
             graph_name="cluster_root_volumes",
-            label="cluster_root_volumes",
+            label="root_volumes",
             color="red",
             rankdir="TB",
             graph_type="digraph",
@@ -175,7 +177,7 @@ class DockerComposeGraph:
 
         self.cluster_root_networks = pydot.Cluster(
             graph_name="cluster_root_networks",
-            label="cluster_root_networks",
+            label="root_networks",
             color="red",
             rankdir="TB",
             graph_type="digraph",
@@ -200,7 +202,7 @@ class DockerComposeGraph:
 
         self.cluster_service_networks = pydot.Cluster(
             graph_name="cluster_service_networks",
-            label="cluster_service_networks",
+            label="service_networks",
             color="blue",
             **self.global_dot_settings,
         )
@@ -631,9 +633,9 @@ class DockerComposeGraph:
             command = _command
 
         fields = OrderedDict({
-            "service_name": service_name,
-            "container_name": "{container_name|{" + os.path.expandvars(
-                service_config.get("container_name", "-")) + "}}",
+            # "service_name": "service_name",
+            "service_name": "{service_name|{" + service_name + "}}",
+            "container_name": "{container_name|{" + os.path.expandvars(service_config.get("container_name", "-")) + "}}",
             "hostname": "{hostname|{" + os.path.expandvars(service_config.get("hostname", "-")) + "}}",
             "domainname": "{domainname|{" + os.path.expandvars(service_config.get("domainname", "-")) + "}}",
             "volumes": "{{" + "|".join([v for v in sorted(_v)]) + "}|volumes}",
@@ -672,11 +674,11 @@ class DockerComposeGraph:
         for service in self.services:
             cluster_service = pydot.Cluster(
                 graph_name=f"cluster_service_{service.get('service_name')}",
-                label=f"cluster_service_{service.get('service_name')}",
+                label=f"service: {service.get('service_name')}",
                 color="white",
                 rankdir="TB",
                 shape="square",
-                style="rounded",
+                # style="rounded",
                 **self.global_dot_settings,
             )
 
@@ -684,8 +686,10 @@ class DockerComposeGraph:
                 name=f"NODE-SERVICE_{service.get('service_name')}",
                 label=self._get_service_label(service),
                 shape="record",
-                style="filled",
-                **self.global_dot_settings,
+                **{
+                    **self.global_dot_settings,
+                    "style": "filled",
+                }
             )
 
             cluster_service.add_node(node_service)
@@ -703,8 +707,10 @@ class DockerComposeGraph:
                     arrowtail="dot",
                     dir="both",
                     color="yellow",
-                    style="dashed",
-                    **self.global_dot_settings,
+                    **{
+                        **self.global_dot_settings,
+                        "style": "dashed",
+                    }
                 )
 
                 self.graph.add_edge(edge)
@@ -738,8 +744,10 @@ class DockerComposeGraph:
                     shape="circle",
                     color=_color,
                     fillcolor=_fillcolor,
-                    style="filled",
-                    **self.global_dot_settings,
+                    **{
+                        **self.global_dot_settings,
+                        "style": "filled",
+                    }
                 )
 
                 self.cluster_root_ports.add_node(node_host)
@@ -840,10 +848,12 @@ class DockerComposeGraph:
                     name=f"{volume_host}__{volume_container}",
                     label=f"{volume_host}",
                     shape="box",
-                    style="filled,rounded",
                     color=_color,
                     fillcolor=_fillcolor,
-                    **self.global_dot_settings,
+                    **{
+                        **self.global_dot_settings,
+                        "style": "filled,rounded",
+                    }
                 )
 
                 self.cluster_root_volumes.add_node(node_host)
@@ -932,10 +942,12 @@ class DockerComposeGraph:
                         name=f"{_mapping}",
                         label=f"{_mapping}",
                         shape="box",
-                        style="filled,rounded",
                         color=_color,
                         fillcolor=_fillcolor,
-                        **self.global_dot_settings,
+                        **{
+                            **self.global_dot_settings,
+                            "style": "filled,rounded",
+                        }
                     )
 
                     self.cluster_root_networks.add_node(node_host)
