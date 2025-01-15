@@ -15,7 +15,9 @@ __license__ = "MIT"
 
 
 def test_get_service_ports():
-    dcg = DockerComposeGraph()
+    dcg = DockerComposeGraph(
+        expandvars=False
+    )
     trees = dcg.parse_docker_compose(
         pathlib.Path("/home/michael/git/repos/docker-graph/tests/fixtures/deadline-docker/10.2/docker-compose.yaml")
     )
@@ -45,7 +47,9 @@ def test_get_service_ports():
 
 
 def test_get_service_volumes():
-    dcg = DockerComposeGraph()
+    dcg = DockerComposeGraph(
+        expandvars=False
+    )
     trees = dcg.parse_docker_compose(
         pathlib.Path("/home/michael/git/repos/docker-graph/tests/fixtures/deadline-docker/10.2/docker-compose.yaml")
     )

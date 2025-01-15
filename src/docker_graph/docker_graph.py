@@ -398,7 +398,7 @@ class DockerComposeGraph:
         services: dict = tree.get("services", {})
 
         for service_name, service_config in services.items():
-            volumes = service_config.get("volumes", {})
+            volumes = service_config.get("volumes", [])
 
             if self.expanded_vars:
                 volume_mappings[service_name] = [os.path.expandvars(v) for v in volumes]
@@ -666,10 +666,7 @@ class DockerComposeGraph:
 
             cluster_service.add_node(node_service)
 
-            _depends_on_conform = self._conform_depends_on(service["service_config"].get("depends_on", []))
-
-            # Todo:
-            for depends_on in _depends_on_conform:
+            for depends_on in service.get("service_config", {}).get("depends_on", {}):
 
                 src = self.get_name(node_service)
 
