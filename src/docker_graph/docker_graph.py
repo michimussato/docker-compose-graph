@@ -666,6 +666,8 @@ class DockerComposeGraph:
 
             cluster_service.add_node(node_service)
 
+            self.cluster_root_services.add_subgraph(cluster_service)
+
             for depends_on in service.get("service_config", {}).get("depends_on", {}):
 
                 src = self.get_name(node_service)
@@ -678,13 +680,10 @@ class DockerComposeGraph:
                     dir="both",
                     color="yellow",
                     style="dashed",
-                    # headport="nw",
-                    # tailport="ne",
+                    tailport="ne",
                 )
 
                 self.graph.add_edge(edge)
-
-            self.cluster_root_services.add_subgraph(cluster_service)
 
         # all services
         #######################
