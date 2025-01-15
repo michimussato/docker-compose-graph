@@ -201,18 +201,10 @@ def test_iterate_trees():
 
     dcg.iterate_trees(trees)
 
-    # This is a hacky fix for the wrong compass_direction
-    # of dst port for nodes after first row. Couldn't
-    # get it to work within the DockerComposeGraph logic yet.
-    dot_str = dcg.graph.to_string()
-    dot_str = dot_str.replace("> [", ">:w [")
-
-    graph = pydot.graph_from_dot_data(dot_str)[0]
-
-    graph.write_png(
+    dcg.write_png(
         path=pathlib.Path(__file__).parent / "fixtures" / "out" / "main_graph.png",
     )
-    graph.write_dot(
+    dcg.write_dot(
         path=pathlib.Path(__file__).parent / "fixtures" / "out" / "main_graph.dot",
     )
 
