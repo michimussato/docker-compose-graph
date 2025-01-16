@@ -134,6 +134,8 @@ class DockerComposeGraph:
             graph_name="cluster_root_services",
             label="root_services",
             color="magenta",
+
+            splines="curved",
             rankdir="TB",
             **self.global_dot_settings,
         )
@@ -793,7 +795,8 @@ class DockerComposeGraph:
                     }
                 )
 
-                self.graph.add_edge(edge)
+                # self.graph.add_edge(edge)
+                self.cluster_root_services.add_edge(edge)
 
         # all services
         #######################
