@@ -784,7 +784,7 @@ class DockerComposeGraph:
                     dst=f'"{src}":"PLUG_DEPENDS_ON_NODE-SERVICE_{depends_on}":w',
                     src=f'"NODE-SERVICE_{depends_on}":ne',
                     arrowhead="dot",
-                    arrowtail="dot",
+                    arrowtail="odot",
                     dir="both",
                     color="yellow",
                     **{
