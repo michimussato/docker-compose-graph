@@ -618,97 +618,98 @@ class DockerComposeGraph:
         elif isinstance(_command, str):
             command = _command
 
-        doc, tag, text = yattag.Doc().tagtext()
-
-        with tag(
-            "table",
-            border="0",
-            cellborder="1",
-            cellpadding="1",
-            cellspacing="1",
-        ):
-            # SERVICE_NAME
-            with tag("tr"):
-                with tag("td"):
-                    text("service_name")
-                with tag("td"):
-                    text(service_name)
-            # CONTAINER_NAME
-            with tag("tr"):
-                with tag("td"):
-                    text("container_name")
-                with tag("td"):
-                    text(os.path.expandvars(service_config.get("container_name", "-")))
-            # HOSTNAME
-            with tag("tr"):
-                with tag("td"):
-                    text("hostname")
-                with tag("td"):
-                    text(os.path.expandvars(service_config.get("hostname", "-")))
-            # DOMAINNAME
-            with tag("tr"):
-                with tag("td"):
-                    text("domainname")
-                with tag("td"):
-                    text(os.path.expandvars(service_config.get("domainname", "-")))
-            # VOLUMES
-            with tag("tr"):
-                with tag("td", rowspan=f"{len(_v) + 1}"):
-                    text("volumes")
-            for v in sorted(_v):
-                with tag("tr"):
-                    with tag("td"):
-                        text(v)
-            # RESTART
-            with tag("tr"):
-                with tag("td"):
-                    text("restart")
-                with tag("td"):
-                    text(restart)
-            # DEPENDS_ON
-            with tag("tr"):
-                with tag("td", rowspan=f"{len(_d) + 1}"):
-                    text("depends_on")
-            for d in sorted(_d):
-                with tag("tr"):
-                    with tag("td"):
-                        text(d)
-            # IMAGE
-            with tag("tr"):
-                with tag("td"):
-                    text("image")
-                with tag("td"):
-                    text(os.path.expandvars(service_config.get("image", "-")))
-            # PORTS
-            with tag("tr"):
-                with tag("td", rowspan=f"{len(_p) + 1}"):
-                    text("exposed ports")
-            for p in sorted(_p):
-                with tag("tr"):
-                    with tag("td"):
-                        text(p)
-            # NETWORKS
-            with tag("tr"):
-                with tag("td", rowspan=f"{len(_n) + 1}"):
-                    text("networks")
-            for n in sorted(_n):
-                with tag("tr"):
-                    with tag("td"):
-                        text(n)
-            # COMMAND
-            with tag("tr"):
-                with tag("td"):
-                    text("command")
-                with tag("td"):
-                    text(os.path.expandvars(command))
-            # ENVIRONMENT
-            with tag("tr"):
-                with tag("td", rowspan=f"{len(service_config.get('environment', [])) + 1}"):
-                    text("environment")
-            for e in sorted(service_config.get('environment', [])):
-                with tag("tr"):
-                    with tag("td"):
-                        text(os.path.expandvars(e))
+        # doc, tag, text = yattag.Doc().tagtext()
+        #
+        # with tag(
+        #     "table",
+        #     border="0",
+        #     cellborder="1",
+        #     cellpadding="1",
+        #     cellspacing="1",
+        # ):
+        #     # SERVICE_NAME
+        #     with tag("tr"):
+        #         with tag("td", align="left"):
+        #             text("service_name")
+        #         with tag("td", align="left"):
+        #             text(service_name)
+        #     # CONTAINER_NAME
+        #     with tag("tr"):
+        #         with tag("td", align="left"):
+        #             text("container_name")
+        #         with tag("td", align="left"):
+        #             text(os.path.expandvars(service_config.get("container_name", "-")))
+        #     # HOSTNAME
+        #     with tag("tr"):
+        #         with tag("td", align="left"):
+        #             text("hostname")
+        #         with tag("td", align="left"):
+        #             text(os.path.expandvars(service_config.get("hostname", "-")))
+        #     # DOMAINNAME
+        #     with tag("tr"):
+        #         with tag("td", align="left"):
+        #             text("domainname")
+        #         with tag("td", align="left"):
+        #             text(os.path.expandvars(service_config.get("domainname", "-")))
+        #     # VOLUMES
+        #     with tag("tr"):
+        #         with tag("td", align="right", rowspan=f"{len(volumes) + 1}"):
+        #             text("volumes")
+        #     for v in sorted(volumes):
+        #         with tag("tr"):
+        #             with tag("td", align="left", port=f"PLUG_{service_name}__{v}"):
+        #                 text(v)
+        #     # RESTART
+        #     with tag("tr"):
+        #         with tag("td"):
+        #             text("restart")
+        #         with tag("td"):
+        #             text(restart)
+        #     # DEPENDS_ON
+        #     with tag("tr"):
+        #         with tag("td", rowspan=f"{len(depends_on) + 1}"):
+        #             text("depends_on")
+        #     for d in sorted(depends_on):
+        #         with tag("tr"):
+        #             with tag("td", port=f"PLUG_DEPENDS_ON_NODE-SERVICE_{d}"):
+        #                 text(d)
+        #     # IMAGE
+        #     with tag("tr"):
+        #         with tag("td"):
+        #             text("image")
+        #         with tag("td"):
+        #             text(os.path.expandvars(service_config.get("image", "-")))
+        #     # PORTS
+        #     with tag("tr"):
+        #         with tag("td", align="right", rowspan=f"{len(ports_container) + 1}"):
+        #             text("exposed ports")
+        #     for p in sorted(ports_container):
+        #         port_host, port_container = p.split(":", maxsplit=1)
+        #         with tag("tr"):
+        #             with tag("td", align="left", PORT=f"PLUG_{service_name}__{port_host}__{port_container}"):
+        #                 text(p)
+        #     # NETWORKS
+        #     with tag("tr"):
+        #         with tag("td", align="right", rowspan=f"{len(networks) + 1}"):
+        #             text("networks")
+        #     for n in sorted(networks):
+        #         with tag("tr"):
+        #             with tag("td", align="left", PORT=f"PLUG_{n}"):
+        #                 text(n)
+        #     # COMMAND
+        #     with tag("tr"):
+        #         with tag("td"):
+        #             text("command")
+        #         with tag("td"):
+        #             text(os.path.expandvars(command))
+        #     # ENVIRONMENT
+        #     with tag("tr"):
+        #         with tag("td", rowspan=f"{len(service_config.get('environment', [])) + 1}"):
+        #             text("environment")
+        #     for e in sorted(service_config.get('environment', [])):
+        #         with tag("tr"):
+        #             with tag("td", align="left"):
+        #                 text(os.path.expandvars(e))
 
         fields = OrderedDict({
             "service_name": "{service_name|{" + service_name + "}}",
@@ -731,9 +732,9 @@ class DockerComposeGraph:
         })
 
         ret = "|".join([v for k, v in fields.items()])
-        ret = doc.getvalue()
+        # ret = f"<{doc.getvalue()}>"
 
-        return doc.getvalue()
+        return ret
 
     def get_primary_graph(self):
 
@@ -762,7 +763,7 @@ class DockerComposeGraph:
 
             node_service = pydot.Node(
                 name=f"NODE-SERVICE_{service.get('service_name')}",
-                label=f"<{self._get_service_label(service)}>",
+                label=self._get_service_label(service),
                 labeljust="l",
                 shape="Mrecord",
                 **{
