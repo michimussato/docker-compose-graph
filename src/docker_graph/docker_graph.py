@@ -63,8 +63,8 @@ import sys
 import yaml as pyyaml
 import pydot
 import dotenv
-import copy
 from collections import OrderedDict
+import yattag
 
 # from docker_graph import __version__
 
@@ -169,8 +169,6 @@ class DockerComposeGraph:
             rankdir="TB",
             graph_type="digraph",
             **self.global_dot_settings,
-            # shape="box",
-            # style="rounded",
         )
 
         #### networks
@@ -182,8 +180,6 @@ class DockerComposeGraph:
             rankdir="TB",
             graph_type="digraph",
             **self.global_dot_settings,
-            # shape="box",
-            # style="rounded",
         )
 
         ## Service Clusters
@@ -289,17 +285,6 @@ class DockerComposeGraph:
 
     def load_dotenv(self, env: pathlib.Path):
         dotenv.load_dotenv(env)
-
-    # def get_fixed_graph(self):
-    #     # This is a hacky fix for the wrong compass_direction
-    #     # of dst port for nodes after first row. Couldn't
-    #     # get it to work within the DockerComposeGraph logic yet.
-    #     dot_str = self.graph.to_string()
-    #     dot_str = dot_str.replace("> [", ">:w [")
-    #
-    #     graph = pydot.graph_from_dot_data(dot_str)[0]
-    #
-    #     return graph
 
     def iterate_trees(self, trees):
 
@@ -565,6 +550,7 @@ class DockerComposeGraph:
 
     @staticmethod
     def get_name(item):
+        # Todo: check effect
         # pydot seems to sometimes
         # return strings that are
         # wrapped inside quotation
@@ -632,8 +618,99 @@ class DockerComposeGraph:
         elif isinstance(_command, str):
             command = _command
 
+        doc, tag, text = yattag.Doc().tagtext()
+
+        with tag(
+            "table",
+            border="0",
+            cellborder="1",
+            cellpadding="1",
+            cellspacing="1",
+        ):
+            # SERVICE_NAME
+            with tag("tr"):
+                with tag("td"):
+                    text("service_name")
+                with tag("td"):
+                    text(service_name)
+            # CONTAINER_NAME
+            with tag("tr"):
+                with tag("td"):
+                    text("container_name")
+                with tag("td"):
+                    text(os.path.expandvars(service_config.get("container_name", "-")))
+            # HOSTNAME
+            with tag("tr"):
+                with tag("td"):
+                    text("hostname")
+                with tag("td"):
+                    text(os.path.expandvars(service_config.get("hostname", "-")))
+            # DOMAINNAME
+            with tag("tr"):
+                with tag("td"):
+                    text("domainname")
+                with tag("td"):
+                    text(os.path.expandvars(service_config.get("domainname", "-")))
+            # VOLUMES
+            with tag("tr"):
+                with tag("td", rowspan=f"{len(_v) + 1}"):
+                    text("volumes")
+            for v in sorted(_v):
+                with tag("tr"):
+                    with tag("td"):
+                        text(v)
+            # RESTART
+            with tag("tr"):
+                with tag("td"):
+                    text("restart")
+                with tag("td"):
+                    text(restart)
+            # DEPENDS_ON
+            with tag("tr"):
+                with tag("td", rowspan=f"{len(_d) + 1}"):
+                    text("depends_on")
+            for d in sorted(_d):
+                with tag("tr"):
+                    with tag("td"):
+                        text(d)
+            # IMAGE
+            with tag("tr"):
+                with tag("td"):
+                    text("image")
+                with tag("td"):
+                    text(os.path.expandvars(service_config.get("image", "-")))
+            # PORTS
+            with tag("tr"):
+                with tag("td", rowspan=f"{len(_p) + 1}"):
+                    text("exposed ports")
+            for p in sorted(_p):
+                with tag("tr"):
+                    with tag("td"):
+                        text(p)
+            # NETWORKS
+            with tag("tr"):
+                with tag("td", rowspan=f"{len(_n) + 1}"):
+                    text("networks")
+            for n in sorted(_n):
+                with tag("tr"):
+                    with tag("td"):
+                        text(n)
+            # COMMAND
+            with tag("tr"):
+                with tag("td"):
+                    text("command")
+                with tag("td"):
+                    text(os.path.expandvars(command))
+            # ENVIRONMENT
+            with tag("tr"):
+                with tag("td", rowspan=f"{len(service_config.get('environment', [])) + 1}"):
+                    text("environment")
+            for e in sorted(service_config.get('environment', [])):
+                with tag("tr"):
+                    with tag("td"):
+                        text(os.path.expandvars(e))
+
         fields = OrderedDict({
-            # "service_name": "service_name",
             "service_name": "{service_name|{" + service_name + "}}",
             "container_name": "{container_name|{" + os.path.expandvars(service_config.get("container_name", "-")) + "}}",
             "hostname": "{hostname|{" + os.path.expandvars(service_config.get("hostname", "-")) + "}}",
@@ -654,8 +731,9 @@ class DockerComposeGraph:
         })
 
         ret = "|".join([v for k, v in fields.items()])
+        ret = doc.getvalue()
 
-        return ret
+        return doc.getvalue()
 
     def get_primary_graph(self):
 
@@ -684,8 +762,9 @@ class DockerComposeGraph:
 
             node_service = pydot.Node(
                 name=f"NODE-SERVICE_{service.get('service_name')}",
-                label=self._get_service_label(service),
-                shape="record",
+                label=f"<{self._get_service_label(service)}>",
+                labeljust="l",
+                shape="Mrecord",
                 **{
                     **self.global_dot_settings,
                     "style": "filled",
@@ -959,38 +1038,14 @@ class DockerComposeGraph:
 
                     dst = self.get_name(n)
                     edge = pydot.Edge(
-                        src=f"{_mapping}",
-                        # dst="%s" % dst,
-                        # dst="%s:<PLUG_%s>" % (dst, _mapping),
+                        src=f'"{_mapping}":e',
                         dst=f'"{dst}":"PLUG_{_mapping}":w',
                         color=_fillcolor,
-                        # fillcolor=_fillcolor,
                         dir="both",
                         arrowhead="dot",
                         arrowtail="dot",
-                        # headport="w",
-                        tailport="e",
                         **self.global_dot_settings,
                     )
-
-                    # edge = pydot.Edge(
-                    #     src=f"{_mapping}",
-                    #     dst="%s:<PLUG_%s>" % (dst, _mapping),
-                    #     color=_fillcolor,
-                    #     dir="both",
-                    #     arrowhead="dot",
-                    #     arrowtail="dot",
-                    #     tailport="e",
-                    # )
-                    #
-                    # edge.set_headport("w")
-                    #
-                    # Results in
-                    # mongodb:e -> "NODE-SERVICE_dagster-dev":w
-
-                    # Expected:
-                    # mongodb:e -> "NODE-SERVICE_dagster-dev":<PLUG_mongodb>:w
-                    #
 
                     self.graph.add_edge(edge)
 
