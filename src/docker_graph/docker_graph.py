@@ -112,7 +112,7 @@ class DockerComposeGraph:
             rankdir="LR",
             graph_type="digraph",
             bgcolor="#2f2f2f",
-            splines="line",
+            splines="curved",
             # splines=False,
             pad="1.5", nodesep="0.3", ranksep="10",
             **self.global_dot_settings,
@@ -135,7 +135,7 @@ class DockerComposeGraph:
             label="root_services",
             color="magenta",
 
-            splines="curved",
+            splines="line",
             rankdir="TB",
             **self.global_dot_settings,
         )
