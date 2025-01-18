@@ -1006,51 +1006,53 @@ class DockerComposeGraph:
         _fillcolor = "orange"
 
         for service_name, mappings in sorted(self.network_mappings.get("services", {}).items()):
-                # network_mappings:
-                # {'mongodb-10-2': ['mongodb', 'repository'], 'mongo-express-10-2': ['mongodb'], 'filebrowser': ['repository'], 'dagster_dev': ['repository', 'mongodb'], 'likec4_dev': [], 'deadline-repository-installer-10-2': ['mongodb', 'repository'], 'deadline-client-installer-10-2': ['mongodb', 'repository'], 'deadline-rcs-runner-10-2': ['mongodb', 'repository'], 'deadline-pulse-runner-10-2': ['mongodb', 'repository'], 'deadline-worker-runner-10-2': ['mongodb', 'repository'], 'deadline-webservice-runner-10-2': ['mongodb', 'repository'], 'kitsu-10-2': [], 'postgres': ['repository', 'mongodb'], 'redis': ['repository', 'mongodb'], 'server': ['repository', 'mongodb']}
+            # network_mappings:
+            # {'mongodb-10-2': ['mongodb', 'repository'], 'mongo-express-10-2': ['mongodb'], 'filebrowser': ['repository'], 'dagster_dev': ['repository', 'mongodb'], 'likec4_dev': [], 'deadline-repository-installer-10-2': ['mongodb', 'repository'], 'deadline-client-installer-10-2': ['mongodb', 'repository'], 'deadline-rcs-runner-10-2': ['mongodb', 'repository'], 'deadline-pulse-runner-10-2': ['mongodb', 'repository'], 'deadline-worker-runner-10-2': ['mongodb', 'repository'], 'deadline-webservice-runner-10-2': ['mongodb', 'repository'], 'kitsu-10-2': [], 'postgres': ['repository', 'mongodb'], 'redis': ['repository', 'mongodb'], 'server': ['repository', 'mongodb']}
 
-                for _mapping in sorted(mappings):
-                    # print(_mapping)
-                    # split = os.path.expandvars(_mapping).split(":")
-                    #
-                    # network_host = split[0]
-                    # network_container = split[1]
-                    # network_mode = "rw"
+            print(sorted(mappings))
 
-                    # if len(split) > 2:
-                    #     volume_mode = split[2]
+            for _mapping in sorted(mappings):
+                # print(_mapping)
+                # split = os.path.expandvars(_mapping).split(":")
+                #
+                # network_host = split[0]
+                # network_container = split[1]
+                # network_mode = "rw"
 
-                    node_host = pydot.Node(
-                        name=f"{_mapping}",
-                        label=f"{_mapping}",
-                        shape="box",
-                        color=_color,
-                        fillcolor=_fillcolor,
-                        **{
-                            **self.global_dot_settings,
-                            "style": "filled,rounded",
-                        }
-                    )
+                # if len(split) > 2:
+                #     volume_mode = split[2]
 
-                    self.cluster_root_networks.add_node(node_host)
-
-                    for sg in self.cluster_root_services.get_subgraphs():
-                        if self.get_name(sg) == f"cluster_cluster_service_{service_name}":
-                            n = sg.get_node(name=f"NODE-SERVICE_{service_name}")[0]
-                            break
-
-                    dst = self.get_name(n)
-                    edge = pydot.Edge(
-                        src=f'"{_mapping}":e',
-                        dst=f'"{dst}":"PLUG_{_mapping}":w',
-                        color=_fillcolor,
-                        dir="both",
-                        arrowhead="dot",
-                        arrowtail="dot",
+                node_host = pydot.Node(
+                    name=f"{_mapping}",
+                    label=f"{_mapping}",
+                    shape="box",
+                    color=_color,
+                    fillcolor=_fillcolor,
+                    **{
                         **self.global_dot_settings,
-                    )
+                        "style": "filled,rounded",
+                    }
+                )
 
-                    self.graph.add_edge(edge)
+                self.cluster_root_networks.add_node(node_host)
+
+                for sg in self.cluster_root_services.get_subgraphs():
+                    if self.get_name(sg) == f"cluster_cluster_service_{service_name}":
+                        n = sg.get_node(name=f"NODE-SERVICE_{service_name}")[0]
+                        break
+
+                dst = self.get_name(n)
+                edge = pydot.Edge(
+                    src=f'"{_mapping}":e',
+                    dst=f'"{dst}":"PLUG_{_mapping}":w',
+                    color=_fillcolor,
+                    dir="both",
+                    arrowhead="dot",
+                    arrowtail="dot",
+                    **self.global_dot_settings,
+                )
+
+                self.graph.add_edge(edge)
 
         # Root Networks
         # Todo
