@@ -702,17 +702,17 @@ class DockerComposeGraph:
                     with tag("tr"):
                         with tag("td", align="left"):
                             text(os.path.expandvars(e))
-                # # VOLUMES
-                # for v in sorted(volumes[:1]):
-                #     with tag("tr"):
-                #         with tag("td", align="left", port=f"PLUG_{service_name}__{v}"):
-                #             text(v)
-                #         with tag("td", align="center", rowspan=f"{len(volumes)}"):
-                #             text("volumes")
-                # for v in sorted(volumes[1:]):
-                #     with tag("tr"):
-                #         with tag("td", align="left", port=f"PLUG_{service_name}__{v}"):
-                #             text(v)
+                # VOLUMES
+                for v in sorted(volumes[:1]):
+                    with tag("tr"):
+                        with tag("td", align="left", port=f"PLUG_{service_name}__{v}"):
+                            text(v)
+                        with tag("td", align="center", rowspan=f"{len(volumes)}"):
+                            text("volumes")
+                for v in sorted(volumes[1:]):
+                    with tag("tr"):
+                        with tag("td", align="left", port=f"PLUG_{service_name}__{v}"):
+                            text(v)
                 # # # DEPENDS_ON
                 # # # https://stackoverflow.com/a/47704499/2207196
                 # # # for d, condition in dict(itertools.islice(depends_on.items(), 1)).items():
