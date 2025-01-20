@@ -135,12 +135,14 @@ class DockerComposeGraph:
         self.cluster_root_services = pydot.Cluster(
             graph_name="cluster_root_services",
             label="root_services",
-            color=fillcolor_cluster_root_services,
-            fillcolor=f"{fillcolor_cluster_root_services}AA",
             # splines="line",
             rankdir="TB",
-            style="filled,rounded",
-            **self.global_dot_settings,
+            **{
+                **self.global_dot_settings,
+                "style": "filled,rounded",
+                "color": fillcolor_cluster_root_services,
+                "fillcolor": f"{fillcolor_cluster_root_services}AA",
+            },
         )
 
         ### Collection Clusters
