@@ -740,6 +740,7 @@ class DockerComposeGraph:
                     with tag("tr"):
                         with tag("td", align="left", PORT=f"PLUG_{service_name}__{port_host}__{port_container}"):
                             text(p)
+                # Todo
                 # # NETWORKS
                 # for n in sorted(networks[:1]):
                 #     with tag("tr"):
