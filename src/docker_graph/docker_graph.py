@@ -688,6 +688,8 @@ class DockerComposeGraph:
                         text("image")
                     with tag("td", align="left"):
                         text(os.path.expandvars(service_config.get("image", "-")))
+                # Todo
+                #  - [ ] ENTRYPOINT
                 # COMMAND
                 with tag("tr"):
                     with tag("td", align="right"):
