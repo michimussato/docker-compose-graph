@@ -189,7 +189,6 @@ class DockerComposeGraph:
             graph_name="cluster_root_volumes",
             label="root_volumes",
             rankdir="TB",
-            # graph_type="digraph",
             **{
                 **self.global_dot_settings,
                 "style": "filled,rounded",
@@ -206,7 +205,6 @@ class DockerComposeGraph:
             graph_name="cluster_root_networks",
             label="root_networks",
             rankdir="TB",
-            # graph_type="digraph",
             **{
                 **self.global_dot_settings,
                 "style": "filled,rounded",
