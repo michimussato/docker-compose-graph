@@ -64,7 +64,6 @@ import yaml as pyyaml
 import pydot
 import dotenv
 from collections import OrderedDict
-import yattag
 
 # from docker_graph import __version__
 
