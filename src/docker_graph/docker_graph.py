@@ -740,17 +740,17 @@ class DockerComposeGraph:
                     with tag("tr"):
                         with tag("td", align="left", PORT=f"PLUG_{service_name}__{port_host}__{port_container}"):
                             text(p)
-                # # NETWORKS
-                # for n in sorted(networks[:1]):
-                #     with tag("tr"):
-                #         with tag("td", align="left", PORT=f"PLUG_{n}"):
-                #             text(n)
-                #         with tag("td", align="center", rowspan=f"{len(networks)}"):
-                #             text("networks")
-                # for n in sorted(networks[1:]):
-                #     with tag("tr"):
-                #         with tag("td", align="left", PORT=f"PLUG_{n}"):
-                #             text(n)
+                # NETWORKS
+                for n in sorted(networks[:1]):
+                    with tag("tr"):
+                        with tag("td", align="left", PORT=f"PLUG_{n}"):
+                            text(n)
+                        with tag("td", align="center", rowspan=f"{len(networks)}"):
+                            text("networks")
+                for n in sorted(networks[1:]):
+                    with tag("tr"):
+                        with tag("td", align="left", PORT=f"PLUG_{n}"):
+                            text(n)
 
             ret = f"<{doc.getvalue()}>"
 
