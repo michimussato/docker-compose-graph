@@ -120,14 +120,22 @@ class DockerComposeGraph:
 
         # Clusters
 
+        alpha = "55"
+
         ## Root Clusters
+
+        fillcolor_cluster_root_include = "#0000FF"
 
         self.cluster_root_include = pydot.Cluster(
             graph_name="cluster_root_include",
             label="root_include",
-            color="magenta",
             rankdir="TB",
-            **self.global_dot_settings,
+            **{
+                **self.global_dot_settings,
+                "style": "filled,rounded",
+                "color": fillcolor_cluster_root_include,
+                "fillcolor": f"{fillcolor_cluster_root_include}{alpha}",
+            },
         )
 
         fillcolor_cluster_root_services = "#FF00FF"
@@ -135,13 +143,12 @@ class DockerComposeGraph:
         self.cluster_root_services = pydot.Cluster(
             graph_name="cluster_root_services",
             label="root_services",
-            # splines="line",
             rankdir="TB",
             **{
                 **self.global_dot_settings,
                 "style": "filled,rounded",
                 "color": fillcolor_cluster_root_services,
-                "fillcolor": f"{fillcolor_cluster_root_services}AA",
+                "fillcolor": f"{fillcolor_cluster_root_services}{alpha}",
             },
         )
 
@@ -160,25 +167,40 @@ class DockerComposeGraph:
 
         #### ports
 
+        fillcolor_cluster_root_ports = "#FF0000"
+
         self.cluster_root_ports = pydot.Cluster(
             graph_name="cluster_root_ports",
             label="root_ports",
-            color="red",
-            **self.global_dot_settings,
+            rankdir="TB",
+            **{
+                **self.global_dot_settings,
+                "style": "filled,rounded",
+                "color": fillcolor_cluster_root_ports,
+                "fillcolor": f"{fillcolor_cluster_root_ports}{alpha}",
+            },
         )
 
         #### volumes
 
+        fillcolor_cluster_root_volumes = "#00FFFF"
+
         self.cluster_root_volumes = pydot.Cluster(
             graph_name="cluster_root_volumes",
             label="root_volumes",
-            color="red",
             rankdir="TB",
-            graph_type="digraph",
-            **self.global_dot_settings,
+            # graph_type="digraph",
+            **{
+                **self.global_dot_settings,
+                "style": "filled,rounded",
+                "color": fillcolor_cluster_root_volumes,
+                "fillcolor": f"{fillcolor_cluster_root_volumes}{alpha}",
+            },
         )
 
         #### networks
+
+        fillcolor_cluster_root_networks = "#FFFFFF"
 
         self.cluster_root_networks = pydot.Cluster(
             graph_name="cluster_root_networks",
@@ -201,14 +223,14 @@ class DockerComposeGraph:
         #     color="blue",
         # )
 
-        ### networks
-
-        self.cluster_service_networks = pydot.Cluster(
-            graph_name="cluster_service_networks",
-            label="service_networks",
-            color="blue",
-            **self.global_dot_settings,
-        )
+        # ### networks
+        #
+        # self.cluster_service_networks = pydot.Cluster(
+        #     graph_name="cluster_service_networks",
+        #     label="service_networks",
+        #     color="blue",
+        #     **self.global_dot_settings,
+        # )
 
     def write_png(self, path):
 
