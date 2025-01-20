@@ -120,35 +120,37 @@ class DockerComposeGraph:
 
         # Clusters
 
-        alpha = "55"
+        self.alpha = "10"
 
         ## Root Clusters
 
-        fillcolor_cluster_root_include = "#0000FF"
+        # self.fillcolor_cluster_root_include = "#0000FF"
+        #
+        # self.cluster_root_include = pydot.Cluster(
+        #     graph_name="cluster_root_include",
+        #     label="root_include",
+        #     rankdir="TB",
+        #     **{
+        #         **self.global_dot_settings,
+        #         "style": "filled,rounded",
+        #         "color": self.fillcolor_cluster_root_include,
+        #         "fillcolor": f"{self.fillcolor_cluster_root_include}{alpha}",
+        #     },
+        # )
 
-        self.cluster_root_include = pydot.Cluster(
-            graph_name="cluster_root_include",
-            label="root_include",
-            rankdir="TB",
-            **{
-                **self.global_dot_settings,
-                "style": "filled,rounded",
-                "color": fillcolor_cluster_root_include,
-                "fillcolor": f"{fillcolor_cluster_root_include}{alpha}",
-            },
-        )
-
-        fillcolor_cluster_root_services = "#FF00FF"
+        self.fillcolor_cluster_root_services = "#FF00FF"
 
         self.cluster_root_services = pydot.Cluster(
             graph_name="cluster_root_services",
-            label="root_services",
+            label="Services",
+            fontsize="40",
             rankdir="TB",
             **{
                 **self.global_dot_settings,
                 "style": "filled,rounded",
-                "color": fillcolor_cluster_root_services,
-                "fillcolor": f"{fillcolor_cluster_root_services}{alpha}",
+                "color": self.fillcolor_cluster_root_services,
+                "fontcolor": self.fillcolor_cluster_root_services,
+                "fillcolor": f"{self.fillcolor_cluster_root_services}{self.alpha}",
             },
         )
 
@@ -167,49 +169,55 @@ class DockerComposeGraph:
 
         #### ports
 
-        fillcolor_cluster_root_ports = "#FF0000"
+        self.fillcolor_cluster_root_ports = "#FFFFFF"
 
         self.cluster_root_ports = pydot.Cluster(
             graph_name="cluster_root_ports",
-            label="root_ports",
+            label="Exposed Ports",
+            fontsize="40",
             rankdir="TB",
             **{
                 **self.global_dot_settings,
                 "style": "filled,rounded",
-                "color": fillcolor_cluster_root_ports,
-                "fillcolor": f"{fillcolor_cluster_root_ports}{alpha}",
+                "color": self.fillcolor_cluster_root_ports,
+                "fontcolor": self.fillcolor_cluster_root_ports,
+                "fillcolor": f"{self.fillcolor_cluster_root_ports}{self.alpha}",
             },
         )
 
         #### volumes
 
-        fillcolor_cluster_root_volumes = "#00FFFF"
+        self.fillcolor_cluster_root_volumes = "#00FFFF"
 
         self.cluster_root_volumes = pydot.Cluster(
             graph_name="cluster_root_volumes",
-            label="root_volumes",
+            label="Mounted Volumes",
+            fontsize="40",
             rankdir="TB",
             **{
                 **self.global_dot_settings,
                 "style": "filled,rounded",
-                "color": fillcolor_cluster_root_volumes,
-                "fillcolor": f"{fillcolor_cluster_root_volumes}{alpha}",
+                "color": self.fillcolor_cluster_root_volumes,
+                "fontcolor": self.fillcolor_cluster_root_volumes,
+                "fillcolor": f"{self.fillcolor_cluster_root_volumes}{self.alpha}",
             },
         )
 
         #### networks
 
-        fillcolor_cluster_root_networks = "#FFFFFF"
+        self.fillcolor_cluster_root_networks = "#FFA500"
 
         self.cluster_root_networks = pydot.Cluster(
             graph_name="cluster_root_networks",
-            label="root_networks",
+            label="Networks",
+            fontsize="40",
             rankdir="TB",
             **{
                 **self.global_dot_settings,
                 "style": "filled,rounded",
-                "color": fillcolor_cluster_root_networks,
-                "fillcolor": f"{fillcolor_cluster_root_networks}{alpha}",
+                "color": self.fillcolor_cluster_root_networks,
+                "fontcolor": self.fillcolor_cluster_root_networks,
+                "fillcolor": f"{self.fillcolor_cluster_root_networks}{self.alpha}",
             },
         )
 
@@ -784,12 +792,19 @@ class DockerComposeGraph:
         for service in self.services:
             cluster_service = pydot.Cluster(
                 graph_name=f"cluster_service_{service.get('service_name')}",
-                label=f"service: {service.get('service_name')}",
-                color="white",
+                label=service.get('service_name'),
+                # color="white",
+                # fillcolor="white",
                 rankdir="TB",
                 shape="square",
                 # style="rounded",
-                **self.global_dot_settings,
+                **{
+                    **self.global_dot_settings,
+                    "style": "filled,rounded",
+                    "color": "white",
+                    "fontcolor": "white",
+                    "fillcolor": f"{self.fillcolor_cluster_root_volumes}{self.alpha}",
+                },
             )
 
             node_service = pydot.Node(
@@ -800,6 +815,8 @@ class DockerComposeGraph:
                 **{
                     **self.global_dot_settings,
                     "style": "filled",
+                    "color": "#0A0A0A",
+                    "fillcolor": "#F0F0F0",
                 }
             )
 
@@ -838,7 +855,7 @@ class DockerComposeGraph:
         #  - [ ] Sorted
 
         _color = "black"
-        _fillcolor = "white"
+        # _fillcolor = "white"
 
         for service_name, mappings in sorted(self.port_mappings["services"].items()):
 
@@ -855,7 +872,7 @@ class DockerComposeGraph:
                     label=port_host,
                     shape="circle",
                     color=_color,
-                    fillcolor=_fillcolor,
+                    fillcolor=self.fillcolor_cluster_root_ports,
                     **{
                         **self.global_dot_settings,
                         "style": "filled",
@@ -873,7 +890,7 @@ class DockerComposeGraph:
                 edge = pydot.Edge(
                     src=f"{service_name}__{port_host}__{port_container}",
                     dst=f'"{dst}":"PLUG_{service_name}__{port_host}__{port_container}":w',
-                    color=_fillcolor,
+                    color=self.fillcolor_cluster_root_ports,
                     # fillcolor=_fillcolor,
                     dir="both",
                     arrowhead="dot",
@@ -940,7 +957,7 @@ class DockerComposeGraph:
         #  - [ ] Sorted
 
         _color = "black"
-        _fillcolor = "green"
+        # _fillcolor = "green"
 
         for service_name, mappings in sorted(self.volume_mappings.get("services", {}).items()):
             # volume_mappings:
@@ -961,7 +978,7 @@ class DockerComposeGraph:
                     label=f"{volume_host}",
                     shape="box",
                     color=_color,
-                    fillcolor=_fillcolor,
+                    fillcolor=self.fillcolor_cluster_root_volumes,
                     **{
                         **self.global_dot_settings,
                         "style": "filled,rounded",
@@ -979,7 +996,7 @@ class DockerComposeGraph:
                 edge = pydot.Edge(
                     src=node_host,
                     dst=f'"{dst}":"PLUG_{service_name}__{volume_container}":w',
-                    color=_fillcolor,
+                    color=self.fillcolor_cluster_root_volumes,
                     # fillcolor=_fillcolor,
                     dir="both",
                     arrowhead="dot",
@@ -1033,13 +1050,13 @@ class DockerComposeGraph:
         #  - [ ] Sorted
 
         _color = "black"
-        _fillcolor = "orange"
+        # _fillcolor = "orange"
 
         for service_name, mappings in sorted(self.network_mappings.get("services", {}).items()):
             # network_mappings:
             # {'mongodb-10-2': ['mongodb', 'repository'], 'mongo-express-10-2': ['mongodb'], 'filebrowser': ['repository'], 'dagster_dev': ['repository', 'mongodb'], 'likec4_dev': [], 'deadline-repository-installer-10-2': ['mongodb', 'repository'], 'deadline-client-installer-10-2': ['mongodb', 'repository'], 'deadline-rcs-runner-10-2': ['mongodb', 'repository'], 'deadline-pulse-runner-10-2': ['mongodb', 'repository'], 'deadline-worker-runner-10-2': ['mongodb', 'repository'], 'deadline-webservice-runner-10-2': ['mongodb', 'repository'], 'kitsu-10-2': [], 'postgres': ['repository', 'mongodb'], 'redis': ['repository', 'mongodb'], 'server': ['repository', 'mongodb']}
 
-            print(sorted(mappings))
+            # print(sorted(mappings))
 
             for _mapping in sorted(mappings):
                 # print(_mapping)
@@ -1057,7 +1074,7 @@ class DockerComposeGraph:
                     label=f"{_mapping}",
                     shape="box",
                     color=_color,
-                    fillcolor=_fillcolor,
+                    fillcolor=self.fillcolor_cluster_root_networks,
                     **{
                         **self.global_dot_settings,
                         "style": "filled,rounded",
@@ -1075,7 +1092,7 @@ class DockerComposeGraph:
                 edge = pydot.Edge(
                     src=f'"{_mapping}":e',
                     dst=f'"{dst}":"PLUG_{_mapping}":w',
-                    color=_fillcolor,
+                    color=self.fillcolor_cluster_root_networks,
                     dir="both",
                     arrowhead="dot",
                     arrowtail="dot",
