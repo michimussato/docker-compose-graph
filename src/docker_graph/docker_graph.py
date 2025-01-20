@@ -75,7 +75,7 @@ __license__ = "MIT"
 _logger = logging.getLogger(__name__)
 
 
-USE_HTML_LABELS = False
+USE_HTML_LABELS = True
 
 
 # ---- Python API ----
@@ -713,20 +713,20 @@ class DockerComposeGraph:
                     with tag("tr"):
                         with tag("td", align="left", port=f"PLUG_{service_name}__{v}"):
                             text(v)
-                # DEPENDS_ON
-                # https://stackoverflow.com/a/47704499/2207196
-                # for d, condition in dict(itertools.islice(depends_on.items(), 1)).items():
-                for d, condition in list(depends_on.items())[:1]:
-                    with tag("tr"):
-                        with tag("td", align="left", port=f"PLUG_DEPENDS_ON_NODE-SERVICE_{d}"):
-                            text(d)
-                        with tag("td", align="center", rowspan=f"{len(depends_on.items())}"):
-                            text("depends_on")
-                # for d, condition in dict(itertools.islice(depends_on.items(), -1)).items():
-                for d, condition in list(depends_on.items())[1:]:
-                    with tag("tr"):
-                        with tag("td", align="left", port=f"PLUG_DEPENDS_ON_NODE-SERVICE_{d}"):
-                            text(d)
+                # # DEPENDS_ON
+                # # https://stackoverflow.com/a/47704499/2207196
+                # # for d, condition in dict(itertools.islice(depends_on.items(), 1)).items():
+                # for d, condition in list(depends_on.items())[:1]:
+                #     with tag("tr"):
+                #         with tag("td", align="left", port=f"PLUG_DEPENDS_ON_NODE-SERVICE_{d}"):
+                #             text(d)
+                #         with tag("td", align="center", rowspan=f"{len(depends_on.items())}"):
+                #             text("depends_on")
+                # # for d, condition in dict(itertools.islice(depends_on.items(), -1)).items():
+                # for d, condition in list(depends_on.items())[1:]:
+                #     with tag("tr"):
+                #         with tag("td", align="left", port=f"PLUG_DEPENDS_ON_NODE-SERVICE_{d}"):
+                #             text(d)
                 # PORTS
                 for p in sorted(ports_container[:1]):
                     port_host, port_container = p.split(":", maxsplit=1)
