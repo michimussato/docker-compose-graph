@@ -75,7 +75,7 @@ __license__ = "MIT"
 _logger = logging.getLogger(__name__)
 
 
-USE_HTML_LABELS = True
+USE_HTML_LABELS = False
 
 
 # ---- Python API ----
@@ -816,8 +816,7 @@ class DockerComposeGraph:
                 name=f"NODE-SERVICE_{service.get('service_name')}",
                 label=self._get_service_label(service),
                 labeljust="l",
-                # shape="Mrecord",
-                shape="plain",  # for HTML style labels
+                shape="plain" if USE_HTML_LABELS else "Mrecord",  # for HTML style labels
                 **{
                     **self.global_dot_settings,
                     "style": "filled",
