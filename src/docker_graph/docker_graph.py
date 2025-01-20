@@ -136,7 +136,7 @@ class DockerComposeGraph:
             graph_name="cluster_root_services",
             label="root_services",
             color=fillcolor_cluster_root_services,
-            fillcolor=f"{fillcolor_cluster_root_services}AA",
+            fillcolor=fillcolor_cluster_root_services,
             # splines="line",
             rankdir="TB",
             **self.global_dot_settings,
