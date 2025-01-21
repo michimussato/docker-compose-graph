@@ -66,6 +66,8 @@ import dotenv
 from collections import OrderedDict
 import yattag
 
+from docker_graph.yaml_tags.overrides import OverrideArray
+
 # from docker_graph import __version__
 
 __author__ = "Michael Mussato"
@@ -598,7 +600,7 @@ class DockerComposeGraph:
         ports: list = service_config.get("ports", [])
         if isinstance(ports, list):
             ports_container: list = [os.path.expandvars(p) for p in ports]
-        elif isinstance(ports, pyyaml.YAMLObject):
+        elif isinstance(ports, OverrideArray):
             # OverrideArray() in
             # ~/repos/deadline-docker/src/Deadline/deadline_docker/assets.py
             # Todo: find a better solution
@@ -867,7 +869,7 @@ class DockerComposeGraph:
 
         for service_name, mappings in sorted(self.port_mappings["services"].items()):
 
-            if isinstance(mappings, pyyaml.YAMLObject):
+            if isinstance(mappings, OverrideArray):
                 # OverrideArray() in
                 # ~/repos/deadline-docker/src/Deadline/deadline_docker/assets.py
                 # Todo: find a better solution
