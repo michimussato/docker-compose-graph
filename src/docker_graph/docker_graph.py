@@ -674,6 +674,8 @@ class DockerComposeGraph:
                 restart=service_config.get("restart", "-"),
                 image=os.path.expandvars(service_config.get("image", "-")),
                 command=command,
+                # Todo:
+                #  - [ ] Variables are currently not expanded
                 environment=service_config.get("environment", {}),
                 volumes=volumes,
                 depends_on=depends_on,
