@@ -343,7 +343,7 @@ class DockerComposeGraph:
                     if isinstance(environment, list):
                         _environment = dict()
                         for env in sorted(environment):
-                            k, v = env.replace(" ", "").split("=")
+                            k, v = env.replace(" ", "").split("=", maxsplit=1)
                             _environment[k] = v
                         service_config["environment"] = _environment
 
