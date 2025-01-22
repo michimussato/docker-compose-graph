@@ -64,7 +64,7 @@ import yaml as pyyaml
 import pydot
 import dotenv
 from collections import OrderedDict
-import yattag
+from jinja2 import Environment, FileSystemLoader
 
 from docker_graph.yaml_tags.overrides import OverrideArray
 
@@ -334,6 +334,19 @@ class DockerComposeGraph:
 
             for service_name, service_config in tree.get("services", {}).items():
 
+                # some environment definitions in docker compose
+                # (i.e. for ayon) will be loaded as lists instead
+                # of k=v pairs. This "tries" to convert it
+                # Todo: maybe improve logic here
+                environment = service_config.get("environment", None)
+                if environment is not None:
+                    if isinstance(environment, list):
+                        _environment = dict()
+                        for env in sorted(environment):
+                            k, v = env.replace(" ", "").split("=")
+                            _environment[k] = v
+                        service_config["environment"] = _environment
+
                 services.append(
                     {
                         "service_name": service_name,
@@ -597,16 +610,20 @@ class DockerComposeGraph:
         service_name = service.get("service_name")
         service_config = service.get("service_config")
 
-        ports: list = service_config.get("ports", [])
-        if isinstance(ports, list):
-            ports_container: list = [os.path.expandvars(p) for p in ports]
-        elif isinstance(ports, OverrideArray):
+        _ports: list = service_config.get("ports", [])
+        if isinstance(_ports, list):
+            ports_container: list = [os.path.expandvars(p) for p in _ports]
+        elif isinstance(_ports, OverrideArray):
             # OverrideArray() in
             # ~/repos/deadline-docker/src/Deadline/deadline_docker/assets.py
             # Todo: find a better solution
-            ports_container: list = sorted([os.path.expandvars(p) for p in ports.array])
-        _p = []
+            ports_container: list = sorted([os.path.expandvars(p) for p in _ports.array])
 
+        ports = [
+            *ports_container
+        ]
+
+        _p = []
         for p in ports_container:
             port_host, port_container = p.split(":", maxsplit=1)
             id_service_port = f"<PLUG_{service_name}__{port_host}__{port_container}> {port_container}"
@@ -635,143 +652,39 @@ class DockerComposeGraph:
             id_service_network = f"<PLUG_{n}> {n}"
             _n.append(id_service_network)
 
-        restart: str = service_config.get("restart", "")
+        restart: str = service_config.get("restart", "-")
 
         _command = service_config.get("command", "-")
         if isinstance(_command, list):
             command = " ".join(_command)
         elif isinstance(_command, str):
             command = _command
+        else:
+            raise TypeError(f"Unhandled command type: {_command} ({type(_command)})")
 
         if USE_HTML_LABELS:
 
-            doc, tag, text = yattag.Doc().tagtext()
+            env = Environment(loader=FileSystemLoader("/home/michael/git/repos/docker-graph/src/docker_graph/resources"))
+            template = env.get_template("service_node_label.j2")
 
-            # doc.asis('<!DOCTYPE html>')  # Causes write_png() to fail
-            with tag(
-                "table",
-                border="0",
-                cellborder="1",
-                cellpadding="1",
-                cellspacing="1",
-            ):
-                # SERVICE_NAME
-                with tag("tr"):
-                    with tag("td", align="right"):
-                        text("service_name")
-                    with tag("td", align="left"):
-                        text(service_name)
-                # CONTAINER_NAME
-                with tag("tr"):
-                    with tag("td", align="right"):
-                        text("container_name")
-                    with tag("td", align="left"):
-                        text(os.path.expandvars(service_config.get("container_name", "-")))
-                # HOSTNAME
-                with tag("tr"):
-                    with tag("td", align="right"):
-                        text("hostname")
-                    with tag("td", align="left"):
-                        text(os.path.expandvars(service_config.get("hostname", "-")))
-                # DOMAINNAME
-                with tag("tr"):
-                    with tag("td", align="right"):
-                        text("domainname")
-                    with tag("td", align="left"):
-                        text(os.path.expandvars(service_config.get("domainname", "-")))
-                # RESTART
-                with tag("tr"):
-                    with tag("td", align="right"):
-                        text("restart")
-                    with tag("td", align="left"):
-                        text(restart)
-                # IMAGE
-                image = os.path.expandvars(service_config.get("image", "-"))
-                if image != "-":
-                    with tag("tr"):
-                        with tag("td", align="right"):
-                            text("image")
-                        with tag("td", align="left"):
-                            text(image)
-                # Todo
-                #  - [ ] ENTRYPOINT
-                # COMMAND
-                if command != "-":
-                    with tag("tr"):
-                        with tag("td", align="right"):
-                            text("command")
-                        with tag("td", align="left"):
-                            text(os.path.expandvars(command))
+            print(ports)
 
-                # ENVIRONMENT
-                environment = sorted(service_config.get('environment', []))
-                if bool(environment):
-                    with tag("tr"):
-                        with tag("td", align="right", rowspan=f"{len(environment) + 1}"):
-                            text("environment")
-                    for e in environment:
-                        with tag("tr"):
-                            with tag("td", align="left"):
-                                text(os.path.expandvars(e))
-                # VOLUMES
-                if bool(volumes):
-                    with tag("tr"):
-                        if bool(volumes):
-                            volume_0 = volumes.pop(0)
-                            with tag("td", align="left", port=f"PLUG_{service_name}__{volume_0}"):
-                                text(volume_0)
-                        else:
-                            with tag("td", align="left"):
-                                text("-")
-                        with tag("td", align="center", rowspan=f"{len(volumes) + 1}"):
-                            text("volumes")
-                    for v in volumes:
-                        with tag("tr"):
-                            with tag("td", align="left", port=f"PLUG_{service_name}__{v}"):
-                                text(v)
-                # DEPENDS_ON
-                for d, condition in list(depends_on.items())[:1]:
-                    with tag("tr"):
-                        with tag("td", align="left", port=f"PLUG_DEPENDS_ON_NODE-SERVICE_{d}"):
-                            text(d)
-                        with tag("td", align="center", rowspan=f"{len(depends_on.items())}"):
-                            text("depends_on")
-                for d, condition in list(depends_on.items())[1:]:
-                    with tag("tr"):
-                        with tag("td", align="left", port=f"PLUG_DEPENDS_ON_NODE-SERVICE_{d}"):
-                            text(d)
-                # PORTS
-                if bool(ports_container):
-                    for p in ports_container[:1]:
-                        port_host, port_container = p.split(":", maxsplit=1)
-                        with tag("tr"):
-                            with tag("td", align="left", port=f"PLUG_{service_name}__{port_host}__{port_container}"):
-                                text(p)
-                            with tag("td", align="center", rowspan=f"{len(ports_container)}"):
-                                text("exposed ports")
-                    for p in ports_container[1:]:
-                        port_host, port_container = p.split(":", maxsplit=1)
-                        with tag("tr"):
-                            with tag("td", align="left", port=f"PLUG_{service_name}__{port_host}__{port_container}"):
-                                text(p)
-                # NETWORKS
-                if bool(networks):
-                    with tag("tr"):
-                        if bool(networks):
-                            network_0 = networks.pop(0)
-                            with tag("td", align="left", port=f"PLUG_{network_0}"):
-                                text(network_0)
-                        else:
-                            with tag("td", align="left"):
-                                text("-")
-                        with tag("td", align="center", rowspan=f"{len(networks) + 2}"):
-                            text("networks")
-                    for n in networks:
-                        with tag("tr"):
-                            with tag("td", align="left", port=f"PLUG_{n}"):
-                                text(n)
+            ret = template.render(
+                service_name=service_name,
+                container_name=os.path.expandvars(service_config.get("container_name", "-")),
+                hostname=os.path.expandvars(service_config.get("hostname", "-")),
+                domainname=os.path.expandvars(service_config.get("domainname", "-")),
+                restart=service_config.get("restart", "-"),
+                image=os.path.expandvars(service_config.get("image", "-")),
+                command=command,
+                environment=service_config.get("environment", {}),
+                volumes=volumes,
+                depends_on=depends_on,
+                ports=ports,
+                networks=networks,
+            )
 
-            ret = f"<{yattag.indent(doc.getvalue())}>"
+            return f"<{ret}>"
 
         else:
 
