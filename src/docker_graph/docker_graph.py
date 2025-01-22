@@ -610,6 +610,7 @@ class DockerComposeGraph:
         service_name = service.get("service_name")
         service_config = service.get("service_config")
 
+        ports_container: list = list()
         _ports: list = service_config.get("ports", [])
         if isinstance(_ports, list):
             ports_container: list = [os.path.expandvars(p) for p in _ports]
@@ -652,8 +653,6 @@ class DockerComposeGraph:
             id_service_network = f"<PLUG_{n}> {n}"
             _n.append(id_service_network)
 
-        restart: str = service_config.get("restart", "-")
-
         _command = service_config.get("command", "-")
         if isinstance(_command, list):
             command = " ".join(_command)
@@ -666,8 +665,6 @@ class DockerComposeGraph:
 
             env = Environment(loader=FileSystemLoader("/home/michael/git/repos/docker-graph/src/docker_graph/resources"))
             template = env.get_template("service_node_label.j2")
-
-            print(ports)
 
             ret = template.render(
                 service_name=service_name,
@@ -694,7 +691,7 @@ class DockerComposeGraph:
                 "hostname": "{hostname|{" + os.path.expandvars(service_config.get("hostname", "-")) + "}}",
                 "domainname": "{domainname|{" + os.path.expandvars(service_config.get("domainname", "-")) + "}}",
                 "volumes": "{{" + "|".join([v for v in sorted(_v)]) + "}|volumes}",
-                "restart": "{restart|{" + restart + "}}",
+                "restart": "{restart|{" + service_config.get("restart", "-") + "}}",
                 "depends_on": "{{" + "|".join([d for d in sorted(_d)]) + "}|depends_on}",
                 "image": "{image|{" + os.path.expandvars(service_config.get("image", "-")) + "}}",
                 "ports": "{{" + "|".join([p for p in sorted(_p)]) + "}|exposed ports}",
