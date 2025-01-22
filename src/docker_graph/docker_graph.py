@@ -228,9 +228,9 @@ class DockerComposeGraph:
 
     def write_png(self, path):
 
-        self.graph.write(
+        self.graph.write_png(
             path=path,
-            format="png",
+            # format="png",
         )
 
     def write_dot(self, path):
@@ -604,7 +604,7 @@ class DockerComposeGraph:
             # OverrideArray() in
             # ~/repos/deadline-docker/src/Deadline/deadline_docker/assets.py
             # Todo: find a better solution
-            ports_container: list = [os.path.expandvars(p) for p in ports.array]
+            ports_container: list = sorted([os.path.expandvars(p) for p in ports.array])
         _p = []
 
         for p in ports_container:
@@ -613,7 +613,6 @@ class DockerComposeGraph:
             _p.append(id_service_port)
 
         depends_on: dict = OrderedDict(self._conform_depends_on(service_config.get("depends_on", [])))
-        print(depends_on)
         assert isinstance(depends_on, dict)
 
         _d = []
@@ -629,6 +628,7 @@ class DockerComposeGraph:
             _v.append(id_service_volume)
 
         networks: list = [os.path.expandvars(n) for n in service_config.get("networks", [])]
+        networks.sort()
 
         _n = []
         for n in networks:
@@ -647,6 +647,7 @@ class DockerComposeGraph:
 
             doc, tag, text = yattag.Doc().tagtext()
 
+            # doc.asis('<!DOCTYPE html>')  # Causes write_png() to fail
             with tag(
                 "table",
                 border="0",
@@ -685,79 +686,92 @@ class DockerComposeGraph:
                     with tag("td", align="left"):
                         text(restart)
                 # IMAGE
-                with tag("tr"):
-                    with tag("td", align="right"):
-                        text("image")
-                    with tag("td", align="left"):
-                        text(os.path.expandvars(service_config.get("image", "-")))
+                image = os.path.expandvars(service_config.get("image", "-"))
+                if image != "-":
+                    with tag("tr"):
+                        with tag("td", align="right"):
+                            text("image")
+                        with tag("td", align="left"):
+                            text(image)
                 # Todo
                 #  - [ ] ENTRYPOINT
                 # COMMAND
-                with tag("tr"):
-                    with tag("td", align="right"):
-                        text("command")
-                    with tag("td", align="left"):
-                        text(os.path.expandvars(command))
-                # ENVIRONMENT
-                with tag("tr"):
-                    with tag("td", align="right", rowspan=f"{len(service_config.get('environment', [])) + 1}"):
-                        text("environment")
-                for e in sorted(service_config.get('environment', [])):
+                if command != "-":
                     with tag("tr"):
+                        with tag("td", align="right"):
+                            text("command")
                         with tag("td", align="left"):
-                            text(os.path.expandvars(e))
+                            text(os.path.expandvars(command))
+
+                # ENVIRONMENT
+                environment = sorted(service_config.get('environment', []))
+                if bool(environment):
+                    with tag("tr"):
+                        with tag("td", align="right", rowspan=f"{len(environment) + 1}"):
+                            text("environment")
+                    for e in environment:
+                        with tag("tr"):
+                            with tag("td", align="left"):
+                                text(os.path.expandvars(e))
                 # VOLUMES
-                for v in sorted(volumes[:1]):
+                if bool(volumes):
                     with tag("tr"):
-                        with tag("td", align="left", port=f"PLUG_{service_name}__{v}"):
-                            text(v)
-                        with tag("td", align="center", rowspan=f"{len(volumes)}"):
+                        if bool(volumes):
+                            volume_0 = volumes.pop(0)
+                            with tag("td", align="left", port=f"PLUG_{service_name}__{volume_0}"):
+                                text(volume_0)
+                        else:
+                            with tag("td", align="left"):
+                                text("-")
+                        with tag("td", align="center", rowspan=f"{len(volumes) + 1}"):
                             text("volumes")
-                for v in sorted(volumes[1:]):
-                    with tag("tr"):
-                        with tag("td", align="left", port=f"PLUG_{service_name}__{v}"):
-                            text(v)
+                    for v in volumes:
+                        with tag("tr"):
+                            with tag("td", align="left", port=f"PLUG_{service_name}__{v}"):
+                                text(v)
                 # DEPENDS_ON
-                # https://stackoverflow.com/a/47704499/2207196
-                # for d, condition in dict(itertools.islice(depends_on.items(), 1)).items():
                 for d, condition in list(depends_on.items())[:1]:
                     with tag("tr"):
                         with tag("td", align="left", port=f"PLUG_DEPENDS_ON_NODE-SERVICE_{d}"):
                             text(d)
                         with tag("td", align="center", rowspan=f"{len(depends_on.items())}"):
                             text("depends_on")
-                # for d, condition in dict(itertools.islice(depends_on.items(), -1)).items():
                 for d, condition in list(depends_on.items())[1:]:
                     with tag("tr"):
                         with tag("td", align="left", port=f"PLUG_DEPENDS_ON_NODE-SERVICE_{d}"):
                             text(d)
                 # PORTS
-                for p in sorted(ports_container[:1]):
-                    port_host, port_container = p.split(":", maxsplit=1)
+                if bool(ports_container):
+                    for p in ports_container[:1]:
+                        port_host, port_container = p.split(":", maxsplit=1)
+                        with tag("tr"):
+                            with tag("td", align="left", port=f"PLUG_{service_name}__{port_host}__{port_container}"):
+                                text(p)
+                            with tag("td", align="center", rowspan=f"{len(ports_container)}"):
+                                text("exposed ports")
+                    for p in ports_container[1:]:
+                        port_host, port_container = p.split(":", maxsplit=1)
+                        with tag("tr"):
+                            with tag("td", align="left", port=f"PLUG_{service_name}__{port_host}__{port_container}"):
+                                text(p)
+                # NETWORKS
+                if bool(networks):
                     with tag("tr"):
-                        with tag("td", align="left", PORT=f"PLUG_{service_name}__{port_host}__{port_container}"):
-                            text(p)
-                        with tag("td", align="center", rowspan=f"{len(ports_container)}"):
-                            text("exposed ports")
-                for p in sorted(ports_container[1:]):
-                    port_host, port_container = p.split(":", maxsplit=1)
-                    with tag("tr"):
-                        with tag("td", align="left", PORT=f"PLUG_{service_name}__{port_host}__{port_container}"):
-                            text(p)
-                # Todo
-                # # NETWORKS
-                # for n in sorted(networks[:1]):
-                #     with tag("tr"):
-                #         with tag("td", align="left", PORT=f"PLUG_{n}"):
-                #             text(n)
-                #         with tag("td", align="center", rowspan=f"{len(networks)}"):
-                #             text("networks")
-                # for n in sorted(networks[1:]):
-                #     with tag("tr"):
-                #         with tag("td", align="left", PORT=f"PLUG_{n}"):
-                #             text(n)
+                        if bool(networks):
+                            network_0 = networks.pop(0)
+                            with tag("td", align="left", port=f"PLUG_{network_0}"):
+                                text(network_0)
+                        else:
+                            with tag("td", align="left"):
+                                text("-")
+                        with tag("td", align="center", rowspan=f"{len(networks) + 2}"):
+                            text("networks")
+                    for n in networks:
+                        with tag("tr"):
+                            with tag("td", align="left", port=f"PLUG_{n}"):
+                                text(n)
 
-            ret = f"<{doc.getvalue()}>"
+            ret = f"<{yattag.indent(doc.getvalue())}>"
 
         else:
 
