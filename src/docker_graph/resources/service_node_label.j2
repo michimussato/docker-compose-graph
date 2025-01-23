@@ -1,12 +1,14 @@
-<table border="0" cellspacing="0" cellpadding="0">
+<table border="1" cellspacing="0" cellpadding="0">
+    <!-- SERVICE_NAME -->
     <tr>
         <td align="right">
             service_name
         </td>
-        <td align="left">
+        <td align="left" port="PLUG_NODE-SERVICE_{{ service_name }}">
             {{ service_name }}
         </td>
     </tr>
+    <!-- CONTAINER_NAME -->
     <tr>
         <td align="right">
             container_name
@@ -15,6 +17,7 @@
             {{ container_name }}
         </td>
     </tr>
+    <!-- HOSTNAME -->
     <tr>
         <td align="right">
             hostname
@@ -23,6 +26,7 @@
             {{ hostname }}
         </td>
     </tr>
+    <!-- DOMAINNAME -->
     <tr>
         <td align="right">
             domainname
@@ -31,6 +35,7 @@
             {{ domainname }}
         </td>
     </tr>
+    <!-- RESTART -->
     <tr>
         <td align="right">
             restart
@@ -39,6 +44,7 @@
             {{ restart }}
         </td>
     </tr>
+    <!-- IMAGE -->
     <tr>
         <td align="right">
             image
@@ -47,14 +53,16 @@
             {{ image }}
         </td>
     </tr>
+    <!-- COMMAND -->
     <tr>
         <td align="right">
-            command
+            command (ENTRYPOINT +)
         </td>
         <td align="left">
             {{ command }}
         </td>
     </tr>
+    <!-- ENVIRONMENT -->
     {% if environment|length > 0 %}
         <tr>
             <td align="right">
@@ -73,11 +81,9 @@
             </td>
         </tr>
     {% endif %}
+    <!-- VOLUMES -->
     {% if volumes|length > 0 %}
         <tr>
-            <td align="right">
-                volumes ({{ volumes|length }})
-            </td>
             <td align="left">
                 <table border="1" cellspacing="0" cellpadding="0">
                     {% for volume in volumes %}
@@ -89,31 +95,33 @@
                     {% endfor %}
                 </table>
             </td>
+            <td align="left">
+                volumes ({{ volumes|length }})
+            </td>
         </tr>
     {% endif %}
+    <!-- DEPENDS_ON -->
     {% if depends_on|length > 0 %}
         <tr>
-            <td align="right">
-                depends_on ({{ depends_on|length }})
-            </td>
             <td>
                 <table border="1" cellspacing="0" cellpadding="0">
                     {% for key, value in depends_on.items() %}
                     <tr>
                         <td align="left" port="PLUG_DEPENDS_ON_NODE-SERVICE_{{ key }}">
-                            {{ key }} ({{ value }})
+                            {{ key }} (condition: {{ value.condition }})
                         </td>
                     </tr>
                     {% endfor %}
                 </table>
             </td>
+            <td align="left">
+                depends_on ({{ depends_on|length }})
+            </td>
         </tr>
     {% endif %}
+    <!-- PORTS -->
     {% if ports|length > 0 %}
         <tr>
-            <td align="right">
-                ports ({{ ports|length }})
-            </td>
             <td align="left">
                 <table border="1" cellspacing="0" cellpadding="0">
                     {% for port in ports %}
@@ -126,13 +134,14 @@
                     {% endfor %}
                 </table>
             </td>
+            <td align="left">
+                ports ({{ ports|length }})
+            </td>
         </tr>
     {% endif %}
+    <!-- NETWORKS -->
     {% if networks|length > 0 %}
         <tr>
-            <td align="right">
-                networks ({{ networks|length }})
-            </td>
             <td align="left">
                 <table border="1" cellspacing="0" cellpadding="0">
                     {% for network in networks %}
@@ -143,6 +152,9 @@
                     </tr>
                     {% endfor %}
                 </table>
+            </td>
+            <td align="left">
+                networks ({{ networks|length }})
             </td>
         </tr>
     {% endif %}

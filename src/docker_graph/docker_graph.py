@@ -672,7 +672,7 @@ class DockerComposeGraph:
                 hostname=os.path.expandvars(service_config.get("hostname", "-")),
                 domainname=os.path.expandvars(service_config.get("domainname", "-")),
                 restart=service_config.get("restart", "-"),
-                image=os.path.expandvars(service_config.get("image", "-")),
+                image=os.path.expandvars(service_config.get("image", "(build)")),
                 command=command,
                 # Todo:
                 #  - [ ] Variables are currently not expanded
@@ -766,9 +766,9 @@ class DockerComposeGraph:
 
                 edge = pydot.Edge(
                     dst=f'"{src}":"PLUG_DEPENDS_ON_NODE-SERVICE_{depends_on}":w',
-                    src=f'"NODE-SERVICE_{depends_on}":ne',
-                    arrowhead="odot",
-                    arrowtail="none",
+                    src=f'"NODE-SERVICE_{depends_on}":"PLUG_NODE-SERVICE_{depends_on}":e',
+                    arrowhead="dot",
+                    arrowtail="dot",
                     dir="both",
                     color="yellow",
                     **{
