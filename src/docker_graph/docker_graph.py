@@ -640,6 +640,11 @@ class DockerComposeGraph:
 
         volumes: list = [os.path.expandvars(v.split(":")[1]) for v in service_config.get("volumes", [])]
 
+        # volumes: list = [
+        #     pathlib.Path(
+        #         os.path.expandvars(v.split(":")[1])
+        #     ).resolve() for v in service_config.get("volumes", [])]
+
         _v = []
         for v in volumes:
             id_service_volume = f"<PLUG_{service_name}__{v}> {v}"
@@ -674,8 +679,6 @@ class DockerComposeGraph:
                 restart=service_config.get("restart", "-"),
                 image=os.path.expandvars(service_config.get("image", "(build)")),
                 command=command,
-                # Todo:
-                #  - [ ] Variables are currently not expanded
                 environment=service_config.get("environment", {}),
                 volumes=volumes,
                 depends_on=depends_on,
@@ -909,6 +912,11 @@ class DockerComposeGraph:
                 if len(split) > 2:
                     volume_mode = split[2]
 
+                # _volume = pathlib.Path(volume_host)
+                #
+                # if not _volume.is_absolute() and not _volume.is_symlink():
+                #     _volume.resolve()
+
                 node_host = pydot.Node(
                     name=f"{volume_host}__{volume_container}",
                     label=f"{volume_host}",
@@ -933,11 +941,9 @@ class DockerComposeGraph:
                     src=node_host,
                     dst=f'"{dst}":"PLUG_{service_name}__{volume_container}":w',
                     color=self.fillcolor_cluster_root_volumes,
-                    # fillcolor=_fillcolor,
                     dir="both",
                     arrowhead="dot",
                     arrowtail="dot",
-                    # headport="w",
                     tailport="e",
                     **self.global_dot_settings,
                 )
@@ -1068,9 +1074,6 @@ class DockerComposeGraph:
 
         # all networks
         #######################
-
-
-
 
         #     cluster_volumes.add_node(node)
         # service volumes
