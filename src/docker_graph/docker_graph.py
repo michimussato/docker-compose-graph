@@ -752,7 +752,7 @@ class DockerComposeGraph:
                     **self.global_dot_settings,
                     "style": "filled",
                     "color": "#0A0A0A",
-                    "fillcolor": "#F0F0F0",
+                    "fillcolor": "#A0A0A0",
                 }
             )
 
@@ -773,7 +773,7 @@ class DockerComposeGraph:
                     color="yellow",
                     **{
                         **self.global_dot_settings,
-                        "style": "dashed",
+                        "style": "bold",
                     }
                 )
 
