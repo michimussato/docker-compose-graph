@@ -397,12 +397,9 @@ class DockerComposeGraph:
 
         for service_name, service_config in services.items():
             ports = service_config.get("ports", [])
-            # ports = []
-            # for _p in _ports:
-            #     if isinstance(_p, OverrideArray):
 
             if isinstance(ports, OverrideArray):
-                ports = ports.array
+                ports: list = ports.array
 
             if self.expanded_vars:
                 port_mappings[service_name] = [os.path.expandvars(p) for p in ports]
