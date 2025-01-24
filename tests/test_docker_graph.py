@@ -190,7 +190,10 @@ def test_get_service_depends_on():
 
 
 def test_iterate_trees():
-    dcg = DockerComposeGraph()
+    dcg = DockerComposeGraph(
+        expandvars=True,
+        resolve_relative_volumes=True,
+    )
     trees = dcg.parse_docker_compose(
         pathlib.Path(__file__).parent / "fixtures" / "deadline-docker" / "10.2" / "docker-compose.yaml"
     )

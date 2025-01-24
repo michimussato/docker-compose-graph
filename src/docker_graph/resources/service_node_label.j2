@@ -88,8 +88,8 @@
                 <table border="1" cellspacing="0" cellpadding="0">
                     {% for volume in volumes %}
                     <tr>
-                        <td align="left" port="PLUG_{{ service_name }}__{{ volume }}">
-                            {{ volume }}
+                        <td align="left" port="PLUG_{{ service_name }}__{{ volume.volume }}">
+                            {{ volume.volume }}:{{ volume.mode }}
                         </td>
                     </tr>
                     {% endfor %}

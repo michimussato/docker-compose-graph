@@ -55,6 +55,7 @@ root: [dict]
 
 
 """
+import copy
 import os
 import argparse
 import logging
@@ -68,7 +69,7 @@ from jinja2 import Environment, FileSystemLoader
 
 from docker_graph.yaml_tags.overrides import OverrideArray
 
-# from docker_graph import __version__
+from docker_graph import __version__
 
 __author__ = "Michael Mussato"
 __copyright__ = "Michael Mussato"
@@ -96,10 +97,12 @@ class DockerComposeGraph:
 
     def __init__(
             self,
-            expandvars: bool = False,
+            expandvars: bool = True,  # False is buggy
+            resolve_relative_volumes: bool = False,
     ):
 
         self.expanded_vars = expandvars
+        self.resolve_relative_volumes = resolve_relative_volumes
 
         self.docker_yaml: [pathlib.Path | None] = None
 
@@ -638,16 +641,23 @@ class DockerComposeGraph:
             id_service_depends_on = f"<PLUG_DEPENDS_ON_NODE-SERVICE_{d}> {d}"
             _d.append(id_service_depends_on)
 
-        volumes: list = [os.path.expandvars(v.split(":")[1]) for v in service_config.get("volumes", [])]
-
-        # volumes: list = [
-        #     pathlib.Path(
-        #         os.path.expandvars(v.split(":")[1])
-        #     ).resolve() for v in service_config.get("volumes", [])]
+        volumes: list = []
+        for v in service_config.get("volumes", []):
+            v_dict: dict = {}
+            v_split: list = v.split(":")
+            if self.expanded_vars:
+                v_dict["volume"] = os.path.expandvars(v_split[1])
+            else:
+                v_dict["volume"] = str(v_split[1])
+            if len(v_split) > 2:
+                v_dict["mode"] = v_split[2]
+            else:
+                v_dict["mode"] = "rw"
+            volumes.append(copy.deepcopy(v_dict))
 
         _v = []
         for v in volumes:
-            id_service_volume = f"<PLUG_{service_name}__{v}> {v}"
+            id_service_volume = f"<PLUG_{service_name}__{v['volume']}> {v['volume']}"
             _v.append(id_service_volume)
 
         networks: list = [os.path.expandvars(n) for n in service_config.get("networks", [])]
@@ -908,17 +918,20 @@ class DockerComposeGraph:
                 volume_host = split[0]
                 volume_container = split[1]
                 volume_mode = "rw"
+                edge_style = "solid"
 
                 if len(split) > 2:
                     volume_mode = split[2]
+                    edge_style = "dashed"
 
-                # _volume = pathlib.Path(volume_host)
-                #
-                # if not _volume.is_absolute() and not _volume.is_symlink():
-                #     _volume.resolve()
+                if self.resolve_relative_volumes:
+                    _volume_host = pathlib.Path(volume_host)
+                    if not _volume_host.is_absolute() \
+                            and not _volume_host.is_symlink():
+                        volume_host = _volume_host.resolve().as_posix()
 
                 node_host = pydot.Node(
-                    name=f"{volume_host}__{volume_container}",
+                    name=f"{volume_host}",
                     label=f"{volume_host}",
                     shape="box",
                     color=_color,
@@ -945,7 +958,10 @@ class DockerComposeGraph:
                     arrowhead="dot",
                     arrowtail="dot",
                     tailport="e",
-                    **self.global_dot_settings,
+                    **{
+                        **self.global_dot_settings,
+                        "style": edge_style,
+                    }
                 )
 
                 self.graph.add_edge(edge)
@@ -1206,11 +1222,11 @@ def parse_args(args):
       :obj:`argparse.Namespace`: command line parameters namespace
     """
     parser = argparse.ArgumentParser(description="Just a Fibonacci demonstration")
-    # parser.add_argument(
-    #     "--version",
-    #     action="version",
-    #     version=f"docker-graph {__version__}",
-    # )
+    parser.add_argument(
+        "--version",
+        action="version",
+        version=f"docker-graph {__version__}",
+    )
     parser.add_argument(dest="n", help="n-th Fibonacci number", type=int, metavar="INT")
     parser.add_argument(
         "-v",
