@@ -368,7 +368,7 @@ def test_iterate_trees():
         pathlib.Path(__file__).parent / "fixtures" / "deadline-docker" / "10.2" / "docker-compose.yaml"
     )
 
-    print(f"{trees = }")
+    # print(f"{trees = }")
 
     # resolve environment variables (optional)
     dcg.load_dotenv(

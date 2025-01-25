@@ -292,8 +292,6 @@ class DockerComposeGraph:
         with open(_abs_yaml, "r") as fr:
             docker_compose_chainmap: dict = pyyaml.full_load(fr)
 
-        # print(f"{docker_compose_chainmap = }")
-
         # the first iteration
         # of recursive function
         if ret is None:
@@ -309,8 +307,6 @@ class DockerComposeGraph:
             if isinstance(include, dict):
 
                 include_set = include
-
-                # include_is_override = False
 
                 for included_docker_compose in include_set.get("path", []):
                     _logger.debug(included_docker_compose)
@@ -331,51 +327,49 @@ class DockerComposeGraph:
         dotenv.load_dotenv(env)
 
     @staticmethod
-    def merge_services(services):
-        # find all service_names
-        ret: list[dict] = []
+    def _get_service_names(
+            services: list[dict],
+    ) -> list[str]:
+
         keys: list = list()
         for service in services:
-            print(f"{service = }")
             key = service.get("service_name", None)
             if key is None or key in keys:
                 continue
             keys.append(key)
 
+        return keys
+
+    def merge_services(
+            self,
+            services,
+    ):
+        ret: list[dict] = []
+
+        service_name_keys: list = self._get_service_names(services)
+
         # find dicts that have the same service_name
         # and merge them into one
-        for service in services:
+        for service_name_key in service_name_keys:
             service_dict_merged: dict = dict()
-            for key in keys:
-                if key != service["service_name"]:
+            for service in services:
+                if service_name_key != service["service_name"]:
+                    # print(f"{key = }")
                     continue
-                print(f"{key = }")
-                # _service_dict = service.get("service_name", None)
-                print(f"{service = }")
-                # print(f"{_service_dict = }")
-                # if _service_dict is None:
-                #     continue
                 service_dict_merged = deep_merge(
                     dict1=service_dict_merged,
                     dict2=service,
                 )
 
-                print(f"{service_dict_merged = }")
-
             ret.append(copy.deepcopy(service_dict_merged))
 
         return ret
 
-
     def iterate_trees(self, trees):
-
-        # _trees = self.merge_trees(trees)
 
         services = self._get_services(trees)
 
         self.services = self.merge_services(services)
-        print(f"{self.services = }")
-        # print(f"{trees         = }")
         self.depends_on = self._get_depends_on(trees)
         self.port_mappings = self._get_ports(trees)
         self.volume_mappings = self._get_volumes(trees)

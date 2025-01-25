@@ -2,6 +2,8 @@ __all__ = [
     "deep_merge",
 ]
 
+import copy
+
 from docker_graph.yaml_tags.overrides import OverrideArray
 
 
@@ -23,4 +25,4 @@ def deep_merge(dict1, dict2):
                 dict1[key] = dict2[key]
             else:
                 dict1[key] = dict2[key]
-    return dict1
+    return copy.deepcopy(dict1)
