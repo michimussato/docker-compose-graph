@@ -1,6 +1,7 @@
 import pathlib
 
 from docker_graph.docker_graph import main, DockerComposeGraph
+from docker_graph.utils import *
 
 __author__ = "Michael Mussato"
 __copyright__ = "Michael Mussato"
@@ -189,6 +190,67 @@ def test_get_service_depends_on():
     assert depends_on == expected
 
 
+def test_deep_merge_1():
+    d1 = {
+        "key1": "value1",
+    }
+
+    d2 = {
+        "key2": "value2",
+    }
+
+    expected = {
+        "key1": "value1",
+        "key2": "value2",
+    }
+
+    result = deep_merge(dict1=d1, dict2=d2)
+
+    assert result == expected
+
+
+def test_deep_merge_2():
+    d1 = {
+        "key1": "value1",
+    }
+
+    d2 = {
+        "key1": "value2",
+    }
+
+    expected = {
+        "key1": "value2",
+    }
+
+    result = deep_merge(dict1=d1, dict2=d2)
+
+    assert result == expected
+
+
+def test_deep_merge_3():
+    d1 = {
+        "key1": [
+            "value1",
+        ],
+    }
+
+    d2 = {
+        "key1": [
+            "value2",
+        ],
+    }
+
+    expected = {
+        "key1": [
+            "value2",
+        ],
+    }
+
+    result = deep_merge(dict1=d1, dict2=d2)
+
+    assert result == expected
+
+
 def test_iterate_trees():
     dcg = DockerComposeGraph(
         expandvars=True,
@@ -197,6 +259,8 @@ def test_iterate_trees():
     trees = dcg.parse_docker_compose(
         pathlib.Path(__file__).parent / "fixtures" / "deadline-docker" / "10.2" / "docker-compose.yaml"
     )
+
+    print(f"{trees = }")
 
     # resolve environment variables (optional)
     dcg.load_dotenv(

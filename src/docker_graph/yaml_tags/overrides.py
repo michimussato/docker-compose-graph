@@ -28,5 +28,5 @@ class OverrideArray(YAMLObject):
         return OverrideArray(array)
 
     def __repr__(self):
-        return "%s(ports=%r)" % (
+        return "%s(array=%r)" % (
             self.__class__.__name__, self.array)
