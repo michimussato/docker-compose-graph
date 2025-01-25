@@ -336,6 +336,7 @@ class DockerComposeGraph:
         ret: list[dict] = []
         keys: list = list()
         for service in services:
+            print(f"{service = }")
             key = service.get("service_name", None)
             if key is None or key in keys:
                 continue

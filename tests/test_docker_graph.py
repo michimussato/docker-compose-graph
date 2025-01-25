@@ -243,6 +243,7 @@ def test_deep_merge_3():
 
     expected = {
         "key1": [
+            "value1",
             "value2",
         ],
     }
@@ -258,16 +259,17 @@ def test_deep_merge_4():
         'service_config': {
             'image': 'ynput/ayon:latest',
             'restart': 'unless-stopped',
-            'healthcheck': {
-                'test': [
-                    'CMD',
-                    'curl',
-                    '-f',
-                    'http://localhost:5000/api/info'
-                ], 'interval': '10s',
-                'timeout': '2s',
-                'retries': 3
-            },
+            # 'healthcheck': {
+            #     'test': [
+            #         'CMD',
+            #         'curl',
+            #         '-f',
+            #         'http://localhost:5000/api/info'
+            #     ],
+            #     'interval': '10s',
+            #     'timeout': '2s',
+            #     'retries': 3
+            # },
             'depends_on': {
                 'postgres': {
                     'condition': 'service_healthy'
@@ -276,8 +278,8 @@ def test_deep_merge_4():
                     'condition': 'service_started'
                 }
             },
-            'expose': [5000],
-            'ports': ['5000:5000'],
+            # 'expose': [5000],
+            # 'ports': ['5000:5000'],
             'volumes': [
                 './addons:/addons',
                 './storage:/storage',
@@ -286,6 +288,13 @@ def test_deep_merge_4():
         }
     }
 
+    # Test fails if the object
+    # instatiated twice. NOT THE SAME OBJECT,
+    # hence:
+    ports_override = OverrideArray(
+                array=['${AYON_PORT_HOST}:${AYON_PORT_CONTAINER}'],
+            )
+
     d2 = {
         'service_name': 'server',
         'service_config': {
@@ -293,16 +302,56 @@ def test_deep_merge_4():
             'hostname': 'ayon-server-10-2',
             'domainname': '${ROOT_DOMAIN}',
             'networks': [
-                'repository', 'mongodb'
+                'repository',
+                'mongodb'
             ],
-            'ports': OverrideArray(array=['${AYON_PORT_HOST}:${AYON_PORT_CONTAINER}'])
+            'volumes': [
+                './another:/volume',
+            ],
+            'ports': ports_override
         }
     }
 
     expected = {
-        "key1": [
-            "value2",
-        ],
+        'service_name': 'server',
+        'service_config': {
+            'container_name': 'ayon-server-10-2',
+            'hostname': 'ayon-server-10-2',
+            'image': 'ynput/ayon:latest',
+            'domainname': '${ROOT_DOMAIN}',
+            'restart': 'unless-stopped',
+            # 'healthcheck': {
+            #     'test': [
+            #         'CMD',
+            #         'curl',
+            #         '-f',
+            #         'http://localhost:5000/api/info'
+            #     ],
+            #     'interval': '10s',
+            #     'timeout': '2s',
+            #     'retries': 3
+            # },
+            'depends_on': {
+                'postgres': {
+                    'condition': 'service_healthy'
+                },
+                'redis': {
+                    'condition': 'service_started'
+                }
+            },
+            'networks': [
+                'repository',
+                'mongodb'
+            ],
+            # 'expose': [5000],
+            'ports': ports_override,
+            'volumes': [
+                './addons:/addons',
+                './storage:/storage',
+                '/etc/localtime:/etc/localtime:ro',
+                './another:/volume',
+            ]
+        }
     }
 
     result = deep_merge(dict1=d1, dict2=d2)
