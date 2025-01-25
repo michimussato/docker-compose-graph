@@ -2,6 +2,7 @@ import pathlib
 
 from docker_graph.docker_graph import main, DockerComposeGraph
 from docker_graph.utils import *
+from docker_graph.yaml_tags.overrides import *
 
 __author__ = "Michael Mussato"
 __copyright__ = "Michael Mussato"
@@ -251,6 +252,64 @@ def test_deep_merge_3():
     assert result == expected
 
 
+def test_deep_merge_4():
+    d1 = {
+        'service_name': 'server',
+        'service_config': {
+            'image': 'ynput/ayon:latest',
+            'restart': 'unless-stopped',
+            'healthcheck': {
+                'test': [
+                    'CMD',
+                    'curl',
+                    '-f',
+                    'http://localhost:5000/api/info'
+                ], 'interval': '10s',
+                'timeout': '2s',
+                'retries': 3
+            },
+            'depends_on': {
+                'postgres': {
+                    'condition': 'service_healthy'
+                },
+                'redis': {
+                    'condition': 'service_started'
+                }
+            },
+            'expose': [5000],
+            'ports': ['5000:5000'],
+            'volumes': [
+                './addons:/addons',
+                './storage:/storage',
+                '/etc/localtime:/etc/localtime:ro'
+            ]
+        }
+    }
+
+    d2 = {
+        'service_name': 'server',
+        'service_config': {
+            'container_name': 'ayon-server-10-2',
+            'hostname': 'ayon-server-10-2',
+            'domainname': '${ROOT_DOMAIN}',
+            'networks': [
+                'repository', 'mongodb'
+            ],
+            'ports': OverrideArray(array=['${AYON_PORT_HOST}:${AYON_PORT_CONTAINER}'])
+        }
+    }
+
+    expected = {
+        "key1": [
+            "value2",
+        ],
+    }
+
+    result = deep_merge(dict1=d1, dict2=d2)
+
+    assert result == expected
+
+
 def test_iterate_trees():
     dcg = DockerComposeGraph(
         expandvars=True,
@@ -277,7 +336,6 @@ def test_iterate_trees():
     dcg.write_dot(
         path=pathlib.Path(__file__).parent / "fixtures" / "out" / "main_graph.dot",
     )
-
 
 # def test_main(capsys):
 #     """CLI Tests"""
