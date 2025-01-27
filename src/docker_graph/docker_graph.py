@@ -694,7 +694,7 @@ class DockerComposeGraph:
 
         _command = service_config.get("command", "-")
 
-        healthcheck_cmd = str()
+        healthcheck_cmd = None
         _healthcheck = service_config.get("healthcheck", {})
         if bool(_healthcheck):
             _healthcheck_cmd = _healthcheck.get("test", [])

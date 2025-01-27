@@ -63,14 +63,16 @@
         </td>
     </tr>
     <!-- HEALTHCHECK -->
-    <tr>
-        <td align="right">
-            healthcheck
-        </td>
-        <td align="left">
-            {{ healthcheck }}
-        </td>
-    </tr>
+    {% if healthcheck is not none %}
+        <tr>
+            <td align="right">
+                healthcheck
+            </td>
+            <td align="left">
+                {{ healthcheck }}
+            </td>
+        </tr>
+    {% endif %}
     <!-- ENVIRONMENT -->
     {% if environment|length > 0 %}
         <tr>
