@@ -179,6 +179,24 @@ class DockerComposeGraph:
         #     color="yellow",
         # )
 
+        #### host
+
+        self.fillcolor_cluster_host = "#FFFFFF"
+
+        self.cluster_host = pydot.Cluster(
+            graph_name="cluster_host",
+            label="Host",
+            fontsize="40",
+            rankdir="TB",
+            **{
+                **self.global_dot_settings,
+                "style": "filled,rounded",
+                "color": self.fillcolor_cluster_host,
+                "fontcolor": self.fillcolor_cluster_host,
+                "fillcolor": f"{self.fillcolor_cluster_host}{self.alpha}",
+            },
+        )
+
         #### ports
 
         self.fillcolor_cluster_root_ports = "#FFFFFF"
@@ -763,9 +781,10 @@ class DockerComposeGraph:
     def get_primary_graph(self):
 
         self.graph.add_subgraph(self.cluster_root_services)
-        self.graph.add_subgraph(self.cluster_root_ports)
-        self.graph.add_subgraph(self.cluster_root_volumes)
-        self.graph.add_subgraph(self.cluster_root_networks)
+        self.cluster_host.add_subgraph(self.cluster_root_ports)
+        self.cluster_host.add_subgraph(self.cluster_root_volumes)
+        self.cluster_host.add_subgraph(self.cluster_root_networks)
+        self.graph.add_subgraph(self.cluster_host)
         # self.graph.add_subgraph(self.cluster_root_images)
 
         #######################
