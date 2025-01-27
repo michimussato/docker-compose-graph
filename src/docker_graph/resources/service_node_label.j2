@@ -139,7 +139,7 @@
                     <tr>
                         {% set port_host, port_container = port.split(':') %}
                         <td align="left" port="PLUG_{{ service_name }}__{{ port_host }}__{{ port_container }}">
-                            {{ port_container }}
+                            {{ port_host }} -> {{ port_container }}
                         </td>
                     </tr>
                     {% endfor %}
