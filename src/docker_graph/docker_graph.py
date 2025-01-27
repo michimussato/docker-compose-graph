@@ -57,6 +57,7 @@ root: [dict]
 """
 import copy
 import os
+import shlex
 import argparse
 import logging
 import pathlib
@@ -692,6 +693,16 @@ class DockerComposeGraph:
             _n.append(id_service_network)
 
         _command = service_config.get("command", "-")
+
+        healthcheck_cmd = str()
+        _healthcheck = service_config.get("healthcheck", {})
+        if bool(_healthcheck):
+            _healthcheck_cmd = _healthcheck.get("test", [])
+            if bool(_healthcheck_cmd):
+                healthcheck_cmd = " ".join(shlex.quote(s) for s in _healthcheck_cmd)
+
+        print(service_config)
+
         if isinstance(_command, list):
             command = " ".join(_command)
         elif isinstance(_command, str):
@@ -712,6 +723,8 @@ class DockerComposeGraph:
                 restart=service_config.get("restart", "-"),
                 image=os.path.expandvars(service_config.get("image", "(build)")),
                 command=command,
+                # Todo:
+                healthcheck=healthcheck_cmd,
                 environment=service_config.get("environment", {}),
                 volumes=volumes,
                 depends_on=depends_on,
