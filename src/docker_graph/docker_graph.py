@@ -181,7 +181,7 @@ class DockerComposeGraph:
 
         #### host
 
-        self.fillcolor_cluster_host = "#FFFF00"
+        self.fillcolor_cluster_host = "#FFFFFF"
 
         self.cluster_host = pydot.Cluster(
             graph_name="cluster_host",
@@ -199,7 +199,7 @@ class DockerComposeGraph:
 
         #### ports
 
-        self.fillcolor_cluster_root_ports = "#FFFFFF"
+        self.fillcolor_cluster_root_ports = "#FFFF00"
 
         self.cluster_root_ports = pydot.Cluster(
             graph_name="cluster_root_ports",
