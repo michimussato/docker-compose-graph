@@ -379,10 +379,10 @@ def test_iterate_trees():
 
     # fixed_graph = dcg.get_fixed_graph()
 
-    dcg.write_png(
-        path=pathlib.Path(__file__).parent / "fixtures" / "out" / "main_graph.png",
+    dcg.graph.write_svg(
+        path=pathlib.Path(__file__).parent / "fixtures" / "out" / "main_graph.svg",
     )
-    dcg.write_dot(
+    dcg.graph.write_dot(
         path=pathlib.Path(__file__).parent / "fixtures" / "out" / "main_graph.dot",
     )
 

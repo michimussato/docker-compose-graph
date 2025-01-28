@@ -251,18 +251,18 @@ class DockerComposeGraph:
             },
         )
 
-    def write_png(self, path):
+    # def write_png(self, path):
+    #
+    #     self.graph.write(
+    #         path=path,
+    #         format="png",
+    #     )
 
-        self.graph.write(
-            path=path,
-            format="png",
-        )
-
-    def write_dot(self, path):
-        self.graph.write(
-            path=path,
-            format="dot",
-        )
+    # def write_dot(self, path):
+    #     self.graph.write(
+    #         path=path,
+    #         format="dot",
+    #     )
 
     def as_dot(self):
         return self.graph

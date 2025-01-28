@@ -71,7 +71,7 @@ Example::
     dcg.write_dot()
 
 
-.. image:: docs/img/main_graph.png
+.. image:: docs/img/main_graph.svg
     :alt: Demo Graph
 
 
