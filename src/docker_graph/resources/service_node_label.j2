@@ -139,7 +139,7 @@
                     <tr>
                         {% set port_host, port_container = port.split(':') %}
                         <td align="left" port="PLUG_{{ service_name }}__{{ port_host }}__{{ port_container }}">
-                            <a href="http://localhost:{{ port_host }}">{{ port_host }}</a> &#8594; {{ port_container }}
+                            <a href="http://localhost:{{ port_host }}" target="_blank">{{ port_host }}</a>
                         </td>
                     </tr>
                     {% endfor %}
