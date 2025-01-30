@@ -1,10 +1,10 @@
 <table border="1" cellspacing="0" cellpadding="0">
     <!-- SERVICE_NAME -->
     <tr>
-        <td align="right">
+        <td align="right" port="PLUG_NODE-SERVICE_{{ service_name }}">
             service_name
         </td>
-        <td align="left" port="PLUG_NODE-SERVICE_{{ service_name }}">
+        <td align="left">
             {{ service_name }}
         </td>
     </tr>
@@ -73,6 +73,25 @@
             </td>
         </tr>
     {% endif %}
+    <!-- DEPENDS_ON -->
+    {% if depends_on|length > 0 %}
+        <tr>
+            <td align="right">
+                depends_on ({{ depends_on|length }})
+            </td>
+            <td>
+                <table border="1" cellspacing="0" cellpadding="0">
+                    {% for key, value in depends_on.items() %}
+                    <tr>
+                        <td align="left" port="PLUG_DEPENDS_ON_NODE-SERVICE_{{ key }}">
+                            {{ key }} (condition: {{ value.condition }})
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </table>
+            </td>
+        </tr>
+    {% endif %}
     <!-- ENVIRONMENT -->
     {% if environment|length > 0 %}
         <tr>
@@ -108,25 +127,6 @@
             </td>
             <td align="left">
                 volumes ({{ volumes|length }})
-            </td>
-        </tr>
-    {% endif %}
-    <!-- DEPENDS_ON -->
-    {% if depends_on|length > 0 %}
-        <tr>
-            <td>
-                <table border="1" cellspacing="0" cellpadding="0">
-                    {% for key, value in depends_on.items() %}
-                    <tr>
-                        <td align="left" port="PLUG_DEPENDS_ON_NODE-SERVICE_{{ key }}">
-                            {{ key }} (condition: {{ value.condition }})
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </table>
-            </td>
-            <td align="left">
-                depends_on ({{ depends_on|length }})
             </td>
         </tr>
     {% endif %}
