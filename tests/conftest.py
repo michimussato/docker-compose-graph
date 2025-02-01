@@ -1,5 +1,5 @@
 """
-    Dummy conftest.py for docker_graph.
+    Dummy conftest.py for docker_compose_graph.
 
     If you don't know what this is for, just leave it empty.
     Read more about conftest.py under:

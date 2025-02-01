@@ -29,9 +29,9 @@
 
 |
 
-============
-docker-graph
-============
+====================
+docker-compose-graph
+====================
 
 
     Add a short description here!
@@ -49,7 +49,7 @@ A longer description of your project goes here...
 Example::
 
 
-    from docker_graph.docker_graph import main, DockerComposeGraph
+    from docker_compose_graph.docker_compose_graph import DockerComposeGraph
 
 
     dcg = DockerComposeGraph()

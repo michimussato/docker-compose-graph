@@ -4,7 +4,7 @@ console script. To run this script uncomment the following lines in the
 ``[options.entry_points]`` section in ``setup.cfg``::
 
     console_scripts =
-         fibonacci = docker_graph.skeleton:run
+         fibonacci = docker_compose_graph.skeleton:run
 
 Then run ``pip install .`` (or ``pip install -e .`` for editable mode)
 which will install the command ``fibonacci`` inside your current environment.
@@ -68,10 +68,10 @@ import dotenv
 from collections import OrderedDict
 from jinja2 import Environment, FileSystemLoader
 
-from docker_graph.yaml_tags.overrides import OverrideArray
-from docker_graph.utils import *
+from docker_compose_graph.yaml_tags.overrides import OverrideArray
+from docker_compose_graph.utils import *
 
-from docker_graph import __version__
+from docker_compose_graph import __version__
 
 __author__ = "Michael Mussato"
 __copyright__ = "Michael Mussato"
@@ -86,7 +86,7 @@ USE_HTML_LABELS = True
 # ---- Python API ----
 # The functions defined in this section can be imported by users in their
 # Python scripts/interactive interpreter, e.g. via
-# `from docker_graph.skeleton import fib`,
+# `from docker_compose_graph.skeleton import fib`,
 # when using this Python module as a library.
 
 
@@ -730,7 +730,7 @@ class DockerComposeGraph:
 
         if USE_HTML_LABELS:
 
-            env = Environment(loader=FileSystemLoader("/home/michael/git/repos/docker-graph/src/docker_graph/resources"))
+            env = Environment(loader=FileSystemLoader("/home/michael/git/repos/docker-graph/src/docker_compose_graph/resources"))
             template = env.get_template("service_node_label.j2")
 
             ret = template.render(
@@ -1123,7 +1123,7 @@ if __name__ == "__main__":
     # After installing your project with pip, users can also run your Python
     # modules as scripts via the ``-m`` flag, as defined in PEP 338::
     #
-    #     python -m docker_graph.skeleton 42
+    #     python -m docker_compose_graph.skeleton 42
     #
     setup_logging(logging.DEBUG)
     run()

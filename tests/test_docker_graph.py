@@ -1,8 +1,8 @@
 import pathlib
 
-from docker_graph.docker_graph import main, DockerComposeGraph
-from docker_graph.utils import *
-from docker_graph.yaml_tags.overrides import *
+from docker_compose_graph.docker_compose_graph import main, DockerComposeGraph
+from docker_compose_graph.utils import *
+from docker_compose_graph.yaml_tags.overrides import *
 
 __author__ = "Michael Mussato"
 __copyright__ = "Michael Mussato"

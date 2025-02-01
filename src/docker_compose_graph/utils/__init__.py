@@ -4,7 +4,7 @@ __all__ = [
 
 import copy
 
-from docker_graph.yaml_tags.overrides import OverrideArray
+from docker_compose_graph.yaml_tags.overrides import OverrideArray
 
 
 def deep_merge(dict1, dict2):
