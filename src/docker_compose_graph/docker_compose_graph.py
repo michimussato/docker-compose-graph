@@ -730,7 +730,11 @@ class DockerComposeGraph:
 
         if USE_HTML_LABELS:
 
-            env = Environment(loader=FileSystemLoader("/home/michael/git/repos/docker-graph/src/docker_compose_graph/resources"))
+            env = Environment(
+                loader=FileSystemLoader(
+                    pathlib.Path(__file__).parent / "resources",
+                )
+            )
             template = env.get_template("service_node_label.j2")
 
             ret = template.render(
