@@ -154,7 +154,7 @@ class DockerComposeGraph:
 
         self.cluster_root_services = pydot.Cluster(
             graph_name="cluster_root_services",
-            label="Services",
+            label="Compose Services",
             fontsize="40",
             rankdir="TB",
             **{
