@@ -1055,13 +1055,13 @@ def parse_args(args):
     Returns:
       :obj:`argparse.Namespace`: command line parameters namespace
     """
-    parser = argparse.ArgumentParser(description="Just a Fibonacci demonstration")
+    parser = argparse.ArgumentParser(description="""Create a graph representation of a Docker Compose file""")
     parser.add_argument(
         "--version",
         action="version",
         version=f"docker-graph {__version__}",
     )
-    parser.add_argument(dest="n", help="n-th Fibonacci number", type=int, metavar="INT")
+    # parser.add_argument(dest="n", help="n-th Fibonacci number", type=int, metavar="INT")
     parser.add_argument(
         "-v",
         "--verbose",
@@ -1078,6 +1078,70 @@ def parse_args(args):
         action="store_const",
         const=logging.DEBUG,
     )
+
+    parser.add_argument(
+        "--no-expand-vars",
+        "-nx",
+        dest="expandvars",
+        default=True,
+        action="store_false",
+        required=False,
+        help="Don't expand environment variables",
+    )
+
+    parser.add_argument(
+        "--no-resolve-relative-volumes",
+        "-nr",
+        dest="resolve_relative_volumes",
+        default=True,
+        action="store_false",
+        required=False,
+        help="Don't resolve relative volume paths to absolute paths",
+    )
+
+    parser.add_argument(
+        "--yaml",
+        "-y",
+        dest="docker_compose_yaml",
+        default=None,
+        type=pathlib.Path,
+        required=True,
+        help="Full path to docker-compose.yaml",
+    )
+
+    parser.add_argument(
+        "--dot-env",
+        "-d",
+        dest="dot_env",
+        default=None,
+        type=pathlib.Path,
+        required=True,
+        help="Full path to .env file",
+    )
+
+    parser.add_argument(
+        "--outfile",
+        "-o",
+        dest="outfile",
+        default=None,
+        type=pathlib.Path,
+        required=True,
+        help="Full output path",
+    )
+
+    parser.add_argument(
+        "--format",
+        "-f",
+        dest="format",
+        choices=["dot", "svg", "png"],
+        default=None,
+        type=str,
+        required=True,
+        help="Output format",
+    )
+
+
+
     return parser.parse_args(args)
 
 
@@ -1105,9 +1169,30 @@ def main(args):
     """
     args = parse_args(args)
     setup_logging(args.loglevel)
-    _logger.debug("Starting crazy calculations...")
+    # _logger.debug("Starting crazy calculations...")
+    dcg = DockerComposeGraph(
+        expandvars=args.expandvars,
+        resolve_relative_volumes=args.resolve_relative_volumes,
+    )
+
+    trees = dcg.parse_docker_compose(
+        yaml=args.docker_compose_yaml,
+    )
+
+    if args.dot_env:
+        dcg.load_dotenv(
+            env=args.dot_env,
+        )
+
+    dcg.iterate_trees(trees)
+
+    dcg.graph.write(
+        path=args.outfile,
+        format=args.format,
+    )
+
     # print(f"The {args.n}-th Fibonacci number is {fib(args.n)}")
-    _logger.info("Script ends here")
+    _logger.info("Output written to: %s" % args.outfile)
 
 
 def run():

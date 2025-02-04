@@ -46,7 +46,7 @@ A longer description of your project goes here...
 4. overlay graph_includes with graph_overrides
 
 
-Example::
+API::
 
 
     from docker_compose_graph.docker_compose_graph import DockerComposeGraph
@@ -73,6 +73,39 @@ Example::
 
 .. image:: docs/img/main_graph.svg
     :alt: Demo Graph
+
+
+CLI::
+
+
+   $ docker-compose-graph --help
+   usage: docker-compose-graph [-h] [--version] [-v] [-vv] [--no-expand-vars] [--no-resolve-relative-volumes] --yaml DOCKER_COMPOSE_YAML --dot-env DOT_ENV --outfile OUTFILE --format {dot,svg,png}
+
+   Create a graph representation of a Docker Compose file
+
+   options:
+     -h, --help            show this help message and exit
+     --version             show program's version number and exit
+     -v, --verbose         set loglevel to INFO
+     -vv, --very-verbose   set loglevel to DEBUG
+     --no-expand-vars, -nx
+                           Don't expand environment variables
+     --no-resolve-relative-volumes, -nr
+                           Don't resolve relative volume paths to absolute paths
+     --yaml DOCKER_COMPOSE_YAML, -y DOCKER_COMPOSE_YAML
+                           Full path to docker-compose.yaml
+     --dot-env DOT_ENV, -d DOT_ENV
+                           Full path to .env file
+     --outfile OUTFILE, -o OUTFILE
+                           Full output path
+     --format {dot,svg,png}, -f {dot,svg,png}
+                           Output format
+
+
+i.e.::
+
+
+   docker-compose-graph --yaml docker-compose-graph/tests/fixtures/deadline-docker/10.2/docker-compose.yaml -d docker-compose-graph/tests/fixtures/deadline-docker/10.2/.env --outfile /path/to/new/graph.png -f png
 
 
 .. _pyscaffold-notes:
