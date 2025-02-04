@@ -1115,7 +1115,7 @@ def parse_args(args):
         dest="dot_env",
         default=None,
         type=pathlib.Path,
-        required=True,
+        required=False,
         help="Full path to .env file",
     )
 

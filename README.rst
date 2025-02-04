@@ -34,16 +34,7 @@ docker-compose-graph
 ====================
 
 
-    Add a short description here!
-
-
-A longer description of your project goes here...
-
-
-1. graph_primary yaml
-2. graph_includes
-3. graph_overrides
-4. overlay graph_includes with graph_overrides
+    A docker-compose graph mapper.
 
 
 API::
