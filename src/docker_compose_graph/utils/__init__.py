@@ -17,12 +17,12 @@ def deep_merge(dict1, dict2):
                 if key in dict1:
                     # Existing list shall
                     # be extended
-                    dict1[key].extend(dict2[key])
+                    for item in dict2[key]:
+                        # Avoid duplicates and keep order
+                        if item not in dict1[key]:
+                            dict1[key].append(dict2[key])
                 else:
                     dict1[key] = dict2[key]
-                # Todo
-                #  - [ ] maybe error prone?
-                dict1[key] = list(set(dict1[key]))  # Avoid duplicates
             elif isinstance(dict2[key], OverrideArray):
                 # Override shall always REPLACE
                 dict1[key] = dict2[key]
