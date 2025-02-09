@@ -20,7 +20,7 @@ def deep_merge(dict1, dict2):
                     for item in dict2[key]:
                         # Avoid duplicates and keep order
                         if item not in dict1[key]:
-                            dict1[key].append(dict2[key])
+                            dict1[key].append(item)
                 else:
                     dict1[key] = dict2[key]
             elif isinstance(dict2[key], OverrideArray):
