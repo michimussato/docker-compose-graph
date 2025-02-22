@@ -53,6 +53,22 @@ root: [dict]
 - [ ] networks
 ...
 
+Todo (low):
+```
+   healthcheck:
+      interval: 10s
+      retries: '3'
+      test:
+      - CMD
+      - timeout
+      - 10s
+      - bash
+      - -c
+      - '":> /dev/tcp/127.0.0.1/5000"'  / - :> /dev/tcp/127.0.0.1/5000
+      timeout: 2s
+```
+fails
+
 
 """
 import copy
