@@ -1046,6 +1046,12 @@ class DockerComposeGraph:
                         n = sg.get_node(name=f"NODE-SERVICE_{service_name}")[0]
                         break
 
+                if _mapping == "host":
+                    edge_style = "dashed"
+                else:
+                    edge_style = "solid"
+
+
                 dst = self.get_name(n)
                 edge = pydot.Edge(
                     src=f'"{_mapping}":e',
@@ -1054,7 +1060,10 @@ class DockerComposeGraph:
                     dir="both",
                     arrowhead="dot",
                     arrowtail="dot",
-                    **self.global_dot_settings,
+                    **{
+                        **self.global_dot_settings,
+                        "style": edge_style,
+                    },
                 )
 
                 self.graph.add_edge(edge)
