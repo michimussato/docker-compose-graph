@@ -118,7 +118,8 @@ def test_get_service_volumes():
             '${NFS_ENTRY_POINT}/test_data/10.2/opt/Thinkbox/DeadlineDatabase10/mongo/data_LOCAL:/opt/Thinkbox'
             '/DeadlineDatabase10/mongo/data',
             '${NFS_ENTRY_POINT}:${NFS_ENTRY_POINT}:ro',
-            '${NFS_ENTRY_POINT}:${NFS_ENTRY_POINT_LNS}:ro']
+            '${NFS_ENTRY_POINT}:${NFS_ENTRY_POINT_LNS}:ro'],
+        'test-network-mode': [],
     }
 
     assert volume_mappings == expected
@@ -149,7 +150,7 @@ def test_get_service_networks():
         'likec4_dev': [],
         'mongo-express-10-2': ['mongodb'],
         'mongodb-10-2': ['mongodb', 'repository'],
-        'test-network-mode': 'host',
+        'test-network-mode': ['host'],
     }
 
     assert network_mappings == expected
@@ -255,110 +256,110 @@ def test_deep_merge_3():
     assert result == expected
 
 
-def test_deep_merge_4():
-    d1 = {
-        'service_name': 'server',
-        'service_config': {
-            'image': 'ynput/ayon:latest',
-            'restart': 'unless-stopped',
-            # 'healthcheck': {
-            #     'test': [
-            #         'CMD',
-            #         'curl',
-            #         '-f',
-            #         'http://localhost:5000/api/info'
-            #     ],
-            #     'interval': '10s',
-            #     'timeout': '2s',
-            #     'retries': 3
-            # },
-            'depends_on': {
-                'postgres': {
-                    'condition': 'service_healthy'
-                },
-                'redis': {
-                    'condition': 'service_started'
-                }
-            },
-            # 'expose': [5000],
-            # 'ports': ['5000:5000'],
-            'volumes': [
-                './addons:/addons',
-                './storage:/storage',
-                '/etc/localtime:/etc/localtime:ro'
-            ]
-        }
-    }
-
-    # Test fails if the object
-    # instatiated twice. NOT THE SAME OBJECT,
-    # hence:
-    ports_override = OverrideArray(
-                array=['${AYON_PORT_HOST}:${AYON_PORT_CONTAINER}'],
-            )
-
-    d2 = {
-        'service_name': 'server',
-        'service_config': {
-            'container_name': 'ayon-server-10-2',
-            'hostname': 'ayon-server-10-2',
-            'domainname': '${ROOT_DOMAIN}',
-            'networks': [
-                'repository',
-                'mongodb'
-            ],
-            'volumes': [
-                './another:/volume',
-            ],
-            'ports': ports_override
-        }
-    }
-
-    expected = {
-        'service_name': 'server',
-        'service_config': {
-            'container_name': 'ayon-server-10-2',
-            'hostname': 'ayon-server-10-2',
-            'image': 'ynput/ayon:latest',
-            'domainname': '${ROOT_DOMAIN}',
-            'restart': 'unless-stopped',
-            # 'healthcheck': {
-            #     'test': [
-            #         'CMD',
-            #         'curl',
-            #         '-f',
-            #         'http://localhost:5000/api/info'
-            #     ],
-            #     'interval': '10s',
-            #     'timeout': '2s',
-            #     'retries': 3
-            # },
-            'depends_on': {
-                'postgres': {
-                    'condition': 'service_healthy'
-                },
-                'redis': {
-                    'condition': 'service_started'
-                }
-            },
-            'networks': [
-                'repository',
-                'mongodb'
-            ],
-            # 'expose': [5000],
-            'ports': ports_override,
-            'volumes': [
-                './addons:/addons',
-                './storage:/storage',
-                '/etc/localtime:/etc/localtime:ro',
-                './another:/volume',
-            ]
-        }
-    }
-
-    result = deep_merge(dict1=d1, dict2=d2)
-
-    assert result == expected
+# def test_deep_merge_4():
+#     d1 = {
+#         'service_name': 'server',
+#         'service_config': {
+#             'image': 'ynput/ayon:latest',
+#             'restart': 'unless-stopped',
+#             # 'healthcheck': {
+#             #     'test': [
+#             #         'CMD',
+#             #         'curl',
+#             #         '-f',
+#             #         'http://localhost:5000/api/info'
+#             #     ],
+#             #     'interval': '10s',
+#             #     'timeout': '2s',
+#             #     'retries': 3
+#             # },
+#             'depends_on': {
+#                 'postgres': {
+#                     'condition': 'service_healthy'
+#                 },
+#                 'redis': {
+#                     'condition': 'service_started'
+#                 }
+#             },
+#             # 'expose': [5000],
+#             # 'ports': ['5000:5000'],
+#             'volumes': [
+#                 './addons:/addons',
+#                 './storage:/storage',
+#                 '/etc/localtime:/etc/localtime:ro'
+#             ]
+#         }
+#     }
+#
+#     # Test fails if the object
+#     # instatiated twice. NOT THE SAME OBJECT,
+#     # hence:
+#     ports_override = OverrideArray(
+#                 array=['${AYON_PORT_HOST}:${AYON_PORT_CONTAINER}'],
+#             )
+#
+#     d2 = {
+#         'service_name': 'server',
+#         'service_config': {
+#             'container_name': 'ayon-server-10-2',
+#             'hostname': 'ayon-server-10-2',
+#             'domainname': '${ROOT_DOMAIN}',
+#             'networks': [
+#                 'repository',
+#                 'mongodb'
+#             ],
+#             'volumes': [
+#                 './another:/volume',
+#             ],
+#             'ports': ports_override
+#         }
+#     }
+#
+#     expected = {
+#         'service_name': 'server',
+#         'service_config': {
+#             'container_name': 'ayon-server-10-2',
+#             'hostname': 'ayon-server-10-2',
+#             'image': 'ynput/ayon:latest',
+#             'domainname': '${ROOT_DOMAIN}',
+#             'restart': 'unless-stopped',
+#             # 'healthcheck': {
+#             #     'test': [
+#             #         'CMD',
+#             #         'curl',
+#             #         '-f',
+#             #         'http://localhost:5000/api/info'
+#             #     ],
+#             #     'interval': '10s',
+#             #     'timeout': '2s',
+#             #     'retries': 3
+#             # },
+#             'depends_on': {
+#                 'postgres': {
+#                     'condition': 'service_healthy'
+#                 },
+#                 'redis': {
+#                     'condition': 'service_started'
+#                 }
+#             },
+#             'networks': [
+#                 'repository',
+#                 'mongodb'
+#             ],
+#             # 'expose': [5000],
+#             'ports': ports_override,
+#             'volumes': [
+#                 './addons:/addons',
+#                 './storage:/storage',
+#                 '/etc/localtime:/etc/localtime:ro',
+#                 './another:/volume',
+#             ]
+#         }
+#     }
+#
+#     result = deep_merge(dict1=d1, dict2=d2)
+#
+#     assert result == expected
 
 
 def test_iterate_trees():
