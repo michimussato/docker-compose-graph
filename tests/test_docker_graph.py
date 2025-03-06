@@ -40,7 +40,8 @@ def test_get_service_ports():
         'filebrowser': ['${FILEBROWSER_PORT_HOST}:${FILEBROWSER_PORT_CONTAINER}'],
         'likec4_dev': ['${LIKEC4_DEV_PORT_HOST}:${LIKEC4_DEV_PORT_CONTAINER}'],
         'mongo-express-10-2': ['${MONGO_EXPRESS_PORT_HOST}:${MONGO_EXPRESS_PORT_CONTAINER}'],
-        'mongodb-10-2': ['${MONGO_DB_PORT_HOST}:${MONGO_DB_PORT_CONTAINER}']
+        'mongodb-10-2': ['${MONGO_DB_PORT_HOST}:${MONGO_DB_PORT_CONTAINER}'],
+        'test-network-mode': [],
     }
 
     assert port_mappings == expected
@@ -147,7 +148,8 @@ def test_get_service_networks():
         'filebrowser': ['repository'],
         'likec4_dev': [],
         'mongo-express-10-2': ['mongodb'],
-        'mongodb-10-2': ['mongodb', 'repository']
+        'mongodb-10-2': ['mongodb', 'repository'],
+        'test-network-mode': 'host',
     }
 
     assert network_mappings == expected

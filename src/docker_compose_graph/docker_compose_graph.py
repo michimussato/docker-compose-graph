@@ -38,7 +38,9 @@ root: [dict]
     - [x] restart: [str]
     - [x] domainname: [str]
     - [x] depends_on: [list[dict[str, list]]]
-    - [x] networks: [list[str]]
+    - Network
+      - [x] networks: [list[str]]
+      - [x] network_mode: [str]
     - [x] environment: [list[str]]
     - [x] command: [str]
     - [x] ports: [list[str]]
@@ -567,7 +569,11 @@ class DockerComposeGraph:
         services: dict = tree.get("services", {})
 
         for service_name, service_config in services.items():
-            networks = service_config.get("networks", [])
+            networks = []
+            if "networks" in service_config:
+                networks = service_config.get("networks", [])
+            elif "network_mode" in service_config:
+                networks = [service_config.get("network_mode", [])]
 
             network_mappings[service_name] = networks
 
@@ -718,7 +724,11 @@ class DockerComposeGraph:
             id_service_volume = f"<PLUG_{service_name}__{v['volume']}> {v['volume']}"
             _v.append(id_service_volume)
 
-        networks: list = [os.path.expandvars(n) for n in service_config.get("networks", [])]
+        networks = []
+        if "networks" in service_config:
+            networks: list = [os.path.expandvars(n) for n in service_config.get("networks", [])]
+        elif "network_mode" in service_config:
+            networks: list = [service_config.get("network_mode")]
         networks.sort()
 
         _n = []
