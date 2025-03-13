@@ -119,10 +119,12 @@ class DockerComposeGraph:
             self,
             expandvars: bool = True,  # False is buggy
             resolve_relative_volumes: bool = False,
+            label_root_service: str = None,
     ):
 
         self.expanded_vars = expandvars
         self.resolve_relative_volumes = resolve_relative_volumes
+        self._label_root_service = label_root_service
 
         self.docker_yaml: [pathlib.Path | None] = None
 
@@ -171,8 +173,8 @@ class DockerComposeGraph:
         self.fillcolor_cluster_root_services = "#FF00FF"
 
         self.cluster_root_services = pydot.Cluster(
-            graph_name="cluster_root_services",
-            label="Compose Services",
+            graph_name=f"cluster_root_services{self.graph_name_root_service_str}",
+            label=f"Compose Services{self.label_root_service_str}",
             fontsize="40",
             rankdir="TB",
             **{
@@ -281,6 +283,20 @@ class DockerComposeGraph:
     #         path=path,
     #         format="dot",
     #     )
+
+    @property
+    def label_root_service_str(self) -> str:
+        if bool(self._label_root_service):
+            return f" ({str(self._label_root_service)})"
+        else:
+            return ""
+
+    @property
+    def graph_name_root_service_str(self) -> str:
+        if bool(self._label_root_service):
+            return f"_{str(self._label_root_service)}"
+        else:
+            return ""
 
     def as_dot(self):
         return self.graph
