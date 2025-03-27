@@ -507,10 +507,17 @@ class DockerComposeGraph:
             if isinstance(ports, OverrideArray):
                 ports: list = ports.array
 
-            if self.expanded_vars:
-                port_mappings[service_name] = [os.path.expandvars(p) for p in ports]
-            else:
-                port_mappings[service_name] = ports
+            port_mappings[service_name] = []
+
+            for p in ports:
+                if len(p.split(":")) > 2:
+                    # Todo: fix this: ['127.0.0.1:1514:10514']
+                    p = ":".join(p.split(":")[1:])
+
+                if self.expanded_vars:
+                    port_mappings[service_name].append(os.path.expandvars(p))
+                else:
+                    port_mappings[service_name].append(p)
 
         return port_mappings
 
@@ -547,41 +554,20 @@ class DockerComposeGraph:
         for service_name, service_config in services.items():
             volumes = service_config.get("volumes", [])
 
-            volumes_ = []
+            volume_mappings[service_name] = []
 
-            if self.expanded_vars:
-                for v in volumes:
-                    if isinstance(v, dict):
-                        _logger.debug("Can't handle dicts here yet: %s" % str(v))
-                        # Todo
-                        """
-                        TypeError: expected str, bytes or os.PathLike object, not dict
-                        File "/home/michael/git/repos/OpenStudioLandscapes/.venv/lib/python3.11/site-packages/dagster/_core/execution/plan/utils.py", line 56, in op_execution_error_boundary
-                          yield
-                        File "/home/michael/git/repos/OpenStudioLandscapes/.venv/lib/python3.11/site-packages/dagster/_utils/__init__.py", line 480, in iterate_with_context
-                          next_output = next(iterator)
-                                        ^^^^^^^^^^^^^^
-                        File "/home/michael/git/repos/OpenStudioLandscapes/src/OpenStudioLandscapes/engine/base/ops/__init__.py", line 109, in op_docker_compose_graph
-                          dcg.iterate_trees(trees)
-                        File "/home/michael/git/repos/OpenStudioLandscapes/.venv/lib/python3.11/site-packages/docker_compose_graph/docker_compose_graph.py", line 428, in iterate_trees
-                          self.volume_mappings = self._get_volumes(trees)
-                                                 ^^^^^^^^^^^^^^^^^^^^^^^^
-                        File "/home/michael/git/repos/OpenStudioLandscapes/.venv/lib/python3.11/site-packages/docker_compose_graph/docker_compose_graph.py", line 528, in _get_volumes
-                          service_volumes = self._get_service_volumes(
-                                            ^^^^^^^^^^^^^^^^^^^^^^^^^^
-                        File "/home/michael/git/repos/OpenStudioLandscapes/.venv/lib/python3.11/site-packages/docker_compose_graph/docker_compose_graph.py", line 551, in _get_service_volumes
-                          volume_mappings[service_name] = [os.path.expandvars(v) for v in volumes]
-                                                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-                        File "/home/michael/git/repos/OpenStudioLandscapes/.venv/lib/python3.11/site-packages/docker_compose_graph/docker_compose_graph.py", line 551, in <listcomp>
-                          volume_mappings[service_name] = [os.path.expandvars(v) for v in volumes]
-                                                           ^^^^^^^^^^^^^^^^^^^^^
-                        File "<frozen posixpath>", line 296, in expandvars
-                        """
+            for v in volumes:
+                if isinstance(v, dict):
+                    src = v.get("source", None)
+                    trgt = v.get("target", None)
+                    if not all([src, trgt]):
                         continue
-                    volumes_.append(os.path.expandvars(v))
-                volume_mappings[service_name] = volumes_
-            else:
-                volume_mappings[service_name] = volumes
+                    v = f"{src}:{trgt}"
+
+                if self.expanded_vars:
+                    volume_mappings[service_name].append(os.path.expandvars(v))
+                else:
+                    volume_mappings[service_name].append(v)
 
         return volume_mappings
 
@@ -727,13 +713,7 @@ class DockerComposeGraph:
         ports_container: list = list()
         _ports: list = service_config.get("ports", [])
         if isinstance(_ports, list):
-            p_ = []
-            for p in _ports:
-                if len(p.split(":")) > 2:
-                    p = ":".join(p.split(":")[1:])
-                    # Todo: fix this
-                p_.append(os.path.expandvars(p))
-            ports_container: list = p_
+            ports_container: list = [os.path.expandvars(p) for p in _ports]
         elif isinstance(_ports, OverrideArray):
             # OverrideArray() in
             # ~/repos/deadline-docker/src/Deadline/deadline_docker/assets.py

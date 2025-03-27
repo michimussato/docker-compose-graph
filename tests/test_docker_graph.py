@@ -40,7 +40,8 @@ def test_get_service_ports():
         'filebrowser': ['${FILEBROWSER_PORT_HOST}:${FILEBROWSER_PORT_CONTAINER}'],
         'likec4_dev': ['${LIKEC4_DEV_PORT_HOST}:${LIKEC4_DEV_PORT_CONTAINER}'],
         'mongo-express-10-2': ['${MONGO_EXPRESS_PORT_HOST}:${MONGO_EXPRESS_PORT_CONTAINER}'],
-        'mongodb-10-2': ['${MONGO_DB_PORT_HOST}:${MONGO_DB_PORT_CONTAINER}'],
+        'mongodb-10-2': ['${MONGO_DB_PORT_HOST}:${MONGO_DB_PORT_CONTAINER}',
+                         '${MONGO_DB_PORT_HOST}:${MONGO_DB_PORT_CONTAINER}'],
         'test-network-mode': [],
     }
 
@@ -118,7 +119,14 @@ def test_get_service_volumes():
             '${NFS_ENTRY_POINT}/test_data/10.2/opt/Thinkbox/DeadlineDatabase10/mongo/data_LOCAL:/opt/Thinkbox'
             '/DeadlineDatabase10/mongo/data',
             '${NFS_ENTRY_POINT}:${NFS_ENTRY_POINT}:ro',
-            '${NFS_ENTRY_POINT}:${NFS_ENTRY_POINT_LNS}:ro'],
+            '${NFS_ENTRY_POINT}:${NFS_ENTRY_POINT_LNS}:ro',
+            # {
+            #     'source': './common/config/core/app.conf',
+            #     'target': '/etc/core/app.conf',
+            #     'type': 'bind'
+            # }
+            './common/config/core/app.conf:/etc/core/app.conf',
+        ],
         'test-network-mode': [],
     }
 
