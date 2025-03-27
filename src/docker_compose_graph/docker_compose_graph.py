@@ -553,6 +553,29 @@ class DockerComposeGraph:
                 for v in volumes:
                     if isinstance(v, dict):
                         _logger.debug("Can't handle dicts here yet: %s" % str(v))
+                        """
+                        TypeError: expected str, bytes or os.PathLike object, not dict
+                        File "/home/michael/git/repos/OpenStudioLandscapes/.venv/lib/python3.11/site-packages/dagster/_core/execution/plan/utils.py", line 56, in op_execution_error_boundary
+                          yield
+                        File "/home/michael/git/repos/OpenStudioLandscapes/.venv/lib/python3.11/site-packages/dagster/_utils/__init__.py", line 480, in iterate_with_context
+                          next_output = next(iterator)
+                                        ^^^^^^^^^^^^^^
+                        File "/home/michael/git/repos/OpenStudioLandscapes/src/OpenStudioLandscapes/engine/base/ops/__init__.py", line 109, in op_docker_compose_graph
+                          dcg.iterate_trees(trees)
+                        File "/home/michael/git/repos/OpenStudioLandscapes/.venv/lib/python3.11/site-packages/docker_compose_graph/docker_compose_graph.py", line 428, in iterate_trees
+                          self.volume_mappings = self._get_volumes(trees)
+                                                 ^^^^^^^^^^^^^^^^^^^^^^^^
+                        File "/home/michael/git/repos/OpenStudioLandscapes/.venv/lib/python3.11/site-packages/docker_compose_graph/docker_compose_graph.py", line 528, in _get_volumes
+                          service_volumes = self._get_service_volumes(
+                                            ^^^^^^^^^^^^^^^^^^^^^^^^^^
+                        File "/home/michael/git/repos/OpenStudioLandscapes/.venv/lib/python3.11/site-packages/docker_compose_graph/docker_compose_graph.py", line 551, in _get_service_volumes
+                          volume_mappings[service_name] = [os.path.expandvars(v) for v in volumes]
+                                                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                        File "/home/michael/git/repos/OpenStudioLandscapes/.venv/lib/python3.11/site-packages/docker_compose_graph/docker_compose_graph.py", line 551, in <listcomp>
+                          volume_mappings[service_name] = [os.path.expandvars(v) for v in volumes]
+                                                           ^^^^^^^^^^^^^^^^^^^^^
+                        File "<frozen posixpath>", line 296, in expandvars
+                        """
                     else:
                         volumes_.append(os.path.expandvars(v))
                 volume_mappings[service_name] = volumes_
