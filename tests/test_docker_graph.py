@@ -30,22 +30,19 @@ def test_get_service_ports():
     )
 
     expected = {
-        'dagster_dev': [('${DAGSTER_DEV_PORT_HOST}', '${DAGSTER_DEV_PORT_CONTAINER}')],
+        'dagster_dev': ['${DAGSTER_DEV_PORT_HOST}:${DAGSTER_DEV_PORT_CONTAINER}'],
         'deadline-client-installer-10-2': [],
         'deadline-pulse-runner-10-2': [],
-        'deadline-rcs-runner-10-2': [('${RCS_HTTP_PORT_HOST}',
-                                      '${RCS_HTTP_PORT_CONTAINER}')],
+        'deadline-rcs-runner-10-2': ['${RCS_HTTP_PORT_HOST}:${RCS_HTTP_PORT_CONTAINER}'],
         'deadline-repository-installer-10-2': [],
-        'deadline-webservice-runner-10-2': [('${WEBSERVICE_HTTP_PORT_HOST}',
-                                             '${WEBSERVICE_HTTP_PORT_CONTAINER}')],
+        'deadline-webservice-runner-10-2': ['${WEBSERVICE_HTTP_PORT_HOST}:${WEBSERVICE_HTTP_PORT_CONTAINER}'],
         'deadline-worker-runner-10-2': [],
-        'filebrowser': [('${FILEBROWSER_PORT_HOST}', '${FILEBROWSER_PORT_CONTAINER}')],
-        'likec4_dev': [('${LIKEC4_DEV_PORT_HOST}', '${LIKEC4_DEV_PORT_CONTAINER}')],
-        'mongo-express-10-2': [('${MONGO_EXPRESS_PORT_HOST}',
-                                '${MONGO_EXPRESS_PORT_CONTAINER}')],
-        'mongodb-10-2': [('${MONGO_DB_PORT_HOST}', '${MONGO_DB_PORT_CONTAINER}'),
-                         ('127.0.0.1:12345', '23456')],
-        'test-network-mode': []
+        'filebrowser': ['${FILEBROWSER_PORT_HOST}:${FILEBROWSER_PORT_CONTAINER}'],
+        'likec4_dev': ['${LIKEC4_DEV_PORT_HOST}:${LIKEC4_DEV_PORT_CONTAINER}'],
+        'mongo-express-10-2': ['${MONGO_EXPRESS_PORT_HOST}:${MONGO_EXPRESS_PORT_CONTAINER}'],
+        'mongodb-10-2': ['${MONGO_DB_PORT_HOST}:${MONGO_DB_PORT_CONTAINER}',
+                         '12345:23456'],
+        'test-network-mode': [],
     }
 
     assert port_mappings == expected
