@@ -553,6 +553,7 @@ class DockerComposeGraph:
                 for v in volumes:
                     if isinstance(v, dict):
                         _logger.debug("Can't handle dicts here yet: %s" % str(v))
+                        # Todo
                         """
                         TypeError: expected str, bytes or os.PathLike object, not dict
                         File "/home/michael/git/repos/OpenStudioLandscapes/.venv/lib/python3.11/site-packages/dagster/_core/execution/plan/utils.py", line 56, in op_execution_error_boundary
@@ -576,8 +577,8 @@ class DockerComposeGraph:
                                                            ^^^^^^^^^^^^^^^^^^^^^
                         File "<frozen posixpath>", line 296, in expandvars
                         """
-                    else:
-                        volumes_.append(os.path.expandvars(v))
+                        continue
+                    volumes_.append(os.path.expandvars(v))
                 volume_mappings[service_name] = volumes_
             else:
                 volume_mappings[service_name] = volumes
@@ -753,6 +754,10 @@ class DockerComposeGraph:
 
         volumes: list = []
         for v in service_config.get("volumes", []):
+            if isinstance(v, dict):
+                # Todo
+                _logger.debug("Can't handle dicts here yet: %s" % str(v))
+                continue
             v_dict: dict = {}
             v_split: list = v.split(":")
             if self.expanded_vars:
