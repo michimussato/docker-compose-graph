@@ -730,8 +730,8 @@ class DockerComposeGraph:
             p_ = []
             for p in _ports:
                 if len(p.split(":")) > 2:
+                    p = ":".join(p.split(":")[:1])
                     # Todo: fix this
-                    continue
                 p_.append(os.path.expandvars(p))
             ports_container: list = p_
         elif isinstance(_ports, OverrideArray):
