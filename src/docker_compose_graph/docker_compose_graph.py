@@ -925,10 +925,11 @@ class DockerComposeGraph:
                 mappings = mappings.array
 
             for _mapping in sorted(mappings):
-                port_host, port_container = os.path.expandvars(_mapping).split(":", maxsplit=1)
+                # port_host, port_container = os.path.expandvars(_mapping).split(":", maxsplit=1)
+                port_host, port_container = os.path.expandvars(_mapping).rsplit(":", 1)
                 node_host = pydot.Node(
                     name=f"{service_name}__{port_host}__{port_container}",
-                    label=port_host,
+                    label=f"{port_host}",
                     shape="circle",
                     color=_color,
                     fillcolor=self.fillcolor_cluster_root_ports,
