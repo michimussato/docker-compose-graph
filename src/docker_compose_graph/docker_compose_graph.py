@@ -727,7 +727,13 @@ class DockerComposeGraph:
         ports_container: list = list()
         _ports: list = service_config.get("ports", [])
         if isinstance(_ports, list):
-            ports_container: list = [os.path.expandvars(p) for p in _ports]
+            p_ = []
+            for p in _ports:
+                if len(p.split(":")) > 2:
+                    # Todo: fix this
+                    continue
+                p_.append(os.path.expandvars(p))
+            ports_container: list = p_
         elif isinstance(_ports, OverrideArray):
             # OverrideArray() in
             # ~/repos/deadline-docker/src/Deadline/deadline_docker/assets.py
