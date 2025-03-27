@@ -125,6 +125,9 @@ def test_get_service_volumes():
             #     'target': '/etc/core/app.conf',
             #     'type': 'bind'
             # }
+            # Todo:
+            #  - [ ] Can't resolve relative paths correctly
+            './common/config/registry/:/etc/registry/:z',
             './common/config/core/app.conf:/etc/core/app.conf',
         ],
         'test-network-mode': [],
