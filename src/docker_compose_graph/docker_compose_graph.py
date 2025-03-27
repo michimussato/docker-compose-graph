@@ -547,8 +547,15 @@ class DockerComposeGraph:
         for service_name, service_config in services.items():
             volumes = service_config.get("volumes", [])
 
+            volumes_ = []
+
             if self.expanded_vars:
-                volume_mappings[service_name] = [os.path.expandvars(v) for v in volumes]
+                for v in volumes:
+                    if isinstance(v, dict):
+                        _logger.debug("Can't handle dicts here yet: %s" % str(v))
+                    else:
+                        volumes_.append(os.path.expandvars(v))
+                volume_mappings[service_name] = volumes_
             else:
                 volume_mappings[service_name] = volumes
 
