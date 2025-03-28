@@ -712,17 +712,17 @@ class DockerComposeGraph:
 
         ports_container: list = list()
         _ports: list = service_config.get("ports", [])
-        ports_ = []
-        for p in _ports:
-            if len(p.split(":")) > 2:
-                # Todo: very dirty
-                p = ":".join(p.split(":")[1:])
-
-            ports_.append(p)
-
-        _ports = ports_
 
         if isinstance(_ports, list):
+            ports_ = []
+            for p in _ports:
+                if len(p.split(":")) > 2:
+                    # Todo: very dirty
+                    p = ":".join(p.split(":")[1:])
+
+                ports_.append(p)
+
+            _ports = ports_
             ports_container: list = [os.path.expandvars(p) for p in _ports]
         elif isinstance(_ports, OverrideArray):
             # OverrideArray() in
