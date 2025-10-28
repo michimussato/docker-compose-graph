@@ -1,5 +1,6 @@
 __all__ = [
     "deep_merge",
+    "deep_sorted",
 ]
 
 import copy
@@ -29,3 +30,25 @@ def deep_merge(dict1, dict2):
             else:
                 dict1[key] = dict2[key]
     return copy.deepcopy(dict1)
+
+
+def deep_sorted(d):
+    # # https://www.geeksforgeeks.org/python/sort-a-nested-dictionary-by-value-in-python/
+    # if isinstance(d, list):
+    #     # sorting is case sensitive. capitals fist.
+    #     return sorted(d, reverse=True)
+    # for key, value in d.items():
+    #     if isinstance(value, dict):
+    #         d[key] = deep_sorted(value)
+    #     elif isinstance(value, list):
+    #         d[key] = deep_sorted(value)
+    # return dict(sorted(d.items(), key=lambda item: str(item[1]) if not isinstance(item[1], dict) else str(
+    #     deep_sorted(item[1]))))
+
+    # https://stackoverflow.com/a/56305689/2207196
+    def make_tuple(v): return (*v,) if isinstance(v, (list,dict)) else (v,)
+    if isinstance(d, list):
+        return sorted(map(deep_sorted, d), key=make_tuple)
+    if isinstance(d, dict):
+        return { k: deep_sorted(d[k]) for k in sorted(d)}
+    return d
