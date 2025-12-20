@@ -80,13 +80,15 @@ import argparse
 import logging
 import pathlib
 import sys
+from typing import Union
+
 import yaml as pyyaml
 import pydot
 import dotenv
 from collections import OrderedDict
 from jinja2 import Environment, FileSystemLoader
 
-from docker_compose_graph.yaml_tags.overrides import OverrideArray
+from docker_compose_graph.yaml_tags.overrides import OverrideArray, ResetNull
 from docker_compose_graph.utils import *
 
 from docker_compose_graph import __version__
@@ -126,13 +128,13 @@ class DockerComposeGraph:
         self.resolve_relative_volumes = resolve_relative_volumes
         self._label_root_service = label_root_service
 
-        self.docker_yaml: [pathlib.Path | None] = None
+        self.docker_yaml: Union[pathlib.Path | None] = None
 
-        self.services: [list[dict] | None] = None
-        self.depends_on: [dict[str, list | dict] | None] = None
-        self.network_mappings: [dict[str, list[str]] | None] = None
-        self.port_mappings: [dict[str, list[str]] | None] = None
-        self.volume_mappings: [dict[str, list[str]] | None] = None
+        self.services: Union[list[dict] | None] = None
+        self.depends_on: Union[dict[str, list | dict] | None] = None
+        self.network_mappings: Union[dict[str, list[str]] | None] = None
+        self.port_mappings: Union[dict[str, list[str]] | None] = None
+        self.volume_mappings: Union[dict[str, list[str]] | None] = None
 
         # Main Graph
 
@@ -316,7 +318,7 @@ class DockerComposeGraph:
     def parse_docker_compose(
             self,
             yaml: pathlib.Path,
-            root_path: [pathlib.Path, None] = None,
+            root_path: Union[pathlib.Path, None] = None,
             ret=None,
     ) -> list[dict]:
         """Recursive"""
@@ -420,6 +422,21 @@ class DockerComposeGraph:
 
     def iterate_trees(self, trees):
 
+        trees_ = copy.deepcopy(trees)
+
+        for tree in trees_:
+            _logger.debug(tree)
+
+            for index, (service_name, service_config) in enumerate(tree.get("services", {}).items()):
+
+                if isinstance(service_config, ResetNull):
+                    # ResetNull objects are !reset YAML tags
+                    _logger.warning(f"Removing item: {service_name}: {type(service_config)}")
+                    trees.pop(index-1)
+                    # trees.remove({service_name: service_config})
+                    # del tree["services"][service_name]
+                    # continue
+
         services = self._get_services(trees)
 
         self.services = self.merge_services(services)
@@ -444,6 +461,11 @@ class DockerComposeGraph:
             _logger.debug(tree)
 
             for service_name, service_config in tree.get("services", {}).items():
+
+                if isinstance(service_config, ResetNull):
+                    # ResetNull objects are !reset YAML tags
+                    _logger.warning(f"Skipping {service_name}: {type(service_config)}")
+                    continue
 
                 # some environment definitions in docker compose
                 # (i.e. for ayon) will be loaded as lists instead
@@ -502,6 +524,12 @@ class DockerComposeGraph:
         services: dict = tree.get("services", {})
 
         for service_name, service_config in services.items():
+
+            if isinstance(service_config, ResetNull):
+                # ResetNull objects are !reset YAML tags
+                _logger.warning(f"Skipping {service_name}: {type(service_config)}")
+                continue
+
             ports = service_config.get("ports", [])
 
             if isinstance(ports, OverrideArray):
@@ -552,6 +580,12 @@ class DockerComposeGraph:
         services: dict = tree.get("services", {})
 
         for service_name, service_config in services.items():
+
+            if isinstance(service_config, ResetNull):
+                # ResetNull objects are !reset YAML tags
+                _logger.warning(f"Skipping {service_name}: {type(service_config)}")
+                continue
+
             volumes = service_config.get("volumes", [])
 
             volume_mappings[service_name] = []
@@ -602,6 +636,12 @@ class DockerComposeGraph:
         services: dict = tree.get("services", {})
 
         for service_name, service_config in services.items():
+
+            if isinstance(service_config, ResetNull):
+                # ResetNull objects are !reset YAML tags
+                _logger.warning(f"Skipping {service_name}: {type(service_config)}")
+                continue
+
             networks = []
             if "networks" in service_config:
                 networks = service_config.get("networks", [])
@@ -644,6 +684,12 @@ class DockerComposeGraph:
         services: dict = tree.get("services", {})
 
         for service_name, service_config in services.items():
+
+            if isinstance(service_config, ResetNull):
+                # ResetNull objects are !reset YAML tags
+                _logger.warning(f"Skipping {service_name}: {type(service_config)}")
+                continue
+
             depends_on = service_config.get("depends_on", [])
 
             if len(depends_on) == 0:

@@ -5,7 +5,7 @@ __all__ = [
 
 import copy
 
-from docker_compose_graph.yaml_tags.overrides import OverrideArray
+from docker_compose_graph.yaml_tags.overrides import OverrideArray, ResetNull
 
 
 def deep_merge(dict1, dict2):
@@ -25,6 +25,9 @@ def deep_merge(dict1, dict2):
                 else:
                     dict1[key] = dict2[key]
             elif isinstance(dict2[key], OverrideArray):
+                # Override shall always REPLACE
+                dict1[key] = dict2[key]
+            elif isinstance(dict2[key], ResetNull):
                 # Override shall always REPLACE
                 dict1[key] = dict2[key]
             else:
