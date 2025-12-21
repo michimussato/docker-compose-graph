@@ -88,7 +88,7 @@ import dotenv
 from collections import OrderedDict
 from jinja2 import Environment, FileSystemLoader
 
-from docker_compose_graph.yaml_tags.overrides import OverrideArray, ResetNull
+from docker_compose_graph.yaml_tags.overrides import OverrideArray
 from docker_compose_graph.utils import *
 
 from docker_compose_graph import __version__
@@ -422,7 +422,7 @@ class DockerComposeGraph:
 
     def iterate_trees(self, trees):
 
-        trees_ = copy.deepcopy(trees)
+        # trees_ = copy.deepcopy(trees)
 
         # for tree in trees_:
         #     _logger.debug(tree)
@@ -463,10 +463,10 @@ class DockerComposeGraph:
 
             for service_name, service_config in tree.get("services", {}).items():
 
-                if isinstance(service_config, ResetNull):
-                    # ResetNull objects are !reset YAML tags
-                    _logger.warning(f"Skipping {service_name}: {type(service_config)}")
-                    continue
+                # if isinstance(service_config, ResetNull):
+                #     # ResetNull objects are !reset YAML tags
+                #     _logger.warning(f"Skipping {service_name}: {type(service_config)}")
+                #     continue
 
                 # some environment definitions in docker compose
                 # (i.e. for ayon) will be loaded as lists instead
@@ -526,10 +526,10 @@ class DockerComposeGraph:
 
         for service_name, service_config in services.items():
 
-            if isinstance(service_config, ResetNull):
-                # ResetNull objects are !reset YAML tags
-                _logger.warning(f"Skipping {service_name}: {type(service_config)}")
-                continue
+            # if isinstance(service_config, ResetNull):
+            #     # ResetNull objects are !reset YAML tags
+            #     _logger.warning(f"Skipping {service_name}: {type(service_config)}")
+            #     continue
 
             ports = service_config.get("ports", [])
 
@@ -582,10 +582,10 @@ class DockerComposeGraph:
 
         for service_name, service_config in services.items():
 
-            if isinstance(service_config, ResetNull):
-                # ResetNull objects are !reset YAML tags
-                _logger.warning(f"Skipping {service_name}: {type(service_config)}")
-                continue
+            # if isinstance(service_config, ResetNull):
+            #     # ResetNull objects are !reset YAML tags
+            #     _logger.warning(f"Skipping {service_name}: {type(service_config)}")
+            #     continue
 
             volumes = service_config.get("volumes", [])
 
@@ -638,10 +638,10 @@ class DockerComposeGraph:
 
         for service_name, service_config in services.items():
 
-            if isinstance(service_config, ResetNull):
-                # ResetNull objects are !reset YAML tags
-                _logger.warning(f"Skipping {service_name}: {type(service_config)}")
-                continue
+            # if isinstance(service_config, ResetNull):
+            #     # ResetNull objects are !reset YAML tags
+            #     _logger.warning(f"Skipping {service_name}: {type(service_config)}")
+            #     continue
 
             networks = []
             if "networks" in service_config:
@@ -686,10 +686,10 @@ class DockerComposeGraph:
 
         for service_name, service_config in services.items():
 
-            if isinstance(service_config, ResetNull):
-                # ResetNull objects are !reset YAML tags
-                _logger.warning(f"Skipping {service_name}: {type(service_config)}")
-                continue
+            # if isinstance(service_config, ResetNull):
+            #     # ResetNull objects are !reset YAML tags
+            #     _logger.warning(f"Skipping {service_name}: {type(service_config)}")
+            #     continue
 
             depends_on = service_config.get("depends_on", [])
 
