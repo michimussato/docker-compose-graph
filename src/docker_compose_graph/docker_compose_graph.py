@@ -424,18 +424,19 @@ class DockerComposeGraph:
 
         trees_ = copy.deepcopy(trees)
 
-        for tree in trees_:
-            _logger.debug(tree)
-
-            for index, (service_name, service_config) in enumerate(tree.get("services", {}).items()):
-
-                if isinstance(service_config, ResetNull):
-                    # ResetNull objects are !reset YAML tags
-                    _logger.warning(f"Removing item: {service_name}: {type(service_config)}")
-                    trees.pop(index-1)
-                    # trees.remove({service_name: service_config})
-                    # del tree["services"][service_name]
-                    # continue
+        # for tree in trees_:
+        #     _logger.debug(tree)
+        #
+        #     for index, (service_name, service_config) in enumerate(tree.get("services", {}).items()):
+        #
+        #         if isinstance(service_config, ResetNull):
+        #             # ResetNull objects are !reset YAML tags
+        #             _logger.warning(f"Removing item: {service_name}: {type(service_config)}")
+        #             trees.remove()
+        #             trees.pop(index-1)
+        #             # trees.remove({service_name: service_config})
+        #             # del tree["services"][service_name]
+        #             # continue
 
         services = self._get_services(trees)
 
