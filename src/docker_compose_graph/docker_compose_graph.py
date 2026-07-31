@@ -81,12 +81,14 @@ import logging
 import pathlib
 import sys
 from typing import Union
-
+import json
 import yaml as pyyaml
 import pydot
 import dotenv
 from collections import OrderedDict
 from jinja2 import Environment, FileSystemLoader
+
+# from pprint import pprint as print
 
 from docker_compose_graph.yaml_tags.overrides import OverrideArray
 from docker_compose_graph.utils import *
@@ -309,6 +311,9 @@ class DockerComposeGraph:
             rel_path
     ) -> pathlib.Path:
 
+        _logger.debug(f"{root_path = }")
+        _logger.debug(f"{rel_path = }")
+
         abs_path = os.path.join(root_path, rel_path)
 
         _logger.debug(f"{rel_path} -> {abs_path}")
@@ -323,29 +328,48 @@ class DockerComposeGraph:
     ) -> list[dict]:
         """Recursive"""
 
+        _logger.debug("############################################")
+
+        _logger.debug(f"{yaml = }")
+
         if self.docker_yaml is None:
             # The main yaml we process will be
             # the label of the main graph
             self.docker_yaml = yaml
             self.graph.set_label(self.docker_yaml.as_posix())
 
-        if not yaml.is_absolute():
-            _logger.debug(yaml)
-            _abs_yaml = self._to_abs_path(
-                root_path=root_path,
-                rel_path=yaml,
-            )
-        else:
+        if yaml.is_absolute():
             _abs_yaml = yaml
             root_path = _abs_yaml.parent
+        else:
+            root_path = root_path.joinpath(yaml.parent)
+            _abs_yaml = self._to_abs_path(
+                root_path=root_path,
+                rel_path=yaml.name,
+            )
+
+        _logger.debug(f"{_abs_yaml = }")
+        # PosixPath('/home/michael/git/repos/memoria-works/OpenStudioLandscapesHub/docker-compose/sites/memoriaworks/reviewboard/docker-compose.reviewboard.yml')
+        #
+        # PosixPath('/home/michael/git/repos/memoria-works/OpenStudioLandscapesHub/docker-compose/sites/memoriaworks/docker-compose.nginx.yml')
+        # PosixPath('/home/michael/git/repos/memoria-works/OpenStudioLandscapesHub/docker-compose/sites/memoriaworks/reviewboard/docker-compose.nginx.yml')
+        _logger.debug(f"{root_path = }")
+        # PosixPath('/home/michael/git/repos/memoria-works/OpenStudioLandscapesHub/docker-compose/sites/memoriaworks')
+        #
+        # PosixPath('/home/michael/git/repos/memoria-works/OpenStudioLandscapesHub/docker-compose/sites/memoriaworks')
+        # PosixPath('/home/michael/git/repos/memoria-works/OpenStudioLandscapesHub/docker-compose/sites/memoriaworks')
 
         _abs_yaml = _abs_yaml.resolve()
 
-        print(f"Processing {_abs_yaml.as_posix()}")
         _logger.info(f"Processing {_abs_yaml.as_posix()}")
+        # /home/michael/git/repos/memoria-works/OpenStudioLandscapesHub/docker-compose/sites/memoriaworks/reviewboard/docker-compose.reviewboard.yml
+        #
+        # /home/michael/git/repos/memoria-works/OpenStudioLandscapesHub/docker-compose/sites/memoriaworks/docker-compose.nginx.yml
+        # /home/michael/git/repos/memoria-works/OpenStudioLandscapesHub/docker-compose/sites/memoriaworks/reviewboard/docker-compose.nginx.yml
 
         with open(_abs_yaml, "r") as fr:
             docker_compose_chainmap: dict = pyyaml.full_load(fr)
+            _logger.debug(f"{docker_compose_chainmap = }")
 
         # the first iteration
         # of recursive function
@@ -356,7 +380,7 @@ class DockerComposeGraph:
 
         includes: list = docker_compose_chainmap.get("include", [])
 
-        _logger.debug(includes)
+        _logger.debug(f"{includes = }")
 
         for include in includes:
             if isinstance(include, dict):
@@ -364,11 +388,15 @@ class DockerComposeGraph:
                 include_set = include
 
                 for included_docker_compose in include_set.get("path", []):
-                    _logger.debug(included_docker_compose)
+                    _logger.debug(f"{included_docker_compose = }")
                     pathlib_path = pathlib.Path(included_docker_compose)
-                    _logger.debug(pathlib_path)
+                    _logger.debug(f"{pathlib_path = }")
 
-                    print(f"{ret = }")
+                    _logger.debug(json.dumps(ret, default=str, indent=2))
+                    # _logger.debug(f"{json.dumps(ret, default=str, indent=2) = }")
+
+                    _logger.debug(f"{pathlib_path = }")
+                    _logger.debug(f"{root_path = }")
 
                     self.parse_docker_compose(
                         yaml=pathlib_path,
